@@ -1,0 +1,26 @@
+transaction_id,date,description,amount,currency,reference,type
+TXN001,2024-01-05,Wire Transfer - Acme Corp,15000.00,USD,REF-2024-001,credit
+TXN002,2024-01-06,Payment to Vendor XYZ,-8500.00,USD,REF-2024-002,debit
+TXN003,2024-01-08,Customer Payment - Beta Inc,22500.00,USD,REF-2024-003,credit
+TXN004,2024-01-10,Payroll Processing,-45000.00,USD,REF-2024-004,debit
+TXN005,2024-01-10,Service Fee,-150.00,USD,REF-2024-005,debit
+TXN006,2024-01-12,Customer Payment - Gamma LLC,9800.00,USD,REF-2024-006,credit
+TXN007,2024-01-15,Wire Transfer - Delta Partners,31000.00,USD,REF-2024-007,credit
+TXN008,2024-01-15,Office Rent Payment,-12000.00,USD,REF-2024-008,debit
+TXN009,2024-01-18,Stripe Settlement,5620.50,USD,STR-20240118,credit
+TXN010,2024-01-18,Stripe Settlement,3480.25,USD,STR-20240118-B,credit
+TXN011,2024-01-20,Customer Payment - Epsilon SA,18750.00,USD,REF-2024-011,credit
+TXN012,2024-01-22,Insurance Premium,-4200.00,USD,REF-2024-012,debit
+TXN013,2024-01-23,Refund to Customer Alpha,-2500.00,USD,REF-2024-013,debit
+TXN014,2024-01-25,Wire Transfer - Zeta Corp,42000.00,USD,REF-2024-014,credit
+TXN015,2024-01-25,Software License Payment,-6800.00,USD,REF-2024-015,debit
+TXN016,2024-01-28,Customer Payment - Theta Inc,11200.00,USD,REF-2024-016,credit
+TXN017,2024-01-29,Bank Interest,325.75,USD,INT-JAN2024,credit
+TXN018,2024-01-30,Monthly Maintenance Fee,-50.00,USD,FEE-JAN2024,debit
+TXN019,2024-01-30,Customer Payment - Iota Ltd,7500.00,USD,REF-2024-019,credit
+TXN020,2024-01-31,Wire Transfer - Kappa Group,55000.00,USD,REF-2024-020,credit
+TXN021,2024-01-31,Utility Payment,-890.00,USD,REF-2024-021,debit
+TXN022,2024-01-15,ATM Withdrawal,-500.00,USD,ATM-0115,debit
+TXN023,2024-01-20,Duplicate Wire - Epsilon SA,18750.00,USD,REF-2024-011-DUP,credit
+TXN024,2024-01-27,Unknown Deposit,3200.00,USD,,credit
+TXN025,2024-01-29,Vendor Rebate,1450.00,USD,REB-2024-001,credit

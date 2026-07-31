@@ -1,0 +1,6 @@
+payout_id,arrival_date,amount,fee,net_amount,currency,status,description
+po_1ABC,2024-01-18,5800.00,179.50,5620.50,USD,paid,Stripe payout - batch 1
+po_2DEF,2024-01-18,3600.00,119.75,3480.25,USD,paid,Stripe payout - batch 2
+po_3GHI,2024-01-25,8200.00,246.00,7954.00,USD,paid,Stripe payout - batch 3
+po_4JKL,2024-02-01,12500.00,375.00,12125.00,USD,paid,Stripe payout - batch 4
+po_5MNO,2024-02-05,4300.00,129.00,4171.00,USD,paid,Stripe payout - batch 5

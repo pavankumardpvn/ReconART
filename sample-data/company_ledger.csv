@@ -1,0 +1,24 @@
+entry_id,posting_date,account,counterparty,debit,credit,reference_number,memo
+LED001,2024-01-05,1100 - Cash,Acme Corp,15000.00,0.00,REF-2024-001,Invoice #INV-1001 payment
+LED002,2024-01-06,2000 - Accounts Payable,Vendor XYZ,0.00,8500.00,REF-2024-002,PO #4521 payment
+LED003,2024-01-08,1100 - Cash,Beta Inc,22500.00,0.00,REF-2024-003,Invoice #INV-1045 payment
+LED004,2024-01-10,6100 - Salaries,Payroll,0.00,45000.00,REF-2024-004,January payroll
+LED005,2024-01-10,6500 - Bank Charges,Bank,0.00,150.00,REF-2024-005,Monthly service fee
+LED006,2024-01-12,1100 - Cash,Gamma LLC,9800.00,0.00,REF-2024-006,Invoice #INV-1052 payment
+LED007,2024-01-15,1100 - Cash,Delta Partners,31000.00,0.00,REF-2024-007,Contract milestone payment
+LED008,2024-01-15,6200 - Rent,Landlord,0.00,12000.00,REF-2024-008,January office rent
+LED009,2024-01-18,1100 - Cash,Stripe,9100.75,0.00,STR-20240118,Stripe daily settlement
+LED010,2024-01-20,1100 - Cash,Epsilon SA,18750.00,0.00,REF-2024-011,Invoice #INV-1060 payment
+LED011,2024-01-22,6300 - Insurance,Insurance Co,0.00,4200.00,REF-2024-012,Q1 insurance premium
+LED012,2024-01-23,1200 - Accounts Receivable,Customer Alpha,0.00,2500.00,REF-2024-013,Credit note #CN-201
+LED013,2024-01-25,1100 - Cash,Zeta Corp,42000.00,0.00,REF-2024-014,Annual contract payment
+LED014,2024-01-25,6400 - Software,Software Vendor,0.00,6800.00,REF-2024-015,Annual license renewal
+LED015,2024-01-28,1100 - Cash,Theta Inc,11200.00,0.00,REF-2024-016,Invoice #INV-1075 payment
+LED016,2024-01-29,7000 - Interest Income,Bank,325.75,0.00,INT-JAN2024,January interest earned
+LED017,2024-01-30,6500 - Bank Charges,Bank,0.00,50.00,FEE-JAN2024,Monthly maintenance fee
+LED018,2024-01-30,1100 - Cash,Iota Ltd,7500.00,0.00,REF-2024-019,Invoice #INV-1080 payment
+LED019,2024-01-31,1100 - Cash,Kappa Group,55000.00,0.00,REF-2024-020,Project funding round 2
+LED020,2024-01-31,6600 - Utilities,Utility Company,0.00,890.00,REF-2024-021,January utilities
+LED021,2024-01-27,1100 - Cash,Unknown,3200.00,0.00,,Unidentified deposit
+LED022,2024-01-29,4000 - Revenue,Vendor Rebate,1450.00,0.00,REB-2024-001,Q4 volume rebate
+LED023,2024-01-10,6500 - Bank Charges,Bank,0.00,25.00,REF-2024-005B,Wire transfer fee

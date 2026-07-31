@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: recon-art-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /api/v1/health/
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: recon-art-db
+          property: connectionURI
+      - key: REDIS_URL
+        fromService:
+          name: recon-art-redis
+          type: redis
+          property: connectionURI
+
+  - type: web
+    name: recon-art-frontend
+    runtime: docker
+    dockerfilePath: ./Dockerfile.frontend
+    dockerContext: .
+
+  - type: worker
+    name: recon-art-celery
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    dockerCommand: celery -A app.celery_app worker --loglevel=info
+
+databases:
+  - name: recon-art-db
+    databaseName: reconart
+    plan: free
+
+  - name: recon-art-redis
+    type: redis
+    plan: free
