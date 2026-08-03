@@ -151,9 +151,9 @@ async def upload_file_to_source(
                 SourceFile.data_source_id == ds.id,
                 SourceFile.file_size_bytes == len(content),
                 SourceFile.status.in_(["success", "active"]),
-            )
+            ).limit(1)
         )
-        file_status = "duplicate" if dup_result.scalar_one_or_none() else "success"
+        file_status = "duplicate" if dup_result.scalars().first() else "success"
 
     # Create SourceFile record
     source_file = SourceFile(
