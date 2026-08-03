@@ -11,6 +11,7 @@ import type {
   Schedule,
   ExportJob,
   PaginatedResponse,
+  UnifiedResource,
 } from "@/lib/types";
 import { getAuthToken } from "@/lib/auth";
 
@@ -43,6 +44,13 @@ export { api };
 
 export async function getDataSources() {
   const { data } = await api.get<PaginatedResponse<DataSource>>("/api/v1/data-sources");
+  return data;
+}
+
+export async function getResources(type?: string, page = 1, pageSize = 100) {
+  const params: Record<string, string | number> = { page, page_size: pageSize };
+  if (type && type !== "all") params.resource_type = type;
+  const { data } = await api.get<PaginatedResponse<UnifiedResource>>("/api/v1/resources/", { params });
   return data;
 }
 

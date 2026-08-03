@@ -25,6 +25,7 @@ from app.api.v1 import (
     lineage,
     notebook,
     reconciliations,
+    resources,
     schedules,
     segments,
     sweeps,
@@ -37,6 +38,7 @@ from app.api.v1 import (
 api_router = APIRouter()
 
 api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(resources.router, prefix="/resources", tags=["resources"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
 api_router.include_router(reconciliations.router, prefix="/reconciliations", tags=["reconciliations"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])

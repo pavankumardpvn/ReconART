@@ -28,6 +28,17 @@ export interface DataSource {
   updated_at: string;
 }
 
+export interface UnifiedResource {
+  id: string;
+  numeric_id: number;
+  name: string;
+  resource_type: "source" | "union" | "group" | "reconciliation";
+  status: string;
+  row_count: number;
+  created_at: string;
+  sub_type: string;
+}
+
 export interface DataSourcePreview {
   columns: DataSourceColumn[];
   rows: Record<string, unknown>[];

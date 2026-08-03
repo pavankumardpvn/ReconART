@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData } from "@tanstack/react-query";
 import {
   getDataSources,
   getDataSource,
@@ -13,12 +14,21 @@ import {
   getSourceFiles,
   forceProcessFile,
   moveFile,
+  getResources,
 } from "@/lib/api";
 
 export function useDataSources() {
   return useQuery({
     queryKey: ["data-sources"],
     queryFn: getDataSources,
+  });
+}
+
+export function useResources(type?: string, page = 1) {
+  return useQuery({
+    queryKey: ["resources", type || "all", page],
+    queryFn: () => getResources(type, page),
+    placeholderData: keepPreviousData,
   });
 }
 
