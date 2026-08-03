@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDataSources, useDataSourceColumns } from "@/hooks/useDataSources";
 import {
@@ -491,8 +491,16 @@ function GroupDialog({
   const [aggregations, setAggregations] = useState<AggregationRow[]>([
     { column: "", function: "sum" },
   ]);
+  const [columns, setColumns] = useState<Array<{ name: string; display_name: string; data_type: string }>>([]);
 
-  const columns = onFetchColumns(selectedSourceId);
+  useEffect(() => {
+    if (selectedSourceId) {
+      const cols = onFetchColumns(selectedSourceId);
+      setColumns(cols);
+    } else {
+      setColumns([]);
+    }
+  }, [selectedSourceId, onFetchColumns]);
 
   function toggleGroupByColumn(col: string) {
     setGroupByColumns((prev) =>
