@@ -25,10 +25,8 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import { getResources } from "@/lib/api";
+import type { UnifiedResource } from "@/lib/types";
 
 interface CommandItem {
   id: string;
@@ -36,7 +34,8 @@ interface CommandItem {
   icon: React.ElementType;
   href: string;
   shortcut?: string;
-  section: "quick" | "navigation";
+  section: "quick" | "navigation" | "resource";
+  badge?: string;
 }
 
 interface CommandPaletteContextValue {
@@ -44,18 +43,13 @@ interface CommandPaletteContextValue {
   setOpen: (open: boolean) => void;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Static data                                                        */
-/* ------------------------------------------------------------------ */
-
 const COMMANDS: CommandItem[] = [
-  // Quick Actions
   { id: "upload", label: "Upload Data Source", icon: Upload, href: "/data-sources/new", section: "quick" },
   { id: "create-recon", label: "Create Reconciliation", icon: Plus, href: "/reconciliations/new", section: "quick" },
   { id: "export", label: "Export Results", icon: Download, href: "/exports", section: "quick" },
-  // Navigation
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", shortcut: "G D", section: "navigation" },
-  { id: "data-sources", label: "Data Sources", icon: Database, href: "/data-sources", shortcut: "G S", section: "navigation" },
+  { id: "resources", label: "Resources", icon: Database, href: "/data-sources", shortcut: "G S", section: "navigation" },
+  { id: "pipeline", label: "Pipeline", icon: Layers, href: "/pipeline", section: "navigation" },
   { id: "reconciliations", label: "Reconciliations", icon: GitCompareArrows, href: "/reconciliations", shortcut: "G R", section: "navigation" },
   { id: "segments", label: "Segments", icon: Layers, href: "/segments", section: "navigation" },
   { id: "exports", label: "Exports", icon: Download, href: "/exports", section: "navigation" },
@@ -63,9 +57,12 @@ const COMMANDS: CommandItem[] = [
   { id: "settings", label: "Settings", icon: Settings, href: "/settings", section: "navigation" },
 ];
 
-/* ------------------------------------------------------------------ */
-/*  Context                                                            */
-/* ------------------------------------------------------------------ */
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  source: Database,
+  union: Layers,
+  group: Layers,
+  reconciliation: GitCompareArrows,
+};
 
 const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(null);
 
@@ -77,35 +74,72 @@ export function useCommandPalette() {
   return ctx;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Dialog                                                             */
-/* ------------------------------------------------------------------ */
-
 function CommandPaletteDialog() {
   const { open, setOpen } = useCommandPalette();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [resourceResults, setResourceResults] = useState<CommandItem[]>([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Filter commands by search query
   const filtered = COMMANDS.filter((cmd) =>
     cmd.label.toLowerCase().includes(query.toLowerCase())
   );
 
   const quickActions = filtered.filter((c) => c.section === "quick");
   const navigation = filtered.filter((c) => c.section === "navigation");
-  const allFiltered = [...quickActions, ...navigation];
+  const allFiltered = [...quickActions, ...navigation, ...resourceResults];
 
-  // Reset state when dialog opens/closes
   useEffect(() => {
     if (open) {
       setQuery("");
       setActiveIndex(0);
+      setResourceResults([]);
     }
   }, [open]);
 
-  // Select handler
+  useEffect(() => {
+    if (!query.trim() || query.length < 2) {
+      setResourceResults([]);
+      return;
+    }
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    searchTimerRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await getResources(undefined, 1, 10);
+        const items = (data.items || [])
+          .filter((r: UnifiedResource) => r.name.toLowerCase().includes(query.toLowerCase()))
+          .map((r: UnifiedResource): CommandItem => {
+            const href =
+              r.resource_type === "source" ? `/data-sources/${r.id}` :
+              r.resource_type === "reconciliation" ? `/reconciliations/${r.id}` :
+              "/pipeline";
+            return {
+              id: `resource-${r.id}`,
+              label: r.name,
+              icon: TYPE_ICONS[r.resource_type] || Database,
+              href,
+              section: "resource",
+              badge: r.resource_type,
+            };
+          });
+        setResourceResults(items);
+      } catch {
+        setResourceResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [query]);
+
   const handleSelect = useCallback(
     (item: CommandItem) => {
       setOpen(false);
@@ -114,7 +148,6 @@ function CommandPaletteDialog() {
     [setOpen, router]
   );
 
-  // Keyboard navigation inside dialog
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown") {
@@ -122,9 +155,7 @@ function CommandPaletteDialog() {
         setActiveIndex((i) => (i + 1) % Math.max(allFiltered.length, 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setActiveIndex((i) =>
-          i <= 0 ? Math.max(allFiltered.length - 1, 0) : i - 1
-        );
+        setActiveIndex((i) => i <= 0 ? Math.max(allFiltered.length - 1, 0) : i - 1);
       } else if (e.key === "Enter" && allFiltered[activeIndex]) {
         e.preventDefault();
         handleSelect(allFiltered[activeIndex]);
@@ -133,7 +164,6 @@ function CommandPaletteDialog() {
     [allFiltered, activeIndex, handleSelect]
   );
 
-  // Clamp activeIndex when filtered list shrinks
   useEffect(() => {
     if (activeIndex >= allFiltered.length) {
       setActiveIndex(Math.max(allFiltered.length - 1, 0));
@@ -141,6 +171,38 @@ function CommandPaletteDialog() {
   }, [allFiltered.length, activeIndex]);
 
   let flatIndex = -1;
+
+  function renderItem(item: CommandItem) {
+    flatIndex++;
+    const idx = flatIndex;
+    const Icon = item.icon;
+    return (
+      <button
+        key={item.id}
+        onClick={() => handleSelect(item)}
+        onMouseEnter={() => setActiveIndex(idx)}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+          idx === activeIndex
+            ? "bg-[var(--background-tertiary)] border-l-2 border-l-[var(--accent-cyan)]"
+            : "border-l-2 border-l-transparent"
+        )}
+      >
+        <Icon className="h-4 w-4 shrink-0 text-[var(--foreground-subtle)]" />
+        <span className="flex-1 text-left text-[var(--foreground)]">{item.label}</span>
+        {item.badge && (
+          <span className="rounded bg-[var(--background-secondary)] px-1.5 py-0.5 text-[10px] uppercase text-[var(--foreground-muted)]">
+            {item.badge}
+          </span>
+        )}
+        {item.shortcut && (
+          <kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--foreground-subtle)]">
+            {item.shortcut}
+          </kbd>
+        )}
+      </button>
+    );
+  }
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -150,135 +212,62 @@ function CommandPaletteDialog() {
           className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]"
           onKeyDown={handleKeyDown}
         >
-          <DialogPrimitive.Title className="sr-only">
-            Command Palette
-          </DialogPrimitive.Title>
-          <DialogPrimitive.Description className="sr-only">
-            Search for commands and navigate the application
-          </DialogPrimitive.Description>
+          <DialogPrimitive.Title className="sr-only">Command Palette</DialogPrimitive.Title>
+          <DialogPrimitive.Description className="sr-only">Search for commands, pages, and resources</DialogPrimitive.Description>
           <div
             className={cn(
               "glass-card gradient-border w-full max-w-lg rounded-xl shadow-2xl",
               "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
               "backdrop-blur-2xl"
             )}
-            style={{
-              boxShadow: "0 0 60px rgba(6, 182, 212, 0.08), 0 25px 50px rgba(0, 0, 0, 0.5)",
-            }}
+            style={{ boxShadow: "0 0 60px rgba(6, 182, 212, 0.08), 0 25px 50px rgba(0, 0, 0, 0.5)" }}
           >
-            {/* Search input */}
             <div className="flex items-center gap-3 border-b border-[var(--card-border)] px-4 py-3">
               <Search className="h-5 w-5 shrink-0 text-[var(--foreground-subtle)]" />
               <input
-                ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Type a command or search..."
+                placeholder="Search resources, commands, pages..."
                 autoFocus
                 className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder-[var(--foreground-subtle)] outline-none"
               />
-              <kbd className="hidden rounded border border-[var(--card-border)] bg-[var(--background-tertiary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--foreground-subtle)] sm:inline-block">
-                ESC
-              </kbd>
+              {searching && (
+                <span className="text-xs text-[var(--foreground-muted)] animate-pulse">Searching...</span>
+              )}
+              <kbd className="hidden rounded border border-[var(--card-border)] bg-[var(--background-tertiary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--foreground-subtle)] sm:inline-block">ESC</kbd>
             </div>
 
-            {/* Results */}
-            <div className="max-h-72 overflow-y-auto p-2">
-              {allFiltered.length === 0 && (
-                <p className="px-3 py-6 text-center text-sm text-[var(--foreground-subtle)]">
-                  No results found.
-                </p>
+            <div className="max-h-80 overflow-y-auto p-2">
+              {allFiltered.length === 0 && !searching && (
+                <p className="px-3 py-6 text-center text-sm text-[var(--foreground-subtle)]">No results found.</p>
               )}
 
               {quickActions.length > 0 && (
                 <div className="mb-1">
-                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">
-                    Quick Actions
-                  </p>
-                  {quickActions.map((item) => {
-                    flatIndex++;
-                    const idx = flatIndex;
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleSelect(item)}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                          idx === activeIndex
-                            ? "bg-[var(--background-tertiary)] border-l-2 border-l-[var(--accent-cyan)]"
-                            : "border-l-2 border-l-transparent"
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0 text-[var(--foreground-subtle)]" />
-                        <span className="flex-1 text-left text-[var(--foreground)]">
-                          {item.label}
-                        </span>
-                        <ArrowRight className="h-3.5 w-3.5 text-[var(--foreground-subtle)] opacity-0 transition-opacity group-hover:opacity-100" />
-                      </button>
-                    );
-                  })}
+                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">Quick Actions</p>
+                  {quickActions.map(renderItem)}
                 </div>
               )}
 
               {navigation.length > 0 && (
+                <div className="mb-1">
+                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">Pages</p>
+                  {navigation.map(renderItem)}
+                </div>
+              )}
+
+              {resourceResults.length > 0 && (
                 <div>
-                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">
-                    Navigation
-                  </p>
-                  {navigation.map((item) => {
-                    flatIndex++;
-                    const idx = flatIndex;
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleSelect(item)}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
-                          idx === activeIndex
-                            ? "bg-[var(--background-tertiary)] border-l-2 border-l-[var(--accent-cyan)]"
-                            : "border-l-2 border-l-transparent"
-                        )}
-                      >
-                        <Icon className="h-4 w-4 shrink-0 text-[var(--foreground-subtle)]" />
-                        <span className="flex-1 text-left text-[var(--foreground)]">
-                          {item.label}
-                        </span>
-                        {item.shortcut && (
-                          <kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--foreground-subtle)]">
-                            {item.shortcut}
-                          </kbd>
-                        )}
-                      </button>
-                    );
-                  })}
+                  <p className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--foreground-subtle)]">Resources</p>
+                  {resourceResults.map(renderItem)}
                 </div>
               )}
             </div>
 
-            {/* Footer */}
             <div className="flex items-center gap-4 border-t border-[var(--card-border)] px-4 py-2.5 text-[10px] text-[var(--foreground-subtle)]">
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">
-                  &uarr;&darr;
-                </kbd>
-                Navigate
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">
-                  &crarr;
-                </kbd>
-                Select
-              </span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">
-                  esc
-                </kbd>
-                Close
-              </span>
+              <span className="flex items-center gap-1"><kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">&uarr;&darr;</kbd> Navigate</span>
+              <span className="flex items-center gap-1"><kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">&crarr;</kbd> Select</span>
+              <span className="flex items-center gap-1"><kbd className="rounded border border-[var(--card-border)] bg-[var(--background-secondary)] px-1 py-0.5 font-mono">esc</kbd> Close</span>
             </div>
           </div>
         </DialogPrimitive.Content>
@@ -287,14 +276,9 @@ function CommandPaletteDialog() {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Provider                                                           */
-/* ------------------------------------------------------------------ */
-
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
-  // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {

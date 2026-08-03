@@ -23,10 +23,12 @@ async def list_resources(
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=200),
     resource_type: str | None = Query(None, description="Filter: source, union, group, reconciliation"),
+    search: str | None = Query(None, description="Search by name"),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
+    search_filter = f"%{search.lower()}%" if search else None
     queries = []
 
     if not resource_type or resource_type == "source":
@@ -42,6 +44,8 @@ async def list_resources(
             )
             .where(DataSource.tenant_id == tenant.id, DataSource.deleted_at.is_(None))
         )
+        if search_filter:
+            source_q = source_q.where(func.lower(DataSource.name).like(search_filter))
         queries.append(source_q)
 
     if not resource_type or resource_type == "union":
@@ -57,6 +61,8 @@ async def list_resources(
             )
             .where(UnionModel.tenant_id == tenant.id)
         )
+        if search_filter:
+            union_q = union_q.where(func.lower(UnionModel.name).like(search_filter))
         queries.append(union_q)
 
     if not resource_type or resource_type == "group":
@@ -72,6 +78,8 @@ async def list_resources(
             )
             .where(Group.tenant_id == tenant.id)
         )
+        if search_filter:
+            group_q = group_q.where(func.lower(Group.name).like(search_filter))
         queries.append(group_q)
 
     if not resource_type or resource_type == "reconciliation":
@@ -91,6 +99,8 @@ async def list_resources(
                 Reconciliation.status != "template",
             )
         )
+        if search_filter:
+            recon_q = recon_q.where(func.lower(Reconciliation.name).like(search_filter))
         queries.append(recon_q)
 
     if not queries:
