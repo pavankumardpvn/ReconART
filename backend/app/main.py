@@ -41,9 +41,12 @@ app.include_router(api_router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def on_startup() -> None:
-    # Pre-warm the database connection pool
     from app.database import engine
     async with engine.connect() as conn:
         from sqlalchemy import text
         await conn.execute(text("SELECT 1"))
-    logger.info("Recon ART API started — DB pool warmed")
+
+    from app.auth.middleware import warm_jwks_cache
+    await warm_jwks_cache()
+
+    logger.info("Recon ART API started — DB pool warmed, JWKS cached")

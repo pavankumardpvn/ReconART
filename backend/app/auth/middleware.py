@@ -6,6 +6,7 @@ middleware validates it against the ``api_keys`` table and sets
 ``request.state.user_id`` / ``request.state.org_id`` accordingly.
 """
 
+import asyncio
 import hashlib
 import logging
 from typing import Any
@@ -21,19 +22,39 @@ logger = logging.getLogger(__name__)
 
 # Cached JWKS keys — fetched once and reused
 _jwks_cache: dict[str, Any] | None = None
+_jwks_lock: asyncio.Lock | None = None
+
+
+def _get_lock() -> asyncio.Lock:
+    global _jwks_lock
+    if _jwks_lock is None:
+        _jwks_lock = asyncio.Lock()
+    return _jwks_lock
 
 
 async def _get_jwks() -> dict[str, Any]:
-    """Fetch and cache the JWKS from Clerk."""
+    """Fetch and cache the JWKS from Clerk. Uses a lock to prevent parallel fetches."""
     global _jwks_cache
     if _jwks_cache is not None:
         return _jwks_cache
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(settings.clerk_jwks_url)
-        response.raise_for_status()
-        _jwks_cache = response.json()
-        return _jwks_cache
+    async with _get_lock():
+        if _jwks_cache is not None:
+            return _jwks_cache
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(settings.clerk_jwks_url)
+            response.raise_for_status()
+            _jwks_cache = response.json()
+            return _jwks_cache
+
+
+async def warm_jwks_cache() -> None:
+    """Pre-warm the JWKS cache at startup."""
+    try:
+        await _get_jwks()
+        logger.info("JWKS cache warmed successfully")
+    except Exception as e:
+        logger.warning("Failed to pre-warm JWKS cache: %s", e)
 
 
 def _get_signing_key(jwks: dict[str, Any], token: str) -> jwt.algorithms.RSAAlgorithm:
