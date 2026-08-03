@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, Plus, ChevronLeft, ChevronRight, Layers } from "lucide-react";
+import { Database, Plus, ChevronLeft, ChevronRight, Layers, GitCompareArrows } from "lucide-react";
 import { useResources, useCreateSource } from "@/hooks/useDataSources";
 import PageContainer from "@/components/layout/PageContainer";
 import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
@@ -33,6 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDate } from "@/lib/utils";
@@ -185,15 +186,35 @@ export default function ResourcesPage() {
               Create
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setDialogOpen(true)}>
-              New Source
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => setDialogOpen(true)} className="gap-3">
+              <Database className="h-4 w-4 text-cyan-400" />
+              <div>
+                <p className="font-medium">New Source</p>
+                <p className="text-xs text-[var(--foreground-muted)]">Upload CSV, Excel, or connect a database</p>
+              </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/pipeline")}>
-              New Union / Group
+            <DropdownMenuItem onClick={() => router.push("/pipeline")} className="gap-3">
+              <Layers className="h-4 w-4 text-purple-400" />
+              <div>
+                <p className="font-medium">New Union</p>
+                <p className="text-xs text-[var(--foreground-muted)]">Combine multiple sources into one</p>
+              </div>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push("/reconciliations/new")}>
-              New Reconciliation
+            <DropdownMenuItem onClick={() => router.push("/pipeline")} className="gap-3">
+              <Layers className="h-4 w-4 text-amber-400" />
+              <div>
+                <p className="font-medium">New Group</p>
+                <p className="text-xs text-[var(--foreground-muted)]">Aggregate data from a source</p>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/reconciliations/new")} className="gap-3">
+              <GitCompareArrows className="h-4 w-4 text-blue-400" />
+              <div>
+                <p className="font-medium">New Reconciliation</p>
+                <p className="text-xs text-[var(--foreground-muted)]">Match data between two sources</p>
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
