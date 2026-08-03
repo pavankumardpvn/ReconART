@@ -15,7 +15,7 @@ from app.config import settings
 from app.models.export import ExportJob
 from app.models.matching import Exception_, MatchPair, MatchPairItem
 from app.models.data_source import DataSourceRow
-from app.storage.local import LocalStorageBackend
+from app.storage import get_storage
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ async def _generate(export_id: str) -> dict:
                         })
 
             df = pd.DataFrame(rows)
-            storage = LocalStorageBackend()
+            storage = get_storage()
             buf = io.BytesIO()
 
             if job.export_type == "csv":

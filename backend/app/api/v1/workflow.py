@@ -19,7 +19,7 @@ from app.models.workflow import (
     ReconciliationSignoff,
     ReconciliationTask,
 )
-from app.storage.local import LocalStorageBackend
+from app.storage import get_storage
 from app.utils.pagination import paginate
 
 router = APIRouter()
@@ -27,7 +27,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Storage helper (used by attachment endpoints)
 # ---------------------------------------------------------------------------
-_storage = LocalStorageBackend()
+_storage = get_storage()
 
 
 # ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@ from app.models.data_source import DataSourceRow
 from app.models.tenant import Tenant
 from app.schemas.common import PaginatedResponse
 from app.schemas.export import ExportCreate, ExportResponse
-from app.storage.local import LocalStorageBackend
+from app.storage import get_storage
 from app.utils.pagination import paginate
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ async def download_export(
     if export_job.status != "completed" or not export_job.file_path:
         raise BadRequestError("Export is not yet ready for download.")
 
-    storage = LocalStorageBackend()
+    storage = get_storage()
     if not await storage.exists(export_job.file_path):
         raise NotFoundError("Export file")
 

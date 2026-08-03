@@ -25,7 +25,7 @@ from app.schemas.data_source import (
     DataSourceResponse,
     DataSourceUpdate,
 )
-from app.storage.local import LocalStorageBackend
+from app.storage import get_storage
 from app.utils.pagination import paginate
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ async def upload_file_to_source(
             raise BadRequestError(f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB limit.")
     content = b"".join(chunks)
 
-    storage = LocalStorageBackend()
+    storage = get_storage()
     relative_path = await storage.save(str(tenant.id), original_filename, content)
 
     full_path = storage.base_path / relative_path
@@ -275,7 +275,7 @@ async def upload_data_source(
     content = b"".join(chunks)
 
     # --- persist to local storage ---
-    storage = LocalStorageBackend()
+    storage = get_storage()
     relative_path = await storage.save(str(tenant.id), original_filename, content)
 
     # --- parse file with FileConnector ---

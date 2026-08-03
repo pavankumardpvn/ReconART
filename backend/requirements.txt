@@ -19,3 +19,4 @@ python-dateutil
 slowapi
 aiofiles
 croniter
+boto3
