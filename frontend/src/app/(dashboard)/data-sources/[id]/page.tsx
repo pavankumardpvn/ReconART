@@ -160,7 +160,6 @@ export default function DataSourceDetailPage({
   // Loaded state
   // -----------------------------------------------------------------------
 
-  const sourceFiles = files ?? [];
   const totalFiles = sourceFiles.length;
 
   return (
