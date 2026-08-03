@@ -861,6 +861,7 @@ export default function PipelinePage() {
         aggregations: aggregations.map((a) => ({
           column: a.column,
           function: a.function,
+          alias: `${a.function}_${a.column}`,
         })),
       },
       {
