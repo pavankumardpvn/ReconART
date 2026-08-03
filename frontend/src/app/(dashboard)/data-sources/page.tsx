@@ -224,10 +224,30 @@ export default function ResourcesPage() {
         <EmptyState
           icon={activeTab === "all" ? Layers : Database}
           title={`No ${activeTab === "all" ? "resources" : activeTab + "s"} yet`}
-          description="Create your first resource to get started"
+          description={
+            activeTab === "union"
+              ? "Create a union to combine multiple sources into one"
+              : activeTab === "group"
+                ? "Create a group to aggregate data from a source"
+                : activeTab === "reconciliation"
+                  ? "Create a reconciliation to match data between sources"
+                  : "Create your first resource to get started"
+          }
           action={{
-            label: "Create Source",
-            onClick: () => setDialogOpen(true),
+            label: activeTab === "union" || activeTab === "group"
+              ? `Create ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`
+              : activeTab === "reconciliation"
+                ? "Create Reconciliation"
+                : "Create Source",
+            onClick: () => {
+              if (activeTab === "union" || activeTab === "group") {
+                router.push("/pipeline");
+              } else if (activeTab === "reconciliation") {
+                router.push("/reconciliations/new");
+              } else {
+                setDialogOpen(true);
+              }
+            },
           }}
         />
       ) : (
