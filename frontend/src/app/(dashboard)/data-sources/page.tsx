@@ -46,8 +46,18 @@ const SOURCE_TYPES = [
 // Column definitions
 // ---------------------------------------------------------------------------
 
-function useColumns(): DataTableColumn<DataSource & Record<string, unknown>>[] {
+function useColumns(items: DataSource[]): DataTableColumn<DataSource & Record<string, unknown>>[] {
+  const idMap = new Map(items.map((s, i) => [s.id, items.length - i]));
   return [
+    {
+      key: "_index",
+      header: "ID",
+      render: (item) => (
+        <span className="font-mono text-xs text-[var(--foreground-muted)]">
+          SRC-{String(idMap.get(item.id) ?? 0).padStart(3, "0")}
+        </span>
+      ),
+    },
     {
       key: "name",
       header: "Name",
@@ -111,14 +121,13 @@ export default function DataSourcesPage() {
   const router = useRouter();
   const { data, isLoading } = useDataSources();
   const createMutation = useCreateSource();
-  const columns = useColumns();
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [sourceType, setSourceType] = useState("file_upload");
 
   const dataSources = data?.items ?? [];
+  const columns = useColumns(dataSources);
 
   function resetForm() {
     setName("");

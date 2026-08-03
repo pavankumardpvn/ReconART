@@ -244,7 +244,17 @@ export default function DataSourceDetailPage({
       {/* ----------------------------------------------------------------- */}
       <Card className="glass-card mb-6">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+            {/* ID */}
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">
+                Source ID
+              </p>
+              <p className="font-mono text-sm text-[var(--foreground)]">
+                {dataSource.id.substring(0, 8).toUpperCase()}
+              </p>
+            </div>
+
             {/* Status */}
             <div className="space-y-1">
               <p className="text-xs font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">
@@ -391,6 +401,7 @@ export default function DataSourceDetailPage({
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-16">#</TableHead>
                         <TableHead>Filename</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Rows</TableHead>
@@ -401,11 +412,14 @@ export default function DataSourceDetailPage({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {sourceFiles.map((file) => (
+                      {sourceFiles.map((file, idx) => (
                         <TableRow
                           key={file.id}
                           className={file.status === "duplicate" || file.status === "failed" ? "opacity-60" : ""}
                         >
+                          <TableCell className="font-mono text-xs text-[var(--foreground-muted)]">
+                            {idx + 1}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <FileSpreadsheet className={`h-4 w-4 shrink-0 ${file.status === "success" ? "text-emerald-400" : file.status === "failed" ? "text-red-400" : "text-amber-400"}`} />
