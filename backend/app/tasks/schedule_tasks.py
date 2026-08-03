@@ -16,10 +16,12 @@ from app.models.schedule import Schedule
 logger = logging.getLogger(__name__)
 
 
+_engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+_session_factory = async_sessionmaker(_engine, expire_on_commit=False)
+
+
 def _get_async_session() -> AsyncSession:
-    engine = create_async_engine(settings.database_url, pool_pre_ping=True)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    return factory()
+    return _session_factory()
 
 
 def _compute_next_run(cron_expression: str, from_dt: datetime) -> datetime | None:

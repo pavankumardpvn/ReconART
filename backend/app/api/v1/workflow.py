@@ -27,7 +27,8 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 # Storage helper (used by attachment endpoints)
 # ---------------------------------------------------------------------------
-_storage = get_storage()
+def _get_storage():
+    return get_storage()
 
 
 # ---------------------------------------------------------------------------
@@ -471,7 +472,7 @@ async def upload_attachment(
     """Upload a file attachment linked to an entity."""
     content = await file.read()
 
-    stored_path = await _storage.save(
+    stored_path = await _get_storage().save(
         tenant_id=tenant.slug,
         filename=file.filename or "unnamed",
         content=content,
@@ -535,7 +536,7 @@ async def download_attachment(
         raise NotFoundError("Attachment")
 
     try:
-        content = await _storage.read(attachment.file_path)
+        content = await _get_storage().read(attachment.file_path)
     except FileNotFoundError:
         raise NotFoundError("Attachment file")
 
@@ -569,7 +570,7 @@ async def delete_attachment(
         raise NotFoundError("Attachment")
 
     # Remove physical file (no-op if already gone)
-    await _storage.delete(attachment.file_path)
+    await _get_storage().delete(attachment.file_path)
     await db.delete(attachment)
     await db.flush()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

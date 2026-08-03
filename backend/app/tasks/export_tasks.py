@@ -6,9 +6,9 @@ import logging
 import uuid
 from datetime import datetime, timezone
 
-import pandas as pd
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import selectinload
 
 from app.celery_app import celery
 from app.config import settings
@@ -20,15 +20,12 @@ from app.storage import get_storage
 
 logger = logging.getLogger(__name__)
 
-
-def _get_async_session() -> AsyncSession:
-    engine = create_async_engine(settings.database_url, pool_pre_ping=True)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    return factory()
+_engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+_session_factory = async_sessionmaker(_engine, expire_on_commit=False)
 
 
 async def _generate(export_id: str) -> dict:
-    async with _get_async_session() as session:
+    async with _session_factory() as session:
         result = await session.execute(
             select(ExportJob).where(ExportJob.id == uuid.UUID(export_id))
         )
@@ -44,18 +41,30 @@ async def _generate(export_id: str) -> dict:
         try:
             rows = []
             if job.export_scope in ("matched", "full"):
-                pairs = await session.execute(
-                    select(MatchPair).where(MatchPair.run_id == job.run_id)
+                pairs_result = await session.execute(
+                    select(MatchPair)
+                    .options(selectinload(MatchPair.items))
+                    .where(MatchPair.run_id == job.run_id)
                 )
-                for pair in pairs.scalars().all():
-                    items = await session.execute(
-                        select(MatchPairItem).where(MatchPairItem.match_pair_id == pair.id)
-                    )
-                    for item in items.scalars().all():
-                        row_data = await session.execute(
-                            select(DataSourceRow).where(DataSourceRow.id == item.data_source_row_id)
+                all_pairs = pairs_result.scalars().all()
+
+                all_row_ids = set()
+                for pair in all_pairs:
+                    for item in pair.items:
+                        all_row_ids.add(item.data_source_row_id)
+
+                row_lookup = {}
+                if all_row_ids:
+                    ds_rows = await session.execute(
+                        select(DataSourceRow).where(
+                            DataSourceRow.id.in_(all_row_ids)
                         )
-                        ds_row = row_data.scalar_one_or_none()
+                    )
+                    row_lookup = {r.id: r for r in ds_rows.scalars().all()}
+
+                for pair in all_pairs:
+                    for item in pair.items:
+                        ds_row = row_lookup.get(item.data_source_row_id)
                         if ds_row:
                             rows.append({
                                 "match_status": pair.match_status,
@@ -66,14 +75,23 @@ async def _generate(export_id: str) -> dict:
                             })
 
             if job.export_scope in ("unmatched", "exceptions", "full"):
-                exceptions = await session.execute(
+                exc_result = await session.execute(
                     select(Exception_).where(Exception_.run_id == job.run_id)
                 )
-                for exc in exceptions.scalars().all():
-                    row_data = await session.execute(
-                        select(DataSourceRow).where(DataSourceRow.id == exc.data_source_row_id)
+                all_exceptions = exc_result.scalars().all()
+
+                exc_row_ids = {e.data_source_row_id for e in all_exceptions}
+                exc_row_lookup = {}
+                if exc_row_ids:
+                    ds_rows = await session.execute(
+                        select(DataSourceRow).where(
+                            DataSourceRow.id.in_(exc_row_ids)
+                        )
                     )
-                    ds_row = row_data.scalar_one_or_none()
+                    exc_row_lookup = {r.id: r for r in ds_rows.scalars().all()}
+
+                for exc in all_exceptions:
+                    ds_row = exc_row_lookup.get(exc.data_source_row_id)
                     if ds_row:
                         rows.append({
                             "match_status": "unmatched",
@@ -83,6 +101,7 @@ async def _generate(export_id: str) -> dict:
                             **ds_row.data,
                         })
 
+            import pandas as pd
             df = pd.DataFrame(rows)
             storage = get_storage()
             buf = io.BytesIO()

@@ -606,6 +606,7 @@ class MatchingEngine:
         left_rows: list[dict],
         right_rows: list[dict],
     ) -> None:
+        all_pairs = []
         for m in matches:
             pair = MatchPair(
                 run_id=run_id,
@@ -618,9 +619,12 @@ class MatchingEngine:
                 difference=m.difference,
                 match_metadata={},
             )
+            all_pairs.append((pair, m))
             self._db.add(pair)
-            await self._db.flush()
 
+        await self._db.flush()
+
+        for pair, m in all_pairs:
             for li in m.left_indices:
                 row_id = left_rows[li].get("_row_id")
                 if row_id:

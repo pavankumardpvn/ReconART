@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   Search,
   Eye,
@@ -165,6 +165,7 @@ export default function ReconResultsTable({ reconId, runId }: ReconResultsTableP
         page,
         page_size: pageSize,
       }),
+    placeholderData: keepPreviousData,
   });
 
   // Initialize visible columns once data loads

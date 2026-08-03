@@ -38,7 +38,7 @@ class Reconciliation(TenantMixin, Base):
         String(100), nullable=False, server_default=text("'Source B'")
     )
     status: Mapped[str] = mapped_column(
-        String(50), nullable=False, server_default=text("'draft'")
+        String(50), nullable=False, server_default=text("'draft'"), index=True,
     )
     tolerance_amount: Mapped[Decimal] = mapped_column(
         Numeric(19, 4), nullable=False, server_default=text("0")

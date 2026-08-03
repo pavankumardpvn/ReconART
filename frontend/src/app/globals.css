@@ -149,8 +149,8 @@
 
 .glass-card {
   background: var(--card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid var(--card-border);
   box-shadow: 0 0 30px var(--card-glow);
 }

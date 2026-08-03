@@ -34,14 +34,14 @@ class ReconRun(Base):
         index=True,
     )
     status: Mapped[str] = mapped_column(
-        String(50), nullable=False, server_default=text("'pending'")
+        String(50), nullable=False, server_default=text("'pending'"), index=True,
     )
     triggered_by: Mapped[str | None] = mapped_column(String(255), nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(
         TIMESTAMP(timezone=True), nullable=True
     )
     completed_at: Mapped[datetime | None] = mapped_column(
-        TIMESTAMP(timezone=True), nullable=True
+        TIMESTAMP(timezone=True), nullable=True, index=True,
     )
     left_row_count: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("0")
@@ -108,7 +108,7 @@ class MatchPair(Base):
         nullable=True,
         index=True,
     )
-    match_status: Mapped[str] = mapped_column(String(50), nullable=False)
+    match_status: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     confidence_score: Mapped[Decimal | None] = mapped_column(
         Numeric(5, 4), nullable=True
     )
@@ -197,12 +197,12 @@ class Exception_(Base):
         index=True,
     )
     side: Mapped[str] = mapped_column(String(10), nullable=False)
-    exception_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    exception_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     severity: Mapped[str] = mapped_column(
         String(20), nullable=False, server_default=text("'medium'")
     )
     status: Mapped[str] = mapped_column(
-        String(50), nullable=False, server_default=text("'open'")
+        String(50), nullable=False, server_default=text("'open'"), index=True,
     )
     assigned_to: Mapped[str | None] = mapped_column(String(255), nullable=True)
     resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -214,6 +214,7 @@ class Exception_(Base):
         TIMESTAMP(timezone=True),
         server_default=text("now()"),
         nullable=False,
+        index=True,
     )
     updated_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),

@@ -5,27 +5,25 @@ clear error at construction time rather than failing with an obscure import
 error at runtime.
 """
 
-import uuid
+import asyncio
+import functools
+from datetime import datetime, timezone
+from pathlib import PurePosixPath
 
 from app.config import settings
 from app.storage.base import StorageBackend
 
 
 class S3StorageBackend(StorageBackend):
-    """Store files on AWS S3 or any S3-compatible service (e.g. MinIO).
+    """Store files on AWS S3 or any S3-compatible service (e.g. Cloudflare R2).
 
-    Configuration is read from ``app.config.settings``:
-
-    - ``s3_bucket``       -- target bucket name
-    - ``s3_region``       -- AWS region (e.g. ``us-east-1``)
-    - ``s3_access_key``   -- AWS access key id
-    - ``s3_secret_key``   -- AWS secret access key
-    - ``s3_endpoint_url`` -- (optional) custom endpoint for S3-compatible services
+    All boto3 calls are offloaded to a thread pool via ``run_in_executor``
+    so they never block the async event loop.
     """
 
     def __init__(self) -> None:
         try:
-            import boto3  # noqa: F401
+            import boto3
         except ImportError:
             raise RuntimeError(
                 "boto3 is required for S3 storage. "
@@ -49,8 +47,6 @@ class S3StorageBackend(StorageBackend):
         if self.region:
             session_kwargs["region_name"] = self.region
 
-        import boto3
-
         self._session = boto3.Session(**session_kwargs)
         client_kwargs: dict = {}
         if self.endpoint_url:
@@ -58,60 +54,57 @@ class S3StorageBackend(StorageBackend):
 
         self._client = self._session.client("s3", **client_kwargs)
 
+    async def _run(self, func, *args, **kwargs):
+        """Run a synchronous boto3 call in a thread pool."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            None, functools.partial(func, *args, **kwargs)
+        )
+
     def _key(self, tenant_id: str, filename: str) -> str:
-        """Build an S3 object key: ``{tenant_id}/{filename}``.
-
-        If a file with the same name already exists, a timestamp suffix
-        is appended to avoid overwriting (e.g. ``report_20260803_143052.csv``).
-        """
-        from datetime import datetime, timezone
-        from pathlib import PurePosixPath
-
         safe_name = PurePosixPath(filename).name
         key = f"{tenant_id}/{safe_name}"
 
-        if self._object_exists(key):
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=key)
             stem = PurePosixPath(safe_name).stem
             ext = PurePosixPath(safe_name).suffix or ""
             ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             key = f"{tenant_id}/{stem}_{ts}{ext}"
+        except Exception:
+            pass
 
         return key
 
-    def _object_exists(self, key: str) -> bool:
-        try:
-            self._client.head_object(Bucket=self.bucket, Key=key)
-            return True
-        except Exception:
-            return False
-
     async def save(self, tenant_id: str, filename: str, content: bytes) -> str:
-        """Upload *content* to S3 and return the object key."""
-        key = self._key(tenant_id, filename)
-        self._client.put_object(Bucket=self.bucket, Key=key, Body=content)
+        key = await self._run(self._key, tenant_id, filename)
+        await self._run(
+            self._client.put_object, Bucket=self.bucket, Key=key, Body=content
+        )
         return key
 
     async def read(self, path: str) -> bytes:
-        """Download and return the bytes stored at *path* (S3 object key)."""
         try:
-            response = self._client.get_object(Bucket=self.bucket, Key=path)
-            return response["Body"].read()
-        except self._client.exceptions.NoSuchKey:
-            raise FileNotFoundError(f"S3 object not found: {path}")
+            response = await self._run(
+                self._client.get_object, Bucket=self.bucket, Key=path
+            )
+            return await self._run(response["Body"].read)
         except Exception as exc:
-            raise FileNotFoundError(f"Failed to read S3 object '{path}': {exc}")
+            raise FileNotFoundError(f"S3 object not found: {path}") from exc
 
     async def delete(self, path: str) -> None:
-        """Delete the S3 object at *path*. Idempotent."""
         try:
-            self._client.delete_object(Bucket=self.bucket, Key=path)
+            await self._run(
+                self._client.delete_object, Bucket=self.bucket, Key=path
+            )
         except Exception:
-            pass  # idempotent
+            pass
 
     async def exists(self, path: str) -> bool:
-        """Return ``True`` if an object exists at *path* in the bucket."""
         try:
-            self._client.head_object(Bucket=self.bucket, Key=path)
+            await self._run(
+                self._client.head_object, Bucket=self.bucket, Key=path
+            )
             return True
         except Exception:
             return False

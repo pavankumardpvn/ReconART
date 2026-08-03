@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ArrowUpDown } from "lucide-react";
 import {
   Table,
@@ -44,18 +44,20 @@ export function DataTable<T extends Record<string, unknown>>({
     }
   }
 
-  const sortedData = [...data].sort((a, b) => {
-    if (!sortKey) return 0;
-    const aVal = a[sortKey];
-    const bVal = b[sortKey];
-    if (aVal == null && bVal == null) return 0;
-    if (aVal == null) return 1;
-    if (bVal == null) return -1;
-    const cmp = String(aVal).localeCompare(String(bVal), undefined, {
-      numeric: true,
+  const sortedData = useMemo(() => {
+    if (!sortKey) return data;
+    return [...data].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      const cmp = String(aVal).localeCompare(String(bVal), undefined, {
+        numeric: true,
+      });
+      return sortDir === "asc" ? cmp : -cmp;
     });
-    return sortDir === "asc" ? cmp : -cmp;
-  });
+  }, [data, sortKey, sortDir]);
 
   if (data.length === 0) {
     return <EmptyState title={emptyMessage} />;

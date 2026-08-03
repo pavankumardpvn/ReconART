@@ -13,10 +13,12 @@ from app.services.matching_engine import MatchingEngine
 logger = logging.getLogger(__name__)
 
 
+_engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+_session_factory = async_sessionmaker(_engine, expire_on_commit=False)
+
+
 def _get_async_session() -> AsyncSession:
-    engine = create_async_engine(settings.database_url, pool_pre_ping=True)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    return factory()
+    return _session_factory()
 
 
 async def _run_recon(recon_id: str, run_id: str) -> dict:

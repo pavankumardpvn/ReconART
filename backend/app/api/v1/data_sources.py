@@ -163,8 +163,9 @@ async def upload_file_to_source(
                 ordinal_position=col_info.get("ordinal_position", 0),
             ))
 
-    # Store rows linked to this file
+    # Store rows linked to this file (bulk insert)
     records = df.where(df.notna(), None).to_dict(orient="records")
+    bulk_rows = []
     for idx, row_data in enumerate(records):
         safe_row = {}
         for k, v in row_data.items():
@@ -174,13 +175,14 @@ async def upload_file_to_source(
                 safe_row[k] = v.isoformat()
             else:
                 safe_row[k] = v
-        db.add(DataSourceRow(
+        bulk_rows.append(DataSourceRow(
             data_source_id=ds.id,
             tenant_id=tenant.id,
             row_number=idx + 1,
             data=safe_row,
             source_file_id=source_file.id,
         ))
+    db.add_all(bulk_rows)
 
     # Update source totals
     total_rows_result = await db.execute(
@@ -309,10 +311,10 @@ async def upload_data_source(
         )
         db.add(col)
 
-    # --- store rows as JSONB ---
+    # --- store rows as JSONB (bulk insert) ---
     records = df.where(df.notna(), None).to_dict(orient="records")
+    bulk_rows = []
     for idx, row_data in enumerate(records):
-        # Convert values to JSON-safe types
         safe_row: dict = {}
         for k, v in row_data.items():
             if v is None:
@@ -321,13 +323,13 @@ async def upload_data_source(
                 safe_row[k] = v.isoformat()
             else:
                 safe_row[k] = v
-        row = DataSourceRow(
+        bulk_rows.append(DataSourceRow(
             data_source_id=data_source.id,
             tenant_id=tenant.id,
             row_number=idx + 1,
             data=safe_row,
-        )
-        db.add(row)
+        ))
+    db.add_all(bulk_rows)
 
     await db.flush()
     await db.refresh(data_source)

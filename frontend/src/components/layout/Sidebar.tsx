@@ -2,12 +2,14 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/constants';
 import { PanelLeftClose, PanelLeft, GitCompareArrows, Sparkles } from 'lucide-react';
-import AIAssistantPanel from '@/components/ai/AIAssistantPanel';
+
+const AIAssistantPanel = dynamic(() => import('@/components/ai/AIAssistantPanel'), { ssr: false });
 
 interface SidebarProps {
   collapsed?: boolean;
