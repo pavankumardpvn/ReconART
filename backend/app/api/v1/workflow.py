@@ -472,7 +472,7 @@ async def upload_attachment(
     content = await file.read()
 
     stored_path = await _storage.save(
-        tenant_id=str(tenant.id),
+        tenant_id=tenant.slug,
         filename=file.filename or "unnamed",
         content=content,
     )

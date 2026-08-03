@@ -126,10 +126,9 @@ async def upload_file_to_source(
     content = b"".join(chunks)
 
     storage = get_storage()
-    relative_path = await storage.save(str(tenant.id), original_filename, content)
+    relative_path = await storage.save(tenant.slug, original_filename, content)
 
-    full_path = storage.base_path / relative_path
-    connector = FileConnector(str(full_path))
+    connector = FileConnector(content=content, filename=original_filename)
     df = await connector.fetch_data()
     schema_cols = await connector.get_schema()
 
@@ -274,13 +273,12 @@ async def upload_data_source(
             raise BadRequestError(f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB size limit.")
     content = b"".join(chunks)
 
-    # --- persist to local storage ---
+    # --- persist to storage ---
     storage = get_storage()
-    relative_path = await storage.save(str(tenant.id), original_filename, content)
+    relative_path = await storage.save(tenant.slug, original_filename, content)
 
-    # --- parse file with FileConnector ---
-    full_path = storage.base_path / relative_path
-    connector = FileConnector(str(full_path))
+    # --- parse file from bytes ---
+    connector = FileConnector(content=content, filename=original_filename)
     df = await connector.fetch_data()
     schema_cols = await connector.get_schema()
 

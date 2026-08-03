@@ -35,13 +35,23 @@ class LocalStorageBackend(StorageBackend):
         return resolved
 
     async def save(self, tenant_id: str, filename: str, content: bytes) -> str:
-        """Save *content* with a UUID-based filename to prevent collisions."""
+        """Save *content* using the original filename.
+
+        If a file with the same name already exists a timestamp suffix is
+        appended to avoid overwriting (e.g. ``report_20260803_143052.csv``).
+        """
+        from datetime import datetime, timezone
+
         tenant_dir = self._tenant_dir(tenant_id)
 
-        # Preserve the original extension but replace the stem with a UUID
-        ext = Path(filename).suffix or ""
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = tenant_dir / unique_name
+        safe_name = Path(filename).name
+        file_path = tenant_dir / safe_name
+
+        if file_path.exists():
+            stem = Path(safe_name).stem
+            ext = Path(safe_name).suffix or ""
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            file_path = tenant_dir / f"{stem}_{ts}{ext}"
 
         async with aiofiles.open(file_path, "wb") as f:
             await f.write(content)

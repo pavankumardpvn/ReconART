@@ -59,12 +59,31 @@ class S3StorageBackend(StorageBackend):
         self._client = self._session.client("s3", **client_kwargs)
 
     def _key(self, tenant_id: str, filename: str) -> str:
-        """Build a unique S3 object key: ``{tenant_id}/{uuid}.{ext}``."""
+        """Build an S3 object key: ``{tenant_id}/{filename}``.
+
+        If a file with the same name already exists, a timestamp suffix
+        is appended to avoid overwriting (e.g. ``report_20260803_143052.csv``).
+        """
+        from datetime import datetime, timezone
         from pathlib import PurePosixPath
 
-        ext = PurePosixPath(filename).suffix or ""
-        unique_name = f"{uuid.uuid4().hex}{ext}"
-        return f"{tenant_id}/{unique_name}"
+        safe_name = PurePosixPath(filename).name
+        key = f"{tenant_id}/{safe_name}"
+
+        if self._object_exists(key):
+            stem = PurePosixPath(safe_name).stem
+            ext = PurePosixPath(safe_name).suffix or ""
+            ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            key = f"{tenant_id}/{stem}_{ts}{ext}"
+
+        return key
+
+    def _object_exists(self, key: str) -> bool:
+        try:
+            self._client.head_object(Bucket=self.bucket, Key=key)
+            return True
+        except Exception:
+            return False
 
     async def save(self, tenant_id: str, filename: str, content: bytes) -> str:
         """Upload *content* to S3 and return the object key."""

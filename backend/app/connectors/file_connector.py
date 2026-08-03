@@ -1,5 +1,6 @@
 """File-based connector for CSV, Excel, JSON, and fixed-width uploads."""
 
+import io
 import json
 from pathlib import Path
 from typing import Any
@@ -31,13 +32,31 @@ class FileConnector(BaseConnector):
 
     SUPPORTED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".txt", ".dat"}
 
-    def __init__(self, file_path: str) -> None:
-        self.file_path = Path(file_path)
+    def __init__(self, file_path: str | None = None, *, content: bytes | None = None, filename: str | None = None) -> None:
+        self.file_path = Path(file_path) if file_path else None
+        self._content = content
+        self._filename = filename
         self._df: pd.DataFrame | None = None
+
+    def _suffix(self) -> str:
+        if self._content is not None and self._filename:
+            return Path(self._filename).suffix.lower()
+        if self.file_path:
+            return self.file_path.suffix.lower()
+        raise ValueError("No file path or content provided.")
 
     async def connect(self) -> None:
         """Validate that the file exists and has a supported extension."""
-        if not self.file_path.exists():
+        if self._content is not None:
+            suffix = self._suffix()
+            if suffix not in self.SUPPORTED_EXTENSIONS:
+                raise ValueError(
+                    f"Unsupported file type '{suffix}'. "
+                    f"Supported: {', '.join(sorted(self.SUPPORTED_EXTENSIONS))}"
+                )
+            return
+
+        if not self.file_path or not self.file_path.exists():
             raise FileNotFoundError(f"File not found: {self.file_path}")
 
         if self.file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
@@ -46,10 +65,15 @@ class FileConnector(BaseConnector):
                 f"Supported: {', '.join(sorted(self.SUPPORTED_EXTENSIONS))}"
             )
 
-    def _read_json(self) -> pd.DataFrame:
+    def _read_json(self, source: Any = None) -> pd.DataFrame:
         """Read a JSON file, detecting whether it is an array of objects or nested."""
-        with open(self.file_path, "r", encoding="utf-8") as f:
-            raw = json.load(f)
+        if source is None:
+            source = self.file_path
+        if isinstance(source, io.BytesIO):
+            raw = json.loads(source.read().decode("utf-8"))
+        else:
+            with open(source, "r", encoding="utf-8") as f:
+                raw = json.load(f)
 
         if isinstance(raw, list):
             # Array of objects — the most common tabular format
@@ -70,16 +94,17 @@ class FileConnector(BaseConnector):
         """Parse the file and return its contents as a DataFrame."""
         await self.connect()
 
-        suffix = self.file_path.suffix.lower()
+        suffix = self._suffix()
+        source = io.BytesIO(self._content) if self._content is not None else self.file_path
+
         if suffix == ".csv":
-            self._df = pd.read_csv(self.file_path)
+            self._df = pd.read_csv(source)
         elif suffix in {".xlsx", ".xls"}:
-            self._df = pd.read_excel(self.file_path)
+            self._df = pd.read_excel(source)
         elif suffix == ".json":
-            self._df = self._read_json()
+            self._df = self._read_json(source)
         elif suffix in {".txt", ".dat"}:
-            # Fixed-width format
-            self._df = pd.read_fwf(self.file_path)
+            self._df = pd.read_fwf(source)
         else:
             raise ValueError(f"Unsupported file type: {suffix}")
 

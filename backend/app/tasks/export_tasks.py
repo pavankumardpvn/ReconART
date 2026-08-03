@@ -15,6 +15,7 @@ from app.config import settings
 from app.models.export import ExportJob
 from app.models.matching import Exception_, MatchPair, MatchPairItem
 from app.models.data_source import DataSourceRow
+from app.models.tenant import Tenant
 from app.storage import get_storage
 
 logger = logging.getLogger(__name__)
@@ -95,8 +96,12 @@ async def _generate(export_id: str) -> dict:
 
             buf.seek(0)
             content = buf.read()
+            tenant_result = await session.execute(
+                select(Tenant).where(Tenant.id == job.tenant_id)
+            )
+            tenant = tenant_result.scalar_one()
             filename = f"export_{job.id}.{ext}"
-            path = await storage.save(str(job.tenant_id), filename, content)
+            path = await storage.save(tenant.slug, filename, content)
 
             await session.execute(
                 update(ExportJob).where(ExportJob.id == job.id).values(
