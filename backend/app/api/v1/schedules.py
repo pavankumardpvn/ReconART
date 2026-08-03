@@ -47,7 +47,7 @@ async def _get_schedule_or_404(
 @router.get("/", response_model=PaginatedResponse[ScheduleResponse])
 async def list_schedules(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     reconciliation_id: UUID | None = Query(None, description="Filter by reconciliation"),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),

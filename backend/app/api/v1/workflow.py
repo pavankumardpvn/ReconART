@@ -110,7 +110,7 @@ async def create_signoff(
 @router.get("/signoff")
 async def list_signoffs(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     status_filter: str | None = Query(None, alias="status"),
     reconciliation_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
@@ -251,7 +251,7 @@ async def create_task(
 @router.get("/tasks")
 async def list_tasks(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     status_filter: str | None = Query(None, alias="status"),
     assigned_to: str | None = None,
     due_from: date | None = None,
@@ -363,7 +363,7 @@ async def tasks_calendar(
 @router.get("/tasks/overdue")
 async def overdue_tasks(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
@@ -413,7 +413,7 @@ async def list_comments(
     entity_type: str = Query(...),
     entity_id: UUID = Query(...),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
@@ -499,7 +499,7 @@ async def list_attachments(
     entity_type: str = Query(...),
     entity_id: UUID = Query(...),
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),

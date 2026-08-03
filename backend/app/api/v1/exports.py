@@ -77,7 +77,7 @@ async def create_export(
 @router.get("/", response_model=PaginatedResponse[ExportResponse])
 async def list_exports(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),

@@ -13,7 +13,7 @@ async def paginate(
     session: AsyncSession,
     query: Select,
     page: int = 1,
-    page_size: int = 50,
+    page_size: int = 100,
 ) -> PaginatedResponse:
     """Execute *query* with pagination and return a ``PaginatedResponse``.
 

@@ -41,7 +41,7 @@ class GenerateRequest(BaseModel):
 @router.get("/templates")
 async def list_templates(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
@@ -100,7 +100,7 @@ async def get_template(
 @router.get("/entries")
 async def list_entries(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     run_id: UUID | None = None,
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),

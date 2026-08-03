@@ -42,7 +42,7 @@ ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".xls", ".json", ".txt", ".dat"}
 @router.get("/", response_model=PaginatedResponse[DataSourceResponse])
 async def list_data_sources(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     source_type: str | None = Query(None, description="Filter by source_type"),
     status_filter: str | None = Query(None, alias="status", description="Filter by status"),
     db: AsyncSession = Depends(get_db),

@@ -52,7 +52,7 @@ class ExceptionResponse(BaseModel):
 @router.get("/")
 async def list_exceptions(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     status_filter: str | None = Query(None, alias="status"),
     severity: str | None = None,
     side: str | None = None,

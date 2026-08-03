@@ -18,7 +18,7 @@ router = APIRouter()
 @router.get("/")
 async def list_audit_logs(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     entity_type: str | None = None,
     entity_id: UUID | None = None,
     action: str | None = None,

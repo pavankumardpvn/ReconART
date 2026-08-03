@@ -56,7 +56,7 @@ export default function AuditLogPage() {
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, string | number> = { page, page_size: 50 };
+      const params: Record<string, string | number> = { page, page_size: 100 };
       if (actionFilter) params.action = actionFilter;
       if (entityTypeFilter) params.entity_type = entityTypeFilter;
 

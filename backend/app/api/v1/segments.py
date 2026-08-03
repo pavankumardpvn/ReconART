@@ -46,7 +46,7 @@ async def _get_segment_or_404(
 @router.get("/", response_model=PaginatedResponse[SegmentResponse])
 async def list_segments(
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(100, ge=1, le=200),
     reconciliation_id: UUID | None = Query(None, description="Filter by reconciliation"),
     data_source_id: UUID | None = Query(None, description="Filter by data source"),
     db: AsyncSession = Depends(get_db),
