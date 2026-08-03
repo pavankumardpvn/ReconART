@@ -99,12 +99,12 @@ export default function DataSourceDetailPage({
       if (!selected) return;
 
       const duplicate = sourceFiles.find(
-        (f) => f.original_filename === selected.name && f.file_size_bytes === selected.size
+        (f) => f.file_size_bytes === selected.size
       );
       if (duplicate) {
         toast({
           title: "Duplicate file",
-          description: `"${selected.name}" with the same size has already been uploaded.`,
+          description: `A file with the same size (${selected.size} bytes) has already been uploaded: "${duplicate.original_filename}".`,
           type: "error",
         });
         return;

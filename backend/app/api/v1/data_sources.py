@@ -126,18 +126,18 @@ async def upload_file_to_source(
             raise BadRequestError(f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB limit.")
     content = b"".join(chunks)
 
-    # Duplicate check: same filename + size in this data source
+    # Duplicate check: same file size in this data source
     dup_result = await db.execute(
         select(SourceFile).where(
             SourceFile.data_source_id == ds.id,
-            SourceFile.original_filename == original_filename,
             SourceFile.file_size_bytes == len(content),
         )
     )
-    if dup_result.scalar_one_or_none():
+    existing_dup = dup_result.scalar_one_or_none()
+    if existing_dup:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"A file named '{original_filename}' with the same size already exists in this data source.",
+            detail=f"A file with the same size ({len(content)} bytes) already exists: '{existing_dup.original_filename}'.",
         )
 
     storage = get_storage()
