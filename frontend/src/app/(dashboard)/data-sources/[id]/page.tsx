@@ -94,7 +94,8 @@ export default function DataSourceDetailPage({
   const moveFileMutation = useMoveFile(id);
 
   const sourceFiles = files ?? [];
-  const otherSources = (allSourcesData?.items ?? allSourcesData ?? []).filter(
+  const allItems = allSourcesData?.items ?? [];
+  const otherSources = allItems.filter(
     (s: { id: string }) => s.id !== id
   );
 
