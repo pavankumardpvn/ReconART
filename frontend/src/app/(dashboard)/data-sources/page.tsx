@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, Plus, ChevronLeft, ChevronRight, Layers, GitCompareArrows } from "lucide-react";
+import { Database, Plus, ChevronLeft, ChevronRight, Layers, GitCompareArrows, Combine } from "lucide-react";
 import { useResources, useCreateSource } from "@/hooks/useDataSources";
 import PageContainer from "@/components/layout/PageContainer";
 import { DataTable, type DataTableColumn } from "@/components/shared/DataTable";
@@ -195,7 +195,7 @@ export default function ResourcesPage() {
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/pipeline")} className="gap-3">
-              <Layers className="h-4 w-4 text-purple-400" />
+              <Combine className="h-4 w-4 text-purple-400" />
               <div>
                 <p className="font-medium">New Union</p>
                 <p className="text-xs text-[var(--foreground-muted)]">Combine multiple sources into one</p>
