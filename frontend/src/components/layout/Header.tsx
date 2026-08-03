@@ -3,9 +3,11 @@
 import { usePathname } from 'next/navigation';
 import { OrganizationSwitcher } from '@clerk/nextjs';
 import { Bell, Search, Command } from 'lucide-react';
+import { useCommandPalette } from '@/components/command-palette/CommandPalette';
 
 export default function Header() {
   const pathname = usePathname();
+  const { setOpen } = useCommandPalette();
   const segments = pathname.split('/').filter(Boolean);
 
   return (
@@ -41,9 +43,7 @@ export default function Header() {
       <div className="flex items-center gap-3">
         {/* Cmd+K Search Trigger */}
         <button
-          onClick={() => {
-            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
-          }}
+          onClick={() => setOpen(true)}
           className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1.5 text-sm text-[var(--foreground-muted)] transition-all hover:border-[var(--border-highlight)] hover:text-[var(--foreground)]"
         >
           <Search className="h-3.5 w-3.5" />
