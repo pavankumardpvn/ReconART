@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, Plus, ChevronLeft, ChevronRight, Layers, GitCompareArrows } from "lucide-react";
+import { Database, Plus, ChevronLeft, ChevronRight, Sigma, GitCompareArrows } from "lucide-react";
 import { UnionIcon } from "@/components/icons/UnionIcon";
 import { useResources, useCreateSource } from "@/hooks/useDataSources";
 import PageContainer from "@/components/layout/PageContainer";
@@ -203,7 +203,7 @@ export default function ResourcesPage() {
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/pipeline")} className="gap-3">
-              <Layers className="h-4 w-4 text-amber-400" />
+              <Sigma className="h-4 w-4 text-amber-400" />
               <div>
                 <p className="font-medium">New Group</p>
                 <p className="text-xs text-[var(--foreground-muted)]">Aggregate data from a source</p>
