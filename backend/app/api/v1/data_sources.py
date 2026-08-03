@@ -130,30 +130,30 @@ async def upload_file_to_source(
     storage = get_storage()
     relative_path = await storage.save(tenant.slug, original_filename, content)
 
-    # Determine status: check for duplicate (same byte size)
-    dup_result = await db.execute(
-        select(SourceFile).where(
-            SourceFile.data_source_id == ds.id,
-            SourceFile.file_size_bytes == len(content),
-            SourceFile.status == "success",
-        )
-    )
-    is_duplicate = dup_result.scalar_one_or_none() is not None
-
-    # Try to parse the file
-    file_status = "duplicate" if is_duplicate else "success"
+    # Step 1: Try to parse the file
     error_message = None
     df = None
     schema_cols = []
 
-    if not is_duplicate:
-        try:
-            connector = FileConnector(content=content, filename=original_filename)
-            df = await connector.fetch_data()
-            schema_cols = await connector.get_schema()
-        except Exception as e:
-            file_status = "failed"
-            error_message = str(e)
+    try:
+        connector = FileConnector(content=content, filename=original_filename)
+        df = await connector.fetch_data()
+        schema_cols = await connector.get_schema()
+    except Exception as e:
+        error_message = str(e)
+
+    # Step 2: Determine status after processing
+    if df is None:
+        file_status = "failed"
+    else:
+        dup_result = await db.execute(
+            select(SourceFile).where(
+                SourceFile.data_source_id == ds.id,
+                SourceFile.file_size_bytes == len(content),
+                SourceFile.status == "success",
+            )
+        )
+        file_status = "duplicate" if dup_result.scalar_one_or_none() else "success"
 
     # Create SourceFile record
     source_file = SourceFile(
@@ -169,7 +169,7 @@ async def upload_file_to_source(
     db.add(source_file)
     await db.flush()
 
-    # Only insert rows and merge columns for successful files
+    # Only insert rows for successful files (not duplicates)
     if file_status == "success" and df is not None:
         await _insert_file_data(db, ds, source_file, df, schema_cols, tenant)
 
