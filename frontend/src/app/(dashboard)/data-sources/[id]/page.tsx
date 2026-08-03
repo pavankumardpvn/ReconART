@@ -575,34 +575,34 @@ export default function DataSourceDetailPage({
                     </Table>
                   </div>
 
-                  {/* Pagination controls */}
-                  {preview.total_pages > 1 && (
-                    <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
-                      <p className="text-sm text-[var(--foreground-muted)]">
-                        Page {previewPage} of {preview.total_pages}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={previewPage <= 1}
-                          onClick={() => setPreviewPage((p) => p - 1)}
-                        >
-                          <ChevronLeft className="mr-1 h-4 w-4" />
-                          Previous
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={previewPage >= preview.total_pages}
-                          onClick={() => setPreviewPage((p) => p + 1)}
-                        >
-                          Next
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </div>
+                  {/* Pagination controls — always visible */}
+                  <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+                    <p className="text-sm text-[var(--foreground-muted)]">
+                      Page {previewPage} of {preview.total_pages || 1}
+                      {" · "}
+                      {new Intl.NumberFormat("en-US").format(preview.total_rows)} total rows
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={previewPage <= 1}
+                        onClick={() => setPreviewPage((p) => p - 1)}
+                      >
+                        <ChevronLeft className="mr-1 h-4 w-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={previewPage >= (preview.total_pages || 1)}
+                        onClick={() => setPreviewPage((p) => p + 1)}
+                      >
+                        Next
+                        <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
