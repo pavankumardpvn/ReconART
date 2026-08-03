@@ -5,7 +5,7 @@ import operator as op
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -92,6 +92,7 @@ async def create_source(
 async def upload_file_to_source(
     data_source_id: UUID,
     file: UploadFile,
+    uploaded_by_name: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     user: dict = Depends(get_current_user),
@@ -125,6 +126,20 @@ async def upload_file_to_source(
             raise BadRequestError(f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB limit.")
     content = b"".join(chunks)
 
+    # Duplicate check: same filename + size in this data source
+    dup_result = await db.execute(
+        select(SourceFile).where(
+            SourceFile.data_source_id == ds.id,
+            SourceFile.original_filename == original_filename,
+            SourceFile.file_size_bytes == len(content),
+        )
+    )
+    if dup_result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A file named '{original_filename}' with the same size already exists in this data source.",
+        )
+
     storage = get_storage()
     relative_path = await storage.save(tenant.slug, original_filename, content)
 
@@ -141,7 +156,7 @@ async def upload_file_to_source(
         file_size_bytes=len(content),
         row_count=len(df),
         status="active",
-        uploaded_by=user.get("user_id"),
+        uploaded_by=uploaded_by_name or user.get("user_id"),
     )
     db.add(source_file)
     await db.flush()

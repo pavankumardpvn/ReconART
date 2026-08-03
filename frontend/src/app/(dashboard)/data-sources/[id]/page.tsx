@@ -1,7 +1,9 @@
 "use client";
 
-import { use, useState, useCallback, useRef } from "react";
+import { use, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { useDropzone } from "react-dropzone";
 import {
   useDataSource,
   useDataSourcePreview,
@@ -29,6 +31,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/toast";
 import {
   Trash2,
   ArrowLeft,
@@ -62,13 +65,16 @@ export default function DataSourceDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useUser();
+  const { toast } = useToast();
 
   const { data: dataSource, isLoading } = useDataSource(id);
   const { data: preview } = useDataSourcePreview(id);
   const { data: files, isLoading: filesLoading } = useSourceFiles(id);
   const deleteMutation = useDeleteDataSource();
   const uploadMutation = useUploadFileToSource(id);
+
+  const sourceFiles = files ?? [];
 
   const [activeTab, setActiveTab] = useState("files");
 
@@ -87,23 +93,45 @@ export default function DataSourceDetailPage({
     });
   }
 
-  const handleFileUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selected = e.target.files?.[0];
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      const selected = acceptedFiles[0];
       if (!selected) return;
+
+      const duplicate = sourceFiles.find(
+        (f) => f.original_filename === selected.name && f.file_size_bytes === selected.size
+      );
+      if (duplicate) {
+        toast({
+          title: "Duplicate file",
+          description: `"${selected.name}" with the same size has already been uploaded.`,
+          type: "error",
+        });
+        return;
+      }
 
       const formData = new FormData();
       formData.append("file", selected);
+      const displayName = user?.fullName || user?.firstName || undefined;
+      if (displayName) {
+        formData.append("uploaded_by_name", displayName);
+      }
 
       uploadMutation.mutate(formData);
-
-      // Reset file input so the same file can be re-selected
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     },
-    [uploadMutation]
+    [uploadMutation, sourceFiles, toast, user]
   );
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "text/csv": [".csv"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.ms-excel": [".xls"],
+    },
+    maxFiles: 1,
+    disabled: uploadMutation.isPending,
+  });
 
   // -----------------------------------------------------------------------
   // Loading state
@@ -249,33 +277,34 @@ export default function DataSourceDetailPage({
         <TabsContent value="files">
           <Card className="glass-card">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Uploaded Files</CardTitle>
-                <div className="flex items-center gap-2">
-                  {uploadMutation.isPending && (
-                    <span className="text-sm text-[var(--foreground-muted)]">
-                      Uploading...
-                    </span>
-                  )}
-                  <Button
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadMutation.isPending}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Upload File
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                  />
-                </div>
-              </div>
+              <CardTitle>Uploaded Files</CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Drop zone */}
+              <div
+                {...getRootProps()}
+                className={`mb-4 cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+                  isDragActive
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-[var(--border)] hover:border-cyan-500/50 hover:bg-[var(--bg-secondary)]"
+                } ${uploadMutation.isPending ? "pointer-events-none opacity-50" : ""}`}
+              >
+                <input {...getInputProps()} />
+                <Upload className="mx-auto mb-2 h-8 w-8 text-[var(--foreground-muted)]" />
+                {isDragActive ? (
+                  <p className="text-sm text-cyan-400">Drop the file here...</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-[var(--foreground)]">
+                      Drag & drop a file here, or click to browse
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                      Supports CSV, XLSX, XLS
+                    </p>
+                  </>
+                )}
+              </div>
+
               {/* Upload progress bar */}
               {uploadMutation.isPending && (
                 <div className="mb-4 space-y-2">
@@ -359,7 +388,7 @@ export default function DataSourceDetailPage({
                             {file.uploaded_by ?? "—"}
                           </TableCell>
                           <TableCell className="text-[var(--foreground-muted)]">
-                            {formatDate(file.created_at)}
+                            {formatDate(file.uploaded_at)}
                           </TableCell>
                         </TableRow>
                       ))}

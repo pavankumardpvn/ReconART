@@ -36,15 +36,14 @@ export interface DataSourcePreview {
 
 export interface DataSourceFile {
   id: string;
-  data_source_id: string;
-  filename: string;
+  data_source_id?: string;
+  filename?: string;
   original_filename: string;
   file_size_bytes: number;
   row_count: number | null;
   status: string;
   uploaded_by?: string;
-  created_at: string;
-  updated_at: string;
+  uploaded_at: string;
 }
 
 // Reconciliation
