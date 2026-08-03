@@ -9,22 +9,21 @@ export function UnionIcon({ className }: { className?: string }) {
       strokeLinejoin="round"
       className={className}
     >
-      {/* Top database */}
-      <ellipse cx="12" cy="3.5" rx="3.5" ry="1.3" />
-      <path d="M8.5 3.5v3c0 .72 1.57 1.3 3.5 1.3s3.5-.58 3.5-1.3v-3" />
+      {/* Top database (small) */}
+      <ellipse cx="5" cy="4.5" rx="3.2" ry="1.3" />
+      <path d="M1.8 4.5v3c0 .72 1.43 1.3 3.2 1.3s3.2-.58 3.2-1.3v-3" />
 
-      {/* Flow line down from top DB */}
-      <path d="M12 7.8v3" />
+      {/* Bottom database (small) */}
+      <ellipse cx="5" cy="15" rx="3.2" ry="1.3" />
+      <path d="M1.8 15v3c0 .72 1.43 1.3 3.2 1.3s3.2-.58 3.2-1.3v-3" />
 
-      {/* Middle connection node */}
-      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      {/* Flow lines converging to arrow */}
+      <path d="M8.2 6.5L13 11" />
+      <path d="M8.2 17L13 12.5" />
 
-      {/* Flow line down to bottom DB */}
-      <path d="M12 13v3.2" />
-
-      {/* Bottom database */}
-      <ellipse cx="12" cy="17.5" rx="3.5" ry="1.3" />
-      <path d="M8.5 17.5v3c0 .72 1.57 1.3 3.5 1.3s3.5-.58 3.5-1.3v-3" />
+      {/* Arrow tip pointing right */}
+      <path d="M13 11.75L19.5 11.75" />
+      <path d="M17 9.25l2.5 2.5-2.5 2.5" />
     </svg>
   );
 }
