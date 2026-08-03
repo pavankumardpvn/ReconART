@@ -44,6 +44,7 @@ export default function Header() {
         {/* Cmd+K Search Trigger */}
         <button
           onClick={() => setOpen(true)}
+          type="button"
           className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1.5 text-sm text-[var(--foreground-muted)] transition-all hover:border-[var(--border-highlight)] hover:text-[var(--foreground)]"
         >
           <Search className="h-3.5 w-3.5" />
