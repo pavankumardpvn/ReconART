@@ -581,8 +581,6 @@ export default function DataSourceDetailPage({
           </Card>
         </TabsContent>
       </Tabs>
-    </PageContainer>
-
       {/* Move File Dialog */}
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent className="glass-card border-[var(--border)]">
@@ -627,5 +625,6 @@ export default function DataSourceDetailPage({
           </div>
         </DialogContent>
       </Dialog>
+    </PageContainer>
   );
 }
