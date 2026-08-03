@@ -136,7 +136,7 @@ export default function DataSourceDetailPage({
           if (data.status === "duplicate") {
             toast({ title: "Duplicate detected", description: `"${selected.name}" matches an existing file by size. Use Force Process to load it anyway.`, type: "warning" });
           } else if (data.status === "failed") {
-            toast({ title: "File structure error", description: `"${selected.name}" could not be parsed. You can move it to another source.`, type: "error" });
+            toast({ title: "File structure error", description: data.error_message || `"${selected.name}" could not be parsed. You can move it to another source.`, type: "error" });
           } else {
             toast({ title: "Upload successful", description: `"${selected.name}" loaded with ${data.row_count} rows.`, type: "success" });
           }

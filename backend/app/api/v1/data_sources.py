@@ -146,14 +146,34 @@ async def upload_file_to_source(
     if df is None:
         file_status = "failed"
     else:
-        dup_result = await db.execute(
-            select(SourceFile).where(
-                SourceFile.data_source_id == ds.id,
-                SourceFile.file_size_bytes == len(content),
-                SourceFile.status.in_(["success", "active"]),
-            ).limit(1)
+        # Structure check: if source already has columns, new file must match
+        existing_cols = await db.execute(
+            select(DataSourceColumn).where(DataSourceColumn.data_source_id == ds.id)
         )
-        file_status = "duplicate" if dup_result.scalars().first() else "success"
+        existing_col_names = {c.name for c in existing_cols.scalars().all()}
+        new_col_names = {c["name"] for c in schema_cols}
+
+        if existing_col_names and new_col_names != existing_col_names:
+            missing = existing_col_names - new_col_names
+            extra = new_col_names - existing_col_names
+            parts = []
+            if missing:
+                parts.append(f"Missing columns: {', '.join(sorted(missing))}")
+            if extra:
+                parts.append(f"Unexpected columns: {', '.join(sorted(extra))}")
+            file_status = "failed"
+            error_message = f"Column structure mismatch. {'. '.join(parts)}. Expected: {', '.join(sorted(existing_col_names))}"
+            df = None
+        else:
+            # Duplicate check by file size
+            dup_result = await db.execute(
+                select(SourceFile).where(
+                    SourceFile.data_source_id == ds.id,
+                    SourceFile.file_size_bytes == len(content),
+                    SourceFile.status.in_(["success", "active"]),
+                ).limit(1)
+            )
+            file_status = "duplicate" if dup_result.scalars().first() else "success"
 
     # Create SourceFile record
     source_file = SourceFile(
