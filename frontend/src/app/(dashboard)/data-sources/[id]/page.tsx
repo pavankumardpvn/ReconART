@@ -6,10 +6,13 @@ import { useUser } from "@clerk/nextjs";
 import { useDropzone } from "react-dropzone";
 import {
   useDataSource,
+  useDataSources,
   useDataSourcePreview,
   useDeleteDataSource,
   useSourceFiles,
   useUploadFileToSource,
+  useForceProcessFile,
+  useMoveFile,
 } from "@/hooks/useDataSources";
 import PageContainer from "@/components/layout/PageContainer";
 import {
@@ -33,6 +36,14 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
   Trash2,
   ArrowLeft,
   Upload,
@@ -40,6 +51,8 @@ import {
   Database,
   Files,
   Eye,
+  Play,
+  ArrowRightLeft,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -71,12 +84,22 @@ export default function DataSourceDetailPage({
   const { data: dataSource, isLoading } = useDataSource(id);
   const { data: preview } = useDataSourcePreview(id);
   const { data: files, isLoading: filesLoading } = useSourceFiles(id);
+  const { data: allSourcesData } = useDataSources();
   const deleteMutation = useDeleteDataSource();
   const uploadMutation = useUploadFileToSource(id);
+  const forceProcessMutation = useForceProcessFile(id);
+  const moveFileMutation = useMoveFile(id);
 
   const sourceFiles = files ?? [];
+  const otherSources = (allSourcesData?.items ?? allSourcesData ?? []).filter(
+    (s: { id: string }) => s.id !== id
+  );
 
   const [activeTab, setActiveTab] = useState("files");
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [moveFileId, setMoveFileId] = useState<string | null>(null);
+  const [moveTarget, setMoveTarget] = useState<string>("new");
+  const [newSourceName, setNewSourceName] = useState("");
 
   function handleDelete() {
     if (
@@ -98,18 +121,6 @@ export default function DataSourceDetailPage({
       const selected = acceptedFiles[0];
       if (!selected) return;
 
-      const duplicate = sourceFiles.find(
-        (f) => f.file_size_bytes === selected.size
-      );
-      if (duplicate) {
-        toast({
-          title: "Duplicate file",
-          description: `A file with the same size (${selected.size} bytes) has already been uploaded: "${duplicate.original_filename}".`,
-          type: "error",
-        });
-        return;
-      }
-
       const formData = new FormData();
       formData.append("file", selected);
       const displayName = user?.fullName || user?.firstName || undefined;
@@ -117,10 +128,50 @@ export default function DataSourceDetailPage({
         formData.append("uploaded_by_name", displayName);
       }
 
-      uploadMutation.mutate(formData);
+      uploadMutation.mutate(formData, {
+        onSuccess: (data) => {
+          if (data.status === "duplicate") {
+            toast({ title: "Duplicate detected", description: `"${selected.name}" matches an existing file by size. Use Force Process to load it anyway.`, type: "warning" });
+          } else if (data.status === "failed") {
+            toast({ title: "File structure error", description: `"${selected.name}" could not be parsed. You can move it to another source.`, type: "error" });
+          } else {
+            toast({ title: "Upload successful", description: `"${selected.name}" loaded with ${data.row_count} rows.`, type: "success" });
+          }
+        },
+      });
     },
-    [uploadMutation, sourceFiles, toast, user]
+    [uploadMutation, toast, user]
   );
+
+  function handleForceProcess(fileId: string) {
+    forceProcessMutation.mutate(fileId, {
+      onSuccess: () => {
+        toast({ title: "File processed", description: "Rows have been loaded successfully.", type: "success" });
+      },
+      onError: () => {
+        toast({ title: "Processing failed", description: "The file could not be parsed.", type: "error" });
+      },
+    });
+  }
+
+  function handleMoveFile() {
+    if (!moveFileId) return;
+    const payload = moveTarget === "new"
+      ? { new_source_name: newSourceName }
+      : { target_source_id: moveTarget };
+
+    moveFileMutation.mutate({ fileId: moveFileId, payload }, {
+      onSuccess: (data) => {
+        toast({ title: "File moved", description: `Moved to "${data.target_source_name}" with status: ${data.status}.`, type: "success" });
+        setMoveDialogOpen(false);
+        setMoveFileId(null);
+        setNewSourceName("");
+      },
+      onError: () => {
+        toast({ title: "Move failed", description: "Could not move the file.", type: "error" });
+      },
+    });
+  }
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -316,20 +367,6 @@ export default function DataSourceDetailPage({
                 </div>
               )}
 
-              {/* Upload error */}
-              {uploadMutation.isError && (
-                <p className="mb-4 text-sm text-red-400">
-                  File upload failed. Please try again.
-                </p>
-              )}
-
-              {/* Upload success */}
-              {uploadMutation.isSuccess && (
-                <p className="mb-4 text-sm text-emerald-400">
-                  File uploaded successfully.
-                </p>
-              )}
-
               {filesLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-full" />
@@ -357,14 +394,18 @@ export default function DataSourceDetailPage({
                         <TableHead>Size</TableHead>
                         <TableHead>Uploaded By</TableHead>
                         <TableHead>Uploaded</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {sourceFiles.map((file) => (
-                        <TableRow key={file.id}>
+                        <TableRow
+                          key={file.id}
+                          className={file.status === "duplicate" || file.status === "failed" ? "opacity-60" : ""}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <FileSpreadsheet className="h-4 w-4 shrink-0 text-emerald-400" />
+                              <FileSpreadsheet className={`h-4 w-4 shrink-0 ${file.status === "success" ? "text-emerald-400" : file.status === "failed" ? "text-red-400" : "text-amber-400"}`} />
                               <span className="font-medium text-[var(--foreground)]">
                                 {file.original_filename ?? file.filename}
                               </span>
@@ -374,10 +415,8 @@ export default function DataSourceDetailPage({
                             <StatusBadge status={file.status} />
                           </TableCell>
                           <TableCell>
-                            {file.row_count != null
-                              ? new Intl.NumberFormat("en-US").format(
-                                  file.row_count
-                                )
+                            {file.status === "success" && file.row_count != null
+                              ? new Intl.NumberFormat("en-US").format(file.row_count)
                               : "—"}
                           </TableCell>
                           <TableCell>
@@ -388,6 +427,39 @@ export default function DataSourceDetailPage({
                           </TableCell>
                           <TableCell className="text-[var(--foreground-muted)]">
                             {formatDate(file.uploaded_at)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {file.status === "duplicate" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  disabled={forceProcessMutation.isPending}
+                                  onClick={() => handleForceProcess(file.id)}
+                                >
+                                  <Play className="mr-1 h-3 w-3" />
+                                  Force Process
+                                </Button>
+                              )}
+                              {file.status === "failed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs"
+                                  onClick={() => {
+                                    setMoveFileId(file.id);
+                                    setMoveDialogOpen(true);
+                                  }}
+                                >
+                                  <ArrowRightLeft className="mr-1 h-3 w-3" />
+                                  Move to Source
+                                </Button>
+                              )}
+                              {file.status === "success" && (
+                                <span className="text-xs text-[var(--foreground-muted)]">—</span>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -510,5 +582,50 @@ export default function DataSourceDetailPage({
         </TabsContent>
       </Tabs>
     </PageContainer>
+
+      {/* Move File Dialog */}
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent className="glass-card border-[var(--border)]">
+          <DialogHeader>
+            <DialogTitle>Move File to Another Source</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <Select value={moveTarget} onValueChange={setMoveTarget}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select destination" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">Create new source</SelectItem>
+                {otherSources.map((s: { id: string; name: string }) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {moveTarget === "new" && (
+              <Input
+                placeholder="New source name"
+                value={newSourceName}
+                onChange={(e) => setNewSourceName(e.target.value)}
+              />
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setMoveDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleMoveFile}
+                disabled={
+                  moveFileMutation.isPending ||
+                  (moveTarget === "new" && !newSourceName.trim())
+                }
+              >
+                {moveFileMutation.isPending ? "Moving..." : "Move File"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
   );
 }

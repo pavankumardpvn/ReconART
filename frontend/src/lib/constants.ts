@@ -66,4 +66,6 @@ export const STATUS_COLORS: Record<string, string> = {
   investigating: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
   resolved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
   dismissed: "bg-[var(--background-tertiary)] text-[var(--foreground-muted)] border border-[var(--border)]",
+  success: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  duplicate: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
 };

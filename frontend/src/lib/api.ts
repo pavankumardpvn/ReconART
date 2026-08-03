@@ -86,6 +86,16 @@ export async function getSourceFiles(sourceId: string) {
   return data;
 }
 
+export async function forceProcessFile(sourceId: string, fileId: string) {
+  const { data } = await api.post(`/api/v1/data-sources/${sourceId}/files/${fileId}/force-process`);
+  return data;
+}
+
+export async function moveFile(sourceId: string, fileId: string, payload: { target_source_id?: string; new_source_name?: string }) {
+  const { data } = await api.post(`/api/v1/data-sources/${sourceId}/files/${fileId}/move`, payload);
+  return data;
+}
+
 export async function getDataSourcePreview(id: string) {
   const { data } = await api.get<DataSourcePreview>(
     `/api/v1/data-sources/${id}/preview`,

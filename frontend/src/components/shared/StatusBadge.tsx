@@ -20,13 +20,13 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         className={cn(
           "status-dot",
           isPulsing && "status-dot-pulse",
-          status === "matched" || status === "completed" || status === "active" || status === "ready" || status === "resolved"
+          status === "matched" || status === "completed" || status === "active" || status === "ready" || status === "resolved" || status === "success"
             ? "bg-emerald-400"
             : status === "unmatched" || status === "failed" || status === "error" || status === "open"
               ? "bg-red-400"
               : status === "running" || status === "processing"
                 ? "bg-blue-400"
-                : status === "pending" || status === "investigating" || status === "paused"
+                : status === "pending" || status === "investigating" || status === "paused" || status === "duplicate"
                   ? "bg-amber-400"
                   : "bg-[var(--foreground-subtle)]"
         )}

@@ -126,26 +126,34 @@ async def upload_file_to_source(
             raise BadRequestError(f"File exceeds the {MAX_FILE_SIZE // (1024 * 1024)}MB limit.")
     content = b"".join(chunks)
 
-    # Duplicate check: same file size in this data source
+    # Save to storage first (always accept the file)
+    storage = get_storage()
+    relative_path = await storage.save(tenant.slug, original_filename, content)
+
+    # Determine status: check for duplicate (same byte size)
     dup_result = await db.execute(
         select(SourceFile).where(
             SourceFile.data_source_id == ds.id,
             SourceFile.file_size_bytes == len(content),
+            SourceFile.status == "success",
         )
     )
-    existing_dup = dup_result.scalar_one_or_none()
-    if existing_dup:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"A file with the same size ({len(content)} bytes) already exists: '{existing_dup.original_filename}'.",
-        )
+    is_duplicate = dup_result.scalar_one_or_none() is not None
 
-    storage = get_storage()
-    relative_path = await storage.save(tenant.slug, original_filename, content)
+    # Try to parse the file
+    file_status = "duplicate" if is_duplicate else "success"
+    error_message = None
+    df = None
+    schema_cols = []
 
-    connector = FileConnector(content=content, filename=original_filename)
-    df = await connector.fetch_data()
-    schema_cols = await connector.get_schema()
+    if not is_duplicate:
+        try:
+            connector = FileConnector(content=content, filename=original_filename)
+            df = await connector.fetch_data()
+            schema_cols = await connector.get_schema()
+        except Exception as e:
+            file_status = "failed"
+            error_message = str(e)
 
     # Create SourceFile record
     source_file = SourceFile(
@@ -154,14 +162,41 @@ async def upload_file_to_source(
         original_filename=original_filename,
         file_path=relative_path,
         file_size_bytes=len(content),
-        row_count=len(df),
-        status="active",
+        row_count=len(df) if df is not None else 0,
+        status=file_status,
         uploaded_by=uploaded_by_name or user.get("user_id"),
     )
     db.add(source_file)
     await db.flush()
 
-    # Update or create columns (merge with existing)
+    # Only insert rows and merge columns for successful files
+    if file_status == "success" and df is not None:
+        await _insert_file_data(db, ds, source_file, df, schema_cols, tenant)
+
+    await db.flush()
+    await db.refresh(source_file)
+
+    return {
+        "id": str(source_file.id),
+        "data_source_id": str(ds.id),
+        "original_filename": source_file.original_filename,
+        "row_count": source_file.row_count,
+        "file_size_bytes": source_file.file_size_bytes,
+        "uploaded_at": source_file.uploaded_at.isoformat(),
+        "status": source_file.status,
+        "error_message": error_message,
+    }
+
+
+async def _insert_file_data(
+    db: AsyncSession,
+    ds: DataSource,
+    source_file: SourceFile,
+    df,
+    schema_cols: list,
+    tenant,
+) -> None:
+    """Merge columns and bulk-insert rows for a successfully parsed file."""
     existing_cols = await db.execute(
         select(DataSourceColumn).where(DataSourceColumn.data_source_id == ds.id)
     )
@@ -178,7 +213,6 @@ async def upload_file_to_source(
                 ordinal_position=col_info.get("ordinal_position", 0),
             ))
 
-    # Store rows linked to this file (bulk insert)
     records = df.where(df.notna(), None).to_dict(orient="records")
     bulk_rows = []
     for idx, row_data in enumerate(records):
@@ -199,25 +233,148 @@ async def upload_file_to_source(
         ))
     db.add_all(bulk_rows)
 
-    # Update source totals
     total_rows_result = await db.execute(
         select(func.count(DataSourceRow.id)).where(DataSourceRow.data_source_id == ds.id)
     )
     ds.row_count = total_rows_result.scalar_one() + len(df)
-    ds.original_filename = original_filename
-    ds.file_size_bytes = len(content)
+    ds.original_filename = source_file.original_filename
+    ds.file_size_bytes = source_file.file_size_bytes
+
+
+# ---------------------------------------------------------------------------
+# POST /{id}/files/{file_id}/force-process — process a duplicate file
+# ---------------------------------------------------------------------------
+@router.post("/{data_source_id}/files/{file_id}/force-process")
+async def force_process_file(
+    data_source_id: UUID,
+    file_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    tenant: Tenant = Depends(get_current_tenant),
+    _user: dict = Depends(get_current_user),
+):
+    ds = (await db.execute(
+        select(DataSource).where(
+            DataSource.id == data_source_id,
+            DataSource.tenant_id == tenant.id,
+            DataSource.deleted_at.is_(None),
+        )
+    )).scalar_one_or_none()
+    if not ds:
+        raise NotFoundError("Data source")
+
+    sf = (await db.execute(
+        select(SourceFile).where(
+            SourceFile.id == file_id,
+            SourceFile.data_source_id == ds.id,
+        )
+    )).scalar_one_or_none()
+    if not sf:
+        raise NotFoundError("File")
+    if sf.status not in ("duplicate", "failed"):
+        raise BadRequestError("Only duplicate or failed files can be force-processed.")
+
+    storage = get_storage()
+    content = await storage.read(sf.file_path)
+
+    try:
+        connector = FileConnector(content=content, filename=sf.original_filename)
+        df = await connector.fetch_data()
+        schema_cols = await connector.get_schema()
+    except Exception as e:
+        sf.status = "failed"
+        await db.flush()
+        raise BadRequestError(f"File parsing failed: {e}")
+
+    sf.status = "success"
+    sf.row_count = len(df)
+    await _insert_file_data(db, ds, sf, df, schema_cols, tenant)
 
     await db.flush()
-    await db.refresh(source_file)
+    return {"status": "success", "row_count": sf.row_count}
 
+
+# ---------------------------------------------------------------------------
+# POST /{id}/files/{file_id}/move — move a file to another data source
+# ---------------------------------------------------------------------------
+class MoveFileRequest(BaseModel):
+    target_source_id: str | None = None
+    new_source_name: str | None = None
+
+
+@router.post("/{data_source_id}/files/{file_id}/move")
+async def move_file(
+    data_source_id: UUID,
+    file_id: UUID,
+    payload: MoveFileRequest,
+    db: AsyncSession = Depends(get_db),
+    tenant: Tenant = Depends(get_current_tenant),
+    _user: dict = Depends(get_current_user),
+):
+    ds = (await db.execute(
+        select(DataSource).where(
+            DataSource.id == data_source_id,
+            DataSource.tenant_id == tenant.id,
+        )
+    )).scalar_one_or_none()
+    if not ds:
+        raise NotFoundError("Source data source")
+
+    sf = (await db.execute(
+        select(SourceFile).where(
+            SourceFile.id == file_id,
+            SourceFile.data_source_id == ds.id,
+        )
+    )).scalar_one_or_none()
+    if not sf:
+        raise NotFoundError("File")
+
+    # Resolve target source
+    if payload.new_source_name:
+        target = DataSource(
+            tenant_id=tenant.id,
+            name=payload.new_source_name,
+            source_type="file_upload",
+            connector_type="file",
+            status="active",
+        )
+        db.add(target)
+        await db.flush()
+    elif payload.target_source_id:
+        target = (await db.execute(
+            select(DataSource).where(
+                DataSource.id == UUID(payload.target_source_id),
+                DataSource.tenant_id == tenant.id,
+                DataSource.deleted_at.is_(None),
+            )
+        )).scalar_one_or_none()
+        if not target:
+            raise NotFoundError("Target data source")
+    else:
+        raise BadRequestError("Provide either target_source_id or new_source_name.")
+
+    # Move file to target source
+    sf.data_source_id = target.id
+
+    # Try to parse in new context
+    storage = get_storage()
+    content = await storage.read(sf.file_path)
+
+    try:
+        connector = FileConnector(content=content, filename=sf.original_filename)
+        df = await connector.fetch_data()
+        schema_cols = await connector.get_schema()
+        sf.status = "success"
+        sf.row_count = len(df)
+        await _insert_file_data(db, ds=target, source_file=sf, df=df, schema_cols=schema_cols, tenant=tenant)
+    except Exception:
+        sf.status = "failed"
+        sf.row_count = 0
+
+    await db.flush()
     return {
-        "id": str(source_file.id),
-        "data_source_id": str(ds.id),
-        "original_filename": source_file.original_filename,
-        "row_count": source_file.row_count,
-        "file_size_bytes": source_file.file_size_bytes,
-        "uploaded_at": source_file.uploaded_at.isoformat(),
-        "status": source_file.status,
+        "status": sf.status,
+        "target_source_id": str(target.id),
+        "target_source_name": target.name,
     }
 
 

@@ -11,6 +11,8 @@ import {
   createSource,
   uploadFileToSource,
   getSourceFiles,
+  forceProcessFile,
+  moveFile,
 } from "@/lib/api";
 
 export function useDataSources() {
@@ -95,5 +97,29 @@ export function useSourceFiles(sourceId: string) {
     queryKey: ["data-sources", sourceId, "files"],
     queryFn: () => getSourceFiles(sourceId),
     enabled: !!sourceId,
+  });
+}
+
+export function useForceProcessFile(sourceId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (fileId: string) => forceProcessFile(sourceId, fileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["data-sources", sourceId] });
+      queryClient.invalidateQueries({ queryKey: ["data-sources", sourceId, "files"] });
+    },
+  });
+}
+
+export function useMoveFile(sourceId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fileId, payload }: { fileId: string; payload: { target_source_id?: string; new_source_name?: string } }) =>
+      moveFile(sourceId, fileId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["data-sources", sourceId] });
+      queryClient.invalidateQueries({ queryKey: ["data-sources", sourceId, "files"] });
+      queryClient.invalidateQueries({ queryKey: ["data-sources"] });
+    },
   });
 }
