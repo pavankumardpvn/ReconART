@@ -593,14 +593,15 @@ async def delete_data_source(
 # ---------------------------------------------------------------------------
 # GET /{id}/preview — first 100 rows
 # ---------------------------------------------------------------------------
-@router.get("/{data_source_id}/preview", response_model=DataSourcePreviewResponse)
+@router.get("/{data_source_id}/preview")
 async def preview_data_source(
     data_source_id: UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(100, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
-    # Fetch the data source
     result = await db.execute(
         select(DataSource).where(
             DataSource.id == data_source_id,
@@ -612,7 +613,6 @@ async def preview_data_source(
     if not ds:
         raise NotFoundError("Data source")
 
-    # Fetch columns
     col_result = await db.execute(
         select(DataSourceColumn)
         .where(DataSourceColumn.data_source_id == data_source_id)
@@ -620,20 +620,31 @@ async def preview_data_source(
     )
     columns = list(col_result.scalars().all())
 
-    # Fetch first 100 rows
+    total_result = await db.execute(
+        select(func.count(DataSourceRow.id))
+        .where(DataSourceRow.data_source_id == data_source_id)
+    )
+    total_rows = total_result.scalar_one()
+
+    import math
+    offset = (page - 1) * page_size
     row_result = await db.execute(
         select(DataSourceRow)
         .where(DataSourceRow.data_source_id == data_source_id)
         .order_by(DataSourceRow.row_number)
-        .limit(100)
+        .offset(offset)
+        .limit(page_size)
     )
     rows = [r.data for r in row_result.scalars().all()]
 
-    return DataSourcePreviewResponse(
-        columns=columns,
-        rows=rows,
-        total_rows=ds.row_count,
-    )
+    return {
+        "columns": [{"name": c.name, "data_type": c.data_type, "ordinal_position": c.ordinal_position} for c in columns],
+        "rows": rows,
+        "total_rows": total_rows,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": math.ceil(total_rows / page_size) if total_rows > 0 else 0,
+    }
 
 
 # ---------------------------------------------------------------------------

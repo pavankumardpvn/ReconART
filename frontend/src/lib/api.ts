@@ -96,9 +96,10 @@ export async function moveFile(sourceId: string, fileId: string, payload: { targ
   return data;
 }
 
-export async function getDataSourcePreview(id: string) {
+export async function getDataSourcePreview(id: string, page = 1, pageSize = 100) {
   const { data } = await api.get<DataSourcePreview>(
     `/api/v1/data-sources/${id}/preview`,
+    { params: { page, page_size: pageSize } },
   );
   return data;
 }

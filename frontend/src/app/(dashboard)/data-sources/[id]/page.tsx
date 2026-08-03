@@ -53,6 +53,8 @@ import {
   Eye,
   Play,
   ArrowRightLeft,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -82,7 +84,8 @@ export default function DataSourceDetailPage({
   const { toast } = useToast();
 
   const { data: dataSource, isLoading } = useDataSource(id);
-  const { data: preview } = useDataSourcePreview(id);
+  const [previewPage, setPreviewPage] = useState(1);
+  const { data: preview } = useDataSourcePreview(id, previewPage);
   const { data: files, isLoading: filesLoading } = useSourceFiles(id);
   const { data: allSourcesData } = useDataSources();
   const deleteMutation = useDeleteDataSource();
@@ -528,44 +531,79 @@ export default function DataSourceDetailPage({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Data Preview</CardTitle>
-                {preview && preview.columns.length > 0 && (
+                {preview && preview.total_rows > 0 && (
                   <p className="text-sm text-[var(--foreground-muted)]">
-                    Showing {preview.rows.length} of{" "}
-                    {new Intl.NumberFormat("en-US").format(preview.total_rows)}{" "}
-                    rows
+                    Showing {(previewPage - 1) * (preview.page_size || 100) + 1}–
+                    {Math.min(previewPage * (preview.page_size || 100), preview.total_rows)} of{" "}
+                    {new Intl.NumberFormat("en-US").format(preview.total_rows)} rows
                   </p>
                 )}
               </div>
             </CardHeader>
             <CardContent>
               {preview && preview.columns.length > 0 ? (
-                <div className="overflow-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {preview.columns.map((col) => (
-                          <TableHead key={col.name}>{col.name}</TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {preview.rows.map((row, idx) => (
-                        <TableRow key={idx}>
+                <>
+                  <div className="overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12 text-center">#</TableHead>
                           {preview.columns.map((col) => (
-                            <TableCell
-                              key={col.name}
-                              className="whitespace-nowrap"
-                            >
-                              {row[col.name] != null
-                                ? String(row[col.name])
-                                : "—"}
-                            </TableCell>
+                            <TableHead key={col.name}>{col.name}</TableHead>
                           ))}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {preview.rows.map((row, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="text-center text-xs text-[var(--foreground-muted)]">
+                              {(previewPage - 1) * (preview.page_size || 100) + idx + 1}
+                            </TableCell>
+                            {preview.columns.map((col) => (
+                              <TableCell
+                                key={col.name}
+                                className="whitespace-nowrap"
+                              >
+                                {row[col.name] != null
+                                  ? String(row[col.name])
+                                  : "—"}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Pagination controls */}
+                  {preview.total_pages > 1 && (
+                    <div className="mt-4 flex items-center justify-between border-t border-[var(--border)] pt-4">
+                      <p className="text-sm text-[var(--foreground-muted)]">
+                        Page {previewPage} of {preview.total_pages}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={previewPage <= 1}
+                          onClick={() => setPreviewPage((p) => p - 1)}
+                        >
+                          <ChevronLeft className="mr-1 h-4 w-4" />
+                          Previous
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={previewPage >= preview.total_pages}
+                          onClick={() => setPreviewPage((p) => p + 1)}
+                        >
+                          Next
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Eye className="mb-3 h-10 w-10 text-[var(--foreground-subtle)]" />

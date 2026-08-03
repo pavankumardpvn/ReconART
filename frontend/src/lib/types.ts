@@ -32,6 +32,9 @@ export interface DataSourcePreview {
   columns: DataSourceColumn[];
   rows: Record<string, unknown>[];
   total_rows: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 }
 
 export interface DataSourceFile {

@@ -38,11 +38,12 @@ export function useDataSourceColumns(id: string) {
   });
 }
 
-export function useDataSourcePreview(id: string) {
+export function useDataSourcePreview(id: string, page = 1, pageSize = 100) {
   return useQuery({
-    queryKey: ["data-sources", id, "preview"],
-    queryFn: () => getDataSourcePreview(id),
+    queryKey: ["data-sources", id, "preview", page, pageSize],
+    queryFn: () => getDataSourcePreview(id, page, pageSize),
     enabled: !!id,
+    placeholderData: (prev: any) => prev,
   });
 }
 
