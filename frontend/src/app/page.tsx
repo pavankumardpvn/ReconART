@@ -588,25 +588,17 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy", icon: Check },
-              { val: txCount, suffix: "M+", label: "Transactions Processed", icon: Database },
-              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work", icon: Clock },
-              { val: integrationsCount, suffix: "+", label: "Integrations", icon: Layers },
+              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy" },
+              { val: txCount, suffix: "M+", label: "Transactions Processed" },
+              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work" },
+              { val: integrationsCount, suffix: "+", label: "Integrations" },
             ].map((stat, i) => (
-              <div key={stat.label} className="group flex flex-col items-center gap-4 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
-                <div className="relative flex h-28 w-28 items-center justify-center">
-                  <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(124,58,237,0.08)" strokeWidth="3" />
-                    <circle cx="50" cy="50" r="44" fill="none" stroke="url(#statGrad)" strokeWidth="3" strokeLinecap="round"
-                      strokeDasharray="276" strokeDashoffset={statsReveal.isVisible ? 276 * (1 - Math.min((typeof stat.val === 'string' ? parseFloat(stat.val) : stat.val) / 100, 1)) : 276}
-                      style={{ transition: 'stroke-dashoffset 2.5s cubic-bezier(.37,0,.63,1)' }} />
-                    <defs><linearGradient id="statGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#7C3AED" /><stop offset="100%" stopColor="#14B8A6" /></linearGradient></defs>
-                  </svg>
-                  <div className="flex flex-col items-center">
-                    <span className="text-2xl font-bold text-white md:text-3xl">
-                      {stat.val}<span className="landing-gradient-text">{stat.suffix}</span>
-                    </span>
-                  </div>
+              <div key={stat.label} className="group flex flex-col items-center gap-3 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="relative">
+                  <span className="text-4xl font-bold text-white md:text-5xl">
+                    {stat.val}
+                  </span>
+                  <span className="landing-gradient-text text-4xl font-bold md:text-5xl">{stat.suffix}</span>
                 </div>
                 <span className="text-sm font-medium text-white/50 transition-colors group-hover:text-white/70">
                   {stat.label}
