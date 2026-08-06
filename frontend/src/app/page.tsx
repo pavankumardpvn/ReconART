@@ -610,59 +610,18 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right — Platform Card */}
+          {/* Right — Platform Visual */}
           <div
             className="animate-fade-in-up hidden lg:block"
             style={{ animationDelay: "0.6s" }}
           >
             <div className="relative">
-              {/* Glow behind card */}
-              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#7C3AED]/10 to-[#14B8A6]/5 blur-2xl" />
-
-              <div className="landing-card landing-card-glow relative rounded-3xl p-8">
-                <div className="mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/30 to-[#14B8A6]/20">
-                      <GitCompareArrows className="h-5 w-5 text-[#9D5CF5]" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold text-white">ReconArt Platform</h3>
-                      <p className="text-xs text-white/30">Reconciliation Intelligence</p>
-                    </div>
-                  </div>
-                  <div className="flex h-2 w-2 rounded-full bg-[#10b981] shadow-lg shadow-[#10b981]/50">
-                    <div className="h-2 w-2 animate-ping rounded-full bg-[#10b981]" />
-                  </div>
-                </div>
-
-                <div className="mb-5 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#14B8A6]">Core Features</p>
-                  {["Multi-source transaction matching", "AI-powered exception detection", "Cross-border currency support"].map((item) => (
-                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
-                      <Check className="h-3.5 w-3.5 text-[#14B8A6]" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mb-6 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9D5CF5]">Advanced</p>
-                  {["ML confidence scoring", "150+ currency FX rates", "Custom ROI reporting"].map((item) => (
-                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
-                      <Check className="h-3.5 w-3.5 text-[#9D5CF5]" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F1729] to-[#1a243a] p-4 text-center">
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#7C3AED]/5 to-[#14B8A6]/5" />
-                  <span className="relative text-xs font-medium text-white/40">Match Rate</span>
-                  <div className="relative text-3xl font-bold tracking-tight">
-                    <span className="landing-gradient-text">99.9%</span>
-                  </div>
-                </div>
-              </div>
+              <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-[#7C3AED]/10 to-[#14B8A6]/5 blur-3xl" />
+              <img
+                src="/hero-platform.png"
+                alt="ReconArt AI Reconciliation Engine"
+                className="relative w-full rounded-2xl shadow-2xl shadow-[#7C3AED]/10"
+              />
             </div>
           </div>
         </div>
@@ -895,6 +854,39 @@ export default function Home() {
                 <p className="text-xs leading-relaxed text-white/40">{domain.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
+          PRODUCT SHOWCASE
+          ================================================================ */}
+      <section className="relative bg-[#0F1729] px-6 py-28 overflow-hidden">
+        <div className="landing-glow-orb left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.04]" />
+        <div className="relative mx-auto max-w-[1200px]">
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Platform</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            The Intelligent <span className="landing-gradient-text">Reconciliation Platform</span>
+          </h2>
+          <p className="mx-auto mb-14 max-w-2xl text-center text-white/40">
+            Built for finance. Designed for scale. See the complete platform in action.
+          </p>
+
+          <div className="relative mx-auto max-w-[1000px]">
+            <div className="absolute -inset-8 rounded-3xl bg-gradient-to-br from-[#7C3AED]/8 to-[#14B8A6]/5 blur-3xl" />
+            <div className="relative overflow-hidden rounded-2xl border border-[#7C3AED]/15 shadow-2xl shadow-[#7C3AED]/10">
+              <img
+                src="/hero-dashboard.png"
+                alt="ReconArt Platform Dashboard"
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </section>
