@@ -758,40 +758,50 @@ export default function Home() {
             Four steps to complete reconciliation — automated, auditable, done.
           </p>
 
-          <div className="relative flex flex-col items-center gap-0 md:flex-row md:justify-between">
-            {/* Connecting line */}
-            <div className="absolute left-[10%] right-[10%] top-[40px] hidden h-[2px] md:block">
+          <div className="relative flex flex-col items-center gap-12 md:flex-row md:justify-between md:gap-0">
+            {/* Connecting line with flowing light */}
+            <div className="absolute left-[10%] right-[10%] top-[58px] hidden md:block">
+              {/* Base line */}
               <div
-                className="h-full rounded-full bg-gradient-to-r from-[#7C3AED] via-[#9D5CF5] to-[#14B8A6]"
+                className="h-[2px] rounded-full bg-gradient-to-r from-[#7C3AED]/30 via-[#9D5CF5]/30 to-[#14B8A6]/30"
                 style={{
                   transition: "transform 2s cubic-bezier(.37,0,.63,1)",
                   transformOrigin: "left",
                   transform: workflowReveal.isVisible ? "scaleX(1)" : "scaleX(0)",
                 }}
               />
+              {/* Flowing light */}
+              {workflowReveal.isVisible && (
+                <div className="absolute top-[-2px] h-[6px] w-[20%] rounded-full bg-gradient-to-r from-transparent via-[#9D5CF5] to-transparent blur-[2px]" style={{ animation: "flow-right 3s ease-in-out infinite" }} />
+              )}
             </div>
 
             {workflowSteps.map((step, i) => (
               <div
                 key={step.title}
-                className="relative z-10 flex flex-col items-center gap-3 text-center"
+                className="relative z-10 flex flex-col items-center gap-4 text-center"
                 style={{
                   transition: `opacity 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms, transform 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms`,
                   opacity: workflowReveal.isVisible ? 1 : 0,
                   transform: workflowReveal.isVisible ? "translateY(0)" : "translateY(20px)",
                 }}
               >
+                {/* Number above */}
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                  {i + 1}
+                </div>
+
+                {/* Icon box */}
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C3AED]/20 bg-[#1a243a] shadow-lg shadow-[#7C3AED]/5">
                     <step.icon className="h-8 w-8 text-[#9D5CF5]" />
-                  </div>
-                  <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-[10px] font-bold text-white shadow-lg shadow-[#7C3AED]/30">
-                    {i + 1}
                   </div>
                   {workflowReveal.isVisible && (
                     <div className="absolute inset-0 rounded-2xl border-2 border-[#7C3AED]/30" style={{ animation: `pulse-ring 2s ease-out ${i * 0.4}s` }} />
                   )}
                 </div>
+
+                {/* Text below */}
                 <h3 className="text-sm font-semibold text-white">{step.title}</h3>
                 <p className="max-w-[120px] text-xs text-white/40">{step.description}</p>
               </div>

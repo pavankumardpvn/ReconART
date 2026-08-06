@@ -365,6 +365,13 @@
   100% { transform: scale(1.8); opacity: 0; }
 }
 
+@keyframes flow-right {
+  0% { left: -20%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 110%; opacity: 0; }
+}
+
 .hover-glow-row:hover {
   background: var(--background-tertiary);
   box-shadow: inset 0 0 80px rgba(6, 182, 212, 0.02);
