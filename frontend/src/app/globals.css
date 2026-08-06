@@ -248,6 +248,10 @@
    Base Resets
    ========================================================================= */
 
+html {
+  scroll-behavior: smooth;
+}
+
 * {
   border-color: var(--border);
 }
