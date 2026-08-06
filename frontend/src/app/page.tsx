@@ -30,6 +30,24 @@ import {
   TrendingUp,
   Currency,
   ArrowLeftRight,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ShieldAlert,
+  Receipt,
+  Calculator,
+  BookOpen,
+  FileCheck,
+  Bell,
+  Landmark,
+  CreditCard,
+  Smartphone,
+  Store,
+  Coins,
+  ShoppingCart,
+  HandCoins,
+  Gamepad2,
+  Building2,
+  Banknote,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -285,6 +303,39 @@ const pricingPlans = [
   },
 ];
 
+const domains = [
+  { icon: ArrowDownToLine, title: "Cash In", description: "Incoming payments, collections, and deposit reconciliation" },
+  { icon: ArrowUpFromLine, title: "Cash Out", description: "Disbursements, payouts, and withdrawal tracking" },
+  { icon: ShieldAlert, title: "Claims & Chargebacks", description: "Dispute management and chargeback reconciliation" },
+  { icon: Receipt, title: "Fees & Billing", description: "Fee reconciliation and billing validation" },
+  { icon: Calculator, title: "Accounting Automation", description: "Automated journal entries and ledger synchronization" },
+  { icon: BookOpen, title: "Accounting Operations", description: "Period close and general ledger reconciliation" },
+  { icon: FileCheck, title: "Reporting & Regulations", description: "Regulatory compliance and audit-ready reports" },
+  { icon: Bell, title: "Unified Oversight & Alerts", description: "Real-time monitoring and threshold-based alerts" },
+];
+
+const templates = [
+  { title: "Payment Networks", examples: "Visa, Mastercard, Amex", description: "Pre-built processing rules for major card networks" },
+  { title: "Banking & Clearing", examples: "SWIFT, ACH, SEPA", description: "Settlement matching for interbank clearing systems" },
+  { title: "Digital Payments", examples: "PayPal, Stripe, Adyen", description: "Connector templates for digital payment gateways" },
+  { title: "POS & Acquiring", examples: "Terminal, Batch, Merchant", description: "Point-of-sale settlement and merchant batch recon" },
+  { title: "Crypto & Digital Assets", examples: "Exchanges, Wallets, DeFi", description: "Exchange settlement and wallet reconciliation" },
+  { title: "ERP & Accounting", examples: "SAP, Oracle, NetSuite", description: "General ledger matching and ERP integration" },
+];
+
+const industries = [
+  { icon: Landmark, title: "Banks & Financial Institutions", description: "Core banking and interbank settlement" },
+  { icon: CreditCard, title: "Payment Service Providers", description: "PSP aggregation and gateway recon" },
+  { icon: Smartphone, title: "Neobanks & Digital Banks", description: "Real-time digital banking operations" },
+  { icon: Store, title: "Marketplaces & Platforms", description: "Seller payouts and commission tracking" },
+  { icon: Shield, title: "Insurance", description: "Premium collection and claims settlement" },
+  { icon: Coins, title: "Crypto & Digital Assets", description: "Exchange settlement and wallet recon" },
+  { icon: ShoppingCart, title: "Retailers & E-commerce", description: "POS settlement and omnichannel recon" },
+  { icon: HandCoins, title: "Lending & BNPL", description: "Loan disbursement and repayment tracking" },
+  { icon: Gamepad2, title: "Betting & iGaming", description: "Payout reconciliation and compliance" },
+  { icon: Building2, title: "Acquirers & Issuers", description: "Card scheme settlement and interchange" },
+];
+
 const footerSections = [
   {
     title: "Quick Links",
@@ -333,8 +384,11 @@ export default function Home() {
   const integrationsCount = useCountUp(60, 2300, statsReveal.isVisible);
 
   const advantagesReveal = useScrollReveal(0.05);
+  const domainsReveal = useScrollReveal(0.05);
   const servicesReveal = useScrollReveal(0.05);
+  const templatesReveal = useScrollReveal(0.05);
   const resultsReveal = useScrollReveal(0.05);
+  const industriesReveal = useScrollReveal(0.05);
   const pricingReveal = useScrollReveal(0.05);
   const ctaReveal = useScrollReveal(0.05);
 
@@ -664,9 +718,50 @@ export default function Home() {
       <div className="section-divider" />
 
       {/* ================================================================
+          DOMAIN COVERAGE
+          ================================================================ */}
+      <section id="domains" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb left-[20%] top-[30%] h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
+        <div
+          ref={domainsReveal.ref}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${domainsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Coverage</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            End-to-End <span className="landing-gradient-text">Transaction Lifecycle</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            One platform covering 8 domains — no separate modules, no patched integrations.
+          </p>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {domains.map((domain, i) => (
+              <div
+                key={domain.title}
+                className="landing-card landing-card-glow group rounded-2xl p-6 text-center"
+                style={itemReveal(domainsReveal.isVisible, i, 150)}
+              >
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
+                  <domain.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
+                </div>
+                <h3 className="mb-1.5 text-sm font-semibold text-white">{domain.title}</h3>
+                <p className="text-xs leading-relaxed text-white/40">{domain.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
           SERVICES
           ================================================================ */}
-      <section id="services" className="relative bg-[#0c1220] px-6 py-28">
+      <section id="services" className="relative bg-[#0F1729] px-6 py-28">
         <div className="landing-glow-orb left-0 bottom-0 h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
         <div
           ref={servicesReveal.ref}
@@ -715,6 +810,56 @@ export default function Home() {
       <div className="section-divider" />
 
       {/* ================================================================
+          PRE-BUILT TEMPLATES
+          ================================================================ */}
+      <section id="templates" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb right-[10%] top-[20%] h-[350px] w-[350px] bg-[#7C3AED]/[0.03]" />
+        <div
+          ref={templatesReveal.ref}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${templatesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Quick Start</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Go Live in <span className="landing-gradient-text">Weeks, Not Months</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            100+ pre-configured reconciliation templates for major counterparties and payment networks.
+          </p>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {templates.map((tmpl, i) => (
+              <div
+                key={tmpl.title}
+                className="landing-card landing-card-glow group rounded-2xl overflow-hidden"
+                style={itemReveal(templatesReveal.isVisible, i)}
+              >
+                <div className="border-b border-[#7C3AED]/10 bg-gradient-to-r from-[#7C3AED]/[0.06] to-transparent px-7 py-4">
+                  <h3 className="text-base font-semibold text-white">{tmpl.title}</h3>
+                  <p className="text-xs font-medium text-[#14B8A6]">{tmpl.examples}</p>
+                </div>
+                <div className="px-7 py-5">
+                  <p className="mb-4 text-sm leading-relaxed text-white/50">{tmpl.description}</p>
+                  <Link
+                    href="/sign-up"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+                  >
+                    Use Template
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
           RESULTS / CASE STUDIES
           ================================================================ */}
       <section id="results" className="relative bg-[#0F1729] px-6 py-28">
@@ -754,6 +899,47 @@ export default function Home() {
                 <div className="px-8 py-6">
                   <p className="text-sm leading-relaxed text-white/50">{study.description}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
+          INDUSTRY VERTICALS
+          ================================================================ */}
+      <section id="industries" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb left-1/2 bottom-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.03]" />
+        <div
+          ref={industriesReveal.ref}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${industriesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Industries</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Built for <span className="landing-gradient-text">Every Industry</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            Trusted across banking, payments, insurance, and emerging digital finance.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {industries.map((ind, i) => (
+              <div
+                key={ind.title}
+                className="landing-card landing-card-glow group rounded-2xl p-5 text-center"
+                style={itemReveal(industriesReveal.isVisible, i, 100)}
+              >
+                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/15 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
+                  <ind.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
+                </div>
+                <h3 className="mb-1 text-xs font-semibold text-white">{ind.title}</h3>
+                <p className="text-[11px] leading-relaxed text-white/35">{ind.description}</p>
               </div>
             ))}
           </div>
