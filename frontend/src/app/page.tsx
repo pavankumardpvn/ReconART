@@ -588,19 +588,27 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy" },
-              { val: txCount, suffix: "M+", label: "Transactions Processed" },
-              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work" },
-              { val: integrationsCount, suffix: "+", label: "Integrations" },
+              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy", icon: Check },
+              { val: txCount, suffix: "M+", label: "Transactions Processed", icon: Database },
+              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work", icon: Clock },
+              { val: integrationsCount, suffix: "+", label: "Integrations", icon: Layers },
             ].map((stat, i) => (
-              <div key={stat.label} className="group flex flex-col items-center gap-3 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
-                <div className="relative">
-                  <span className="text-4xl font-bold text-white md:text-5xl">
-                    {stat.val}
-                  </span>
-                  <span className="landing-gradient-text text-4xl font-bold md:text-5xl">{stat.suffix}</span>
+              <div key={stat.label} className="group flex flex-col items-center gap-4 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="relative flex h-28 w-28 items-center justify-center">
+                  <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(124,58,237,0.08)" strokeWidth="3" />
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="url(#statGrad)" strokeWidth="3" strokeLinecap="round"
+                      strokeDasharray="276" strokeDashoffset={statsReveal.isVisible ? 276 * (1 - Math.min((typeof stat.val === 'string' ? parseFloat(stat.val) : stat.val) / 100, 1)) : 276}
+                      style={{ transition: 'stroke-dashoffset 2.5s cubic-bezier(.37,0,.63,1)' }} />
+                    <defs><linearGradient id="statGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#7C3AED" /><stop offset="100%" stopColor="#14B8A6" /></linearGradient></defs>
+                  </svg>
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl font-bold text-white md:text-3xl">
+                      {stat.val}<span className="landing-gradient-text">{stat.suffix}</span>
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-white/40 transition-colors group-hover:text-white/60">
+                <span className="text-sm font-medium text-white/50 transition-colors group-hover:text-white/70">
                   {stat.label}
                 </span>
               </div>
@@ -636,14 +644,15 @@ export default function Home() {
             {advantages.map((item, i) => (
               <div
                 key={item.title}
-                className="landing-card landing-card-glow rounded-2xl p-7"
+                className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
                 style={itemReveal(advantagesReveal.isVisible, i)}
               >
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
-                  <item.icon className="h-5 w-5 text-[#9D5CF5]" />
+                <div className="absolute left-0 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-[#7C3AED] to-[#14B8A6] opacity-40 transition-opacity group-hover:opacity-100" />
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
+                  <item.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
+                <p className="text-sm leading-relaxed text-white/50">{item.description}</p>
               </div>
             ))}
           </div>
@@ -727,18 +736,22 @@ export default function Home() {
             {caseStudies.map((study, i) => (
               <div
                 key={study.title}
-                className="landing-card landing-card-glow group rounded-2xl p-8"
+                className="landing-card landing-card-glow group rounded-2xl overflow-hidden"
                 style={itemReveal(resultsReveal.isVisible, i)}
               >
-                <div className="mb-5 flex items-start justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-white">{study.stat}</span>
-                    <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
+                <div className="flex items-center gap-5 border-b border-[#7C3AED]/10 bg-gradient-to-r from-[#7C3AED]/[0.06] to-transparent px-8 py-5">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
+                    <span className="text-lg font-bold text-white">{study.stat}</span>
                   </div>
-                  <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">{study.statLabel}</p>
+                    <p className="text-xs text-white/40">{study.title}</p>
+                  </div>
+                  <TrendingUp className="ml-auto h-5 w-5 text-[#14B8A6]/30 transition-colors group-hover:text-[#14B8A6]" />
                 </div>
-                <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
-                <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
+                <div className="px-8 py-6">
+                  <p className="text-sm leading-relaxed text-white/50">{study.description}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -825,18 +838,25 @@ export default function Home() {
       {/* ================================================================
           QUOTE
           ================================================================ */}
-      <section className="relative bg-[#0F1729] px-6 py-20">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 text-4xl text-[#7C3AED]/20">&ldquo;</div>
-          <blockquote className="mb-6 text-xl font-medium italic leading-relaxed text-white/70 md:text-2xl">
-            Most teams spend more time managing their reconciliation tools than
-            actually reconciling. The right platform should eliminate complexity,
-            not add to it.
-          </blockquote>
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#7C3AED]/40" />
-            <span className="text-sm font-semibold tracking-wider text-[#9D5CF5]">The ReconArt Philosophy</span>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#7C3AED]/40" />
+      <section className="relative bg-[#0F1729] px-6 py-24">
+        <div className="landing-glow-orb left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
+        <div className="relative mx-auto max-w-3xl">
+          <div className="landing-card rounded-3xl px-10 py-14 text-center">
+            <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
+              <span className="text-2xl font-bold text-[#7C3AED]">&ldquo;</span>
+            </div>
+            <blockquote className="mb-8 text-xl font-medium leading-relaxed text-white/80 md:text-2xl">
+              Most teams spend more time managing their reconciliation tools than
+              actually reconciling. The right platform should eliminate complexity,
+              not add to it.
+            </blockquote>
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white">RA</div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-white">ReconArt Team</p>
+                <p className="text-xs text-white/40">Product Philosophy</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
