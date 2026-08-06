@@ -292,18 +292,18 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Stats — single section-level trigger so all counters start together on scroll
-  const statsReveal = useScrollReveal(0.3);
+  const statsReveal = useScrollReveal(0.2);
   const accuracyCount = useCountUp(999, 2000, statsReveal.isVisible);
   const txCount = useCountUp(10, 1500, statsReveal.isVisible);
   const reductionCount = useCountUp(85, 1800, statsReveal.isVisible);
   const integrationsCount = useCountUp(60, 1600, statsReveal.isVisible);
 
-  // Section reveals
-  const advantagesReveal = useScrollReveal();
-  const servicesReveal = useScrollReveal();
-  const resultsReveal = useScrollReveal();
-  const pricingReveal = useScrollReveal();
-  const ctaReveal = useScrollReveal();
+  // Section reveals — low threshold so animations trigger early
+  const advantagesReveal = useScrollReveal(0.05);
+  const servicesReveal = useScrollReveal(0.05);
+  const resultsReveal = useScrollReveal(0.05);
+  const pricingReveal = useScrollReveal(0.05);
+  const ctaReveal = useScrollReveal(0.05);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -315,7 +315,7 @@ export default function Home() {
     if (isLoaded && isSignedIn) router.push("/dashboard");
   }, [isLoaded, isSignedIn, router]);
 
-  if (!isLoaded || isSignedIn) return null;
+  if (isLoaded && isSignedIn) return null;
 
   const closeMobile = () => setMobileMenuOpen(false);
 
@@ -429,25 +429,37 @@ export default function Home() {
         <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 lg:grid-cols-2">
           {/* Left — Text */}
           <div className="flex flex-col gap-8">
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#1a243a]/60 px-4 py-1.5">
+            <div
+              className="animate-fade-in-up inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#1a243a]/60 px-4 py-1.5"
+              style={{ animationDelay: "0.1s" }}
+            >
               <Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" />
               <span className="text-xs font-medium text-[#9D5CF5]">
                 Intelligent Reconciliation Platform
               </span>
             </div>
 
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+            <h1
+              className="animate-fade-in-up text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
+              style={{ animationDelay: "0.3s" }}
+            >
               Are your reconciliations actually delivering{" "}
               <span className="text-[#7C3AED]">ROI</span>?
             </h1>
 
-            <p className="max-w-lg text-lg leading-relaxed text-white/60">
+            <p
+              className="animate-fade-in-up max-w-lg text-lg leading-relaxed text-white/60"
+              style={{ animationDelay: "0.5s" }}
+            >
               ReconArt is the only platform that combines AI-powered matching,
               real-time analytics, and vendor-agnostic flexibility — delivering
               answers in minutes, not months.
             </p>
 
-            <div className="flex flex-col gap-4 sm:flex-row">
+            <div
+              className="animate-fade-in-up flex flex-col gap-4 sm:flex-row"
+              style={{ animationDelay: "0.7s" }}
+            >
               <Link href="/sign-up">
                 <button className="inline-flex items-center gap-2 rounded-full bg-[#7C3AED] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/30">
                   Start Free Trial
@@ -463,7 +475,10 @@ export default function Home() {
           </div>
 
           {/* Right — Platform Card */}
-          <div className="hidden lg:block">
+          <div
+            className="animate-fade-in-up hidden lg:block"
+            style={{ animationDelay: "0.6s" }}
+          >
             <div className="rounded-3xl border border-[#2f3c5b] bg-[#1a243a] p-8 shadow-2xl shadow-[#7C3AED]/5">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/20">
@@ -539,7 +554,7 @@ export default function Home() {
       <section id="stats" className="border-y border-[#2f3c5b]/40 bg-[#0F1729] px-6 py-20">
         <div
           ref={statsReveal.ref}
-          className="mx-auto max-w-[1200px]"
+          className={`mx-auto max-w-[1200px] transition-all duration-700 ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
           <p className="mb-12 text-center text-lg text-white/50">
             Traditional reconciliation takes weeks.{" "}
