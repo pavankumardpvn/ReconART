@@ -308,10 +308,10 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const statsReveal = useScrollReveal(0.2);
-  const accuracyCount = useCountUp(999, 2000, statsReveal.isVisible);
-  const txCount = useCountUp(10, 1500, statsReveal.isVisible);
-  const reductionCount = useCountUp(85, 1800, statsReveal.isVisible);
-  const integrationsCount = useCountUp(60, 1600, statsReveal.isVisible);
+  const accuracyCount = useCountUp(999, 2800, statsReveal.isVisible);
+  const txCount = useCountUp(10, 2200, statsReveal.isVisible);
+  const reductionCount = useCountUp(85, 2500, statsReveal.isVisible);
+  const integrationsCount = useCountUp(60, 2300, statsReveal.isVisible);
 
   const advantagesReveal = useScrollReveal(0.05);
   const servicesReveal = useScrollReveal(0.05);
@@ -629,9 +629,9 @@ export default function Home() {
                 key={item.title}
                 className="landing-card landing-card-glow rounded-2xl p-7"
                 style={{
-                  transitionDelay: `${i * 80}ms`,
+                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
                   opacity: advantagesReveal.isVisible ? 1 : 0,
-                  transform: advantagesReveal.isVisible ? "translateY(0)" : "translateY(24px)",
+                  transform: advantagesReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
                 }}
               >
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:from-[#7C3AED]/30">
@@ -674,9 +674,9 @@ export default function Home() {
                 key={service.num}
                 className="landing-card landing-card-glow group rounded-2xl p-7"
                 style={{
-                  transitionDelay: `${i * 80}ms`,
+                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
                   opacity: servicesReveal.isVisible ? 1 : 0,
-                  transform: servicesReveal.isVisible ? "translateY(0)" : "translateY(24px)",
+                  transform: servicesReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
                 }}
               >
                 <div className="mb-4 flex items-center justify-between">
@@ -728,9 +728,9 @@ export default function Home() {
                 key={study.title}
                 className="landing-card landing-card-glow group rounded-2xl p-8"
                 style={{
-                  transitionDelay: `${i * 100}ms`,
+                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
                   opacity: resultsReveal.isVisible ? 1 : 0,
-                  transform: resultsReveal.isVisible ? "translateY(0)" : "translateY(24px)",
+                  transform: resultsReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
                 }}
               >
                 <div className="mb-5 flex items-start justify-between">
@@ -781,11 +781,11 @@ export default function Home() {
                     : "landing-card"
                 }`}
                 style={{
-                  transitionDelay: `${i * 100}ms`,
+                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 300}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 300}ms`,
                   opacity: pricingReveal.isVisible ? 1 : 0,
                   transform: pricingReveal.isVisible
-                    ? plan.highlighted ? "translateY(0) scale(1.02)" : "translateY(0)"
-                    : "translateY(24px)",
+                    ? plan.highlighted ? "translateY(0) scale(1.02)" : "translateY(0) scale(1)"
+                    : "translateY(40px) scale(0.95)",
                 }}
               >
                 {plan.highlighted && (
