@@ -100,6 +100,30 @@ function useCountUp(target: number, duration: number, shouldStart: boolean) {
   return count;
 }
 
+function useMouseGlow() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0, active: false });
+
+  const onMove = (e: React.MouseEvent) => {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top, active: true });
+  };
+  const onLeave = () => setPos((p) => ({ ...p, active: false }));
+
+  const style: React.CSSProperties = {
+    position: "absolute",
+    inset: 0,
+    pointerEvents: "none",
+    borderRadius: "inherit",
+    opacity: pos.active ? 1 : 0,
+    transition: "opacity 0.4s ease",
+    background: `radial-gradient(700px circle at ${pos.x}px ${pos.y}px, rgba(124,58,237,0.07), transparent 40%)`,
+  };
+
+  return { ref, onMove, onLeave, glowStyle: style };
+}
+
 function itemReveal(isVisible: boolean, i: number, stagger = 200): React.CSSProperties {
   const delay = i * stagger;
   return {
@@ -336,6 +360,18 @@ const industries = [
   { icon: Building2, title: "Acquirers & Issuers", description: "Card scheme settlement and interchange" },
 ];
 
+const logoPartners = [
+  "Visa", "Mastercard", "Stripe", "PayPal", "Adyen", "SWIFT", "SAP", "Oracle",
+  "NetSuite", "Plaid", "Square", "Worldpay", "FIS", "Fiserv", "Braintree",
+];
+
+const workflowSteps = [
+  { icon: Database, title: "Connect Data", description: "Ingest from any source" },
+  { icon: Brain, title: "Smart Matching", description: "AI-powered reconciliation" },
+  { icon: AlertTriangle, title: "Resolve Exceptions", description: "Classify & action" },
+  { icon: LineChart, title: "Report & Comply", description: "Audit-ready insights" },
+];
+
 const footerSections = [
   {
     title: "Quick Links",
@@ -383,9 +419,12 @@ export default function Home() {
   const reductionCount = useCountUp(85, 2500, statsReveal.isVisible);
   const integrationsCount = useCountUp(60, 2300, statsReveal.isVisible);
 
+  const workflowReveal = useScrollReveal(0.2);
   const advantagesReveal = useScrollReveal(0.05);
+  const advantagesGlow = useMouseGlow();
   const domainsReveal = useScrollReveal(0.05);
   const servicesReveal = useScrollReveal(0.05);
+  const servicesGlow = useMouseGlow();
   const templatesReveal = useScrollReveal(0.05);
   const resultsReveal = useScrollReveal(0.05);
   const industriesReveal = useScrollReveal(0.05);
@@ -673,12 +712,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ================================================================
+          LOGO TICKER
+          ================================================================ */}
+      <section className="border-y border-[#7C3AED]/[0.06] bg-[#0a0f1d] px-6 py-10 overflow-hidden">
+        <p className="mb-6 text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/20">
+          Integrations & Counterparties
+        </p>
+        <div className="relative mx-auto max-w-[1200px] overflow-hidden">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-r from-[#0a0f1d] to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-l from-[#0a0f1d] to-transparent" />
+          <div className="logo-ticker">
+            {[...logoPartners, ...logoPartners].map((name, i) => (
+              <div
+                key={`${name}-${i}`}
+                className="mx-6 flex shrink-0 items-center gap-2 rounded-lg border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-2.5"
+              >
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 text-[8px] font-bold text-[#9D5CF5]">
+                  {name.substring(0, 2).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium text-white/40">{name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================
+          WORKFLOW DIAGRAM
+          ================================================================ */}
+      <section className="relative bg-[#0F1729] px-6 py-28">
+        <div
+          ref={workflowReveal.ref}
+          className={`relative mx-auto max-w-[900px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${workflowReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">How It Works</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            From Data to <span className="landing-gradient-text">Decision</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
+            Four steps to complete reconciliation — automated, auditable, done.
+          </p>
+
+          <div className="relative flex flex-col items-center gap-0 md:flex-row md:justify-between">
+            {/* Connecting line */}
+            <div className="absolute left-[10%] right-[10%] top-[40px] hidden h-[2px] md:block">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#7C3AED] via-[#9D5CF5] to-[#14B8A6]"
+                style={{
+                  transition: "transform 2s cubic-bezier(.37,0,.63,1)",
+                  transformOrigin: "left",
+                  transform: workflowReveal.isVisible ? "scaleX(1)" : "scaleX(0)",
+                }}
+              />
+            </div>
+
+            {workflowSteps.map((step, i) => (
+              <div
+                key={step.title}
+                className="relative z-10 flex flex-col items-center gap-3 text-center"
+                style={{
+                  transition: `opacity 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms, transform 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms`,
+                  opacity: workflowReveal.isVisible ? 1 : 0,
+                  transform: workflowReveal.isVisible ? "translateY(0)" : "translateY(20px)",
+                }}
+              >
+                <div className="relative">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C3AED]/20 bg-[#1a243a] shadow-lg shadow-[#7C3AED]/5">
+                    <step.icon className="h-8 w-8 text-[#9D5CF5]" />
+                  </div>
+                  <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-[10px] font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                    {i + 1}
+                  </div>
+                  {workflowReveal.isVisible && (
+                    <div className="absolute inset-0 rounded-2xl border-2 border-[#7C3AED]/30" style={{ animation: `pulse-ring 2s ease-out ${i * 0.4}s` }} />
+                  )}
+                </div>
+                <h3 className="text-sm font-semibold text-white">{step.title}</h3>
+                <p className="max-w-[120px] text-xs text-white/40">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <div className="section-divider" />
 
       {/* ================================================================
           ADVANTAGES
           ================================================================ */}
-      <section id="advantages" className="relative bg-[#0F1729] px-6 py-28">
+      <section id="advantages" className="relative bg-[#0c1220] px-6 py-28">
         <div className="landing-glow-orb right-0 top-0 h-[400px] w-[400px] bg-[#7C3AED]/[0.03]" />
         <div
           ref={advantagesReveal.ref}
@@ -696,7 +823,13 @@ export default function Home() {
             Our platform delivers what traditional reconciliation tools can&apos;t — speed, intelligence, and complete transparency.
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            ref={advantagesGlow.ref}
+            onMouseMove={advantagesGlow.onMove}
+            onMouseLeave={advantagesGlow.onLeave}
+            className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <div style={advantagesGlow.glowStyle} />
             {advantages.map((item, i) => (
               <div
                 key={item.title}
@@ -779,7 +912,13 @@ export default function Home() {
             A comprehensive reconciliation platform covering the full lifecycle — from data ingestion to compliance reporting.
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            ref={servicesGlow.ref}
+            onMouseMove={servicesGlow.onMove}
+            onMouseLeave={servicesGlow.onLeave}
+            className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            <div style={servicesGlow.glowStyle} />
             {services.map((service, i) => (
               <div
                 key={service.num}

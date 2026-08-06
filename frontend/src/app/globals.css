@@ -332,6 +332,39 @@
   background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), rgba(20, 184, 166, 0.2), transparent);
 }
 
+/* Logo ticker */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.logo-ticker {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll 30s linear infinite;
+}
+.logo-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Workflow draw line */
+@keyframes draw-line {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+.workflow-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  transition: stroke-dashoffset 1.5s cubic-bezier(.37,0,.63,1);
+}
+.workflow-line.drawn {
+  stroke-dashoffset: 0;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
 .hover-glow-row:hover {
   background: var(--background-tertiary);
   box-shadow: inset 0 0 80px rgba(6, 182, 212, 0.02);
