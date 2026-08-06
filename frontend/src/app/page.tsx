@@ -80,22 +80,13 @@ function useCountUp(target: number, duration: number, shouldStart: boolean) {
   return count;
 }
 
-function boxReveal(isVisible: boolean, i: number, stagger = 400) {
-  const delay = 300 + i * stagger;
+function itemReveal(isVisible: boolean, i: number, stagger = 200): React.CSSProperties {
+  const delay = i * stagger;
   return {
-    transition: `opacity 1.5s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 1.5s cubic-bezier(0.22,1,0.36,1) ${delay}ms, box-shadow 1.5s ease ${delay}ms`,
+    transition: `opacity 1.2s cubic-bezier(.37,0,.63,1) ${delay}ms, transform 1.2s cubic-bezier(.37,0,.63,1) ${delay}ms`,
     opacity: isVisible ? 1 : 0,
-    transform: isVisible ? "translateY(0) scale(1)" : "translateY(50px) scale(0.93)",
-  } as React.CSSProperties;
-}
-
-function contentReveal(isVisible: boolean, i: number, stagger = 400) {
-  const delay = 300 + i * stagger + 800;
-  return {
-    transition: `opacity 1s ease-out ${delay}ms, transform 1s ease-out ${delay}ms`,
-    opacity: isVisible ? 1 : 0,
-    transform: isVisible ? "translateX(0)" : "translateX(-35px)",
-  } as React.CSSProperties;
+    transform: isVisible ? "translateY(0)" : "translateY(30px)",
+  };
 }
 
 /* =========================================================================
@@ -588,7 +579,7 @@ export default function Home() {
         <div className="landing-glow-orb left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
         <div
           ref={statsReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <p className="mb-14 text-center text-lg text-white/40">
             Traditional reconciliation takes weeks.{" "}
@@ -627,7 +618,7 @@ export default function Home() {
         <div className="landing-glow-orb right-0 top-0 h-[400px] w-[400px] bg-[#7C3AED]/[0.03]" />
         <div
           ref={advantagesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -645,16 +636,14 @@ export default function Home() {
             {advantages.map((item, i) => (
               <div
                 key={item.title}
-                className="landing-card landing-card-glow rounded-2xl p-7 overflow-hidden"
-                style={boxReveal(advantagesReveal.isVisible, i)}
+                className="landing-card landing-card-glow rounded-2xl p-7"
+                style={itemReveal(advantagesReveal.isVisible, i)}
               >
-                <div style={contentReveal(advantagesReveal.isVisible, i)}>
-                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
-                    <item.icon className="h-5 w-5 text-[#9D5CF5]" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
+                  <item.icon className="h-5 w-5 text-[#9D5CF5]" />
                 </div>
+                <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
               </div>
             ))}
           </div>
@@ -670,7 +659,7 @@ export default function Home() {
         <div className="landing-glow-orb left-0 bottom-0 h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
         <div
           ref={servicesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -688,26 +677,24 @@ export default function Home() {
             {services.map((service, i) => (
               <div
                 key={service.num}
-                className="landing-card landing-card-glow group rounded-2xl p-7 overflow-hidden"
-                style={boxReveal(servicesReveal.isVisible, i)}
+                className="landing-card landing-card-glow group rounded-2xl p-7"
+                style={itemReveal(servicesReveal.isVisible, i)}
               >
-                <div style={contentReveal(servicesReveal.isVisible, i)}>
-                  <div className="mb-4 flex items-center justify-between">
-                    <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
-                      <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
-                    </div>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
+                    <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
                   </div>
-                  <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
-                  <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
-                  <Link
-                    href="/sign-up"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
-                  >
-                    {service.cta}
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
                 </div>
+                <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
+                <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
+                <Link
+                  href="/sign-up"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+                >
+                  {service.cta}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </div>
             ))}
           </div>
@@ -722,7 +709,7 @@ export default function Home() {
       <section id="results" className="relative bg-[#0F1729] px-6 py-28">
         <div
           ref={resultsReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -740,20 +727,18 @@ export default function Home() {
             {caseStudies.map((study, i) => (
               <div
                 key={study.title}
-                className="landing-card landing-card-glow group rounded-2xl p-8 overflow-hidden"
-                style={boxReveal(resultsReveal.isVisible, i)}
+                className="landing-card landing-card-glow group rounded-2xl p-8"
+                style={itemReveal(resultsReveal.isVisible, i)}
               >
-                <div style={contentReveal(resultsReveal.isVisible, i)}>
-                  <div className="mb-5 flex items-start justify-between">
-                    <div>
-                      <span className="text-3xl font-bold text-white">{study.stat}</span>
-                      <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
-                    </div>
-                    <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
+                <div className="mb-5 flex items-start justify-between">
+                  <div>
+                    <span className="text-3xl font-bold text-white">{study.stat}</span>
+                    <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
                   </div>
-                  <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
-                  <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
+                  <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
                 </div>
+                <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
+                <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
               </div>
             ))}
           </div>
@@ -769,7 +754,7 @@ export default function Home() {
         <div className="landing-glow-orb left-1/2 top-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.04]" />
         <div
           ref={pricingReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -792,10 +777,7 @@ export default function Home() {
                     ? "landing-card border-[#7C3AED]/50 shadow-2xl shadow-[#7C3AED]/10"
                     : "landing-card"
                 }`}
-                style={{
-                  ...boxReveal(pricingReveal.isVisible, i, 450),
-                  ...(plan.highlighted && pricingReveal.isVisible ? { transform: "translateY(0) scale(1.02)" } : {}),
-                }}
+                style={itemReveal(pricingReveal.isVisible, i, 250)}
               >
                 {plan.highlighted && (
                   <>
@@ -805,7 +787,7 @@ export default function Home() {
                     </div>
                   </>
                 )}
-                <div style={contentReveal(pricingReveal.isVisible, i, 450)}>
+                <div>
                   <h3 className="mb-2 text-lg font-semibold text-white">{plan.name}</h3>
                   <div className="mb-1 flex items-baseline gap-1">
                     <span className="text-4xl font-bold text-white">{plan.price}</span>
@@ -867,7 +849,7 @@ export default function Home() {
       <section className="relative px-6 py-28">
         <div
           ref={ctaReveal.ref}
-          className={`relative mx-auto max-w-[1200px] overflow-hidden rounded-3xl transition-all duration-700 ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] overflow-hidden rounded-3xl transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           {/* Animated gradient bg */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#7C3AED] via-[#6D28D9] to-[#9D5CF5]" />
