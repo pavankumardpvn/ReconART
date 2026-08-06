@@ -28,6 +28,8 @@ import {
   Clock,
   Star,
   TrendingUp,
+  Currency,
+  ArrowLeftRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -115,10 +117,10 @@ const advantages = [
       "Connect any data source — ERP, banking core, payment gateway — with zero vendor lock-in. Your data, your rules.",
   },
   {
-    icon: Zap,
-    title: "Free Tier Available",
+    icon: Currency,
+    title: "Cross-Border Currency Support",
     description:
-      "Start with our free plan to audit your reconciliation landscape. No credit card, no commitment, just clarity.",
+      "Reconcile across 150+ currencies with real-time FX rates, multi-currency matching, and automated conversion for global operations.",
   },
   {
     icon: Search,
@@ -183,6 +185,14 @@ const services = [
   },
   {
     num: "06",
+    icon: ArrowLeftRight,
+    title: "Cross-Border Currency",
+    description:
+      "Multi-currency reconciliation with real-time FX rates, automated conversion, and tolerance-based matching across 150+ currencies.",
+    cta: "Go Global",
+  },
+  {
+    num: "07",
     icon: Shield,
     title: "Compliance & Audit",
     description:
@@ -464,7 +474,7 @@ export default function Home() {
               style={{ animationDelay: "0.5s" }}
             >
               ReconArt is the only platform that combines AI-powered matching,
-              real-time analytics, and vendor-agnostic flexibility — delivering
+              cross-border currency support, and real-time analytics — delivering
               answers in minutes, not months.
             </p>
 
@@ -534,7 +544,7 @@ export default function Home() {
 
                 <div className="mb-5 space-y-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#14B8A6]">Core Features</p>
-                  {["Multi-source transaction matching", "AI-powered exception detection", "Real-time analytics dashboards"].map((item) => (
+                  {["Multi-source transaction matching", "AI-powered exception detection", "Cross-border currency support"].map((item) => (
                     <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
                       <Check className="h-3.5 w-3.5 text-[#14B8A6]" />
                       {item}
@@ -544,7 +554,7 @@ export default function Home() {
 
                 <div className="mb-6 space-y-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9D5CF5]">Advanced</p>
-                  {["ML confidence scoring", "Automated compliance workflows", "Custom ROI reporting"].map((item) => (
+                  {["ML confidence scoring", "150+ currency FX rates", "Custom ROI reporting"].map((item) => (
                     <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
                       <Check className="h-3.5 w-3.5 text-[#9D5CF5]" />
                       {item}
