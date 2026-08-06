@@ -26,6 +26,8 @@ import {
   Sparkles,
   Search,
   Clock,
+  Star,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -33,7 +35,7 @@ import Link from "next/link";
    Hooks
    ========================================================================= */
 
-function useScrollReveal(threshold = 0.15) {
+function useScrollReveal(threshold = 0.1) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -132,6 +134,7 @@ const advantages = [
 const services = [
   {
     num: "01",
+    icon: Database,
     title: "Data Sources",
     description:
       "Connect, normalize, and manage data from any financial system with automated schema detection and real-time sync.",
@@ -139,6 +142,7 @@ const services = [
   },
   {
     num: "02",
+    icon: Brain,
     title: "Matching Engine",
     description:
       "AI-powered transaction matching with configurable rules, fuzzy logic, and ML-driven confidence scoring.",
@@ -146,6 +150,7 @@ const services = [
   },
   {
     num: "03",
+    icon: AlertTriangle,
     title: "Exception Management",
     description:
       "Automated detection, severity classification, and resolution workflows for every discrepancy.",
@@ -153,6 +158,7 @@ const services = [
   },
   {
     num: "04",
+    icon: LineChart,
     title: "Analytics & Reporting",
     description:
       "Real-time dashboards, trend analysis, and operational KPIs to drive continuous improvement.",
@@ -160,6 +166,7 @@ const services = [
   },
   {
     num: "05",
+    icon: Clock,
     title: "Automation",
     description:
       "Scheduled reconciliations, automated alerts, and workflow triggers that eliminate manual intervention.",
@@ -167,6 +174,7 @@ const services = [
   },
   {
     num: "06",
+    icon: Shield,
     title: "Compliance & Audit",
     description:
       "Complete audit trails, regulatory reporting, and governance frameworks built into every workflow.",
@@ -177,21 +185,29 @@ const services = [
 const caseStudies = [
   {
     title: "Global Payment Processor",
+    stat: "85%",
+    statLabel: "Faster Exception Handling",
     description:
       "Automated matching of 2M+ daily transactions across 15 payment channels, reducing exception handling time by 85%.",
   },
   {
     title: "Investment Management Firm",
+    stat: "99.9%",
+    statLabel: "Match Accuracy",
     description:
       "End-to-end trade reconciliation transformation across all asset classes, achieving 99.9% match accuracy within 30 days.",
   },
   {
     title: "Digital Banking Platform",
+    stat: "500K+",
+    statLabel: "Daily Transactions",
     description:
       "Real-time transaction reconciliation for a neo-bank processing 500K+ daily transactions with zero manual intervention.",
   },
   {
     title: "Insurance Group",
+    stat: "8",
+    statLabel: "Business Units",
     description:
       "Multi-entity premium reconciliation across 8 business units, eliminating month-end bottlenecks and ensuring regulatory compliance.",
   },
@@ -291,14 +307,12 @@ export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Stats — single section-level trigger so all counters start together on scroll
   const statsReveal = useScrollReveal(0.2);
   const accuracyCount = useCountUp(999, 2000, statsReveal.isVisible);
   const txCount = useCountUp(10, 1500, statsReveal.isVisible);
   const reductionCount = useCountUp(85, 1800, statsReveal.isVisible);
   const integrationsCount = useCountUp(60, 1600, statsReveal.isVisible);
 
-  // Section reveals — low threshold so animations trigger early
   const advantagesReveal = useScrollReveal(0.05);
   const servicesReveal = useScrollReveal(0.05);
   const resultsReveal = useScrollReveal(0.05);
@@ -320,24 +334,24 @@ export default function Home() {
   const closeMobile = () => setMobileMenuOpen(false);
 
   return (
-    <div className="min-h-screen bg-[#0F1729] text-white font-[var(--font-geist-sans)]">
+    <div className="min-h-screen bg-[#0F1729] text-white font-[var(--font-geist-sans)] overflow-x-hidden">
       {/* ================================================================
           NAVIGATION
           ================================================================ */}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           scrolled
-            ? "bg-[#0F1729]/95 backdrop-blur-xl border-b border-[#2f3c5b]/50 shadow-lg shadow-black/30"
+            ? "bg-[#0F1729]/80 backdrop-blur-2xl border-b border-[#7C3AED]/10 shadow-2xl shadow-[#7C3AED]/5"
             : "bg-transparent"
         }`}
       >
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7C3AED] shadow-lg shadow-[#7C3AED]/20">
+          <Link href="/" className="group flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] shadow-lg shadow-[#7C3AED]/25 transition-shadow group-hover:shadow-[#7C3AED]/40">
               <GitCompareArrows className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              ReconArt
+              Recon<span className="text-[#9D5CF5]">Art</span>
             </span>
           </Link>
 
@@ -346,22 +360,22 @@ export default function Home() {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-white/70 transition-colors hover:text-white hover:underline underline-offset-4"
+                className="relative text-sm font-medium text-white/60 transition-colors hover:text-white after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-[#7C3AED] after:transition-all hover:after:w-full"
               >
                 {link.label}
               </a>
             ))}
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-4 md:flex">
             <Link
               href="/sign-in"
-              className="text-sm font-medium text-white/70 transition-colors hover:text-white"
+              className="text-sm font-medium text-white/60 transition-colors hover:text-white"
             >
               Sign In
             </Link>
             <Link href="/sign-up">
-              <button className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0F1729] transition-all hover:bg-white/90 hover:shadow-lg hover:shadow-white/10">
+              <button className="landing-btn-primary inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white">
                 Start Free Trial
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -369,42 +383,25 @@ export default function Home() {
           </div>
 
           <button
-            className="text-white/70 md:hidden"
+            className="text-white/60 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-[#2f3c5b]/50 bg-[#0F1729]/98 backdrop-blur-xl md:hidden">
+          <div className="border-t border-[#7C3AED]/10 bg-[#0F1729]/98 backdrop-blur-2xl md:hidden">
             <div className="flex flex-col gap-1 px-6 py-4">
               {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={closeMobile}
-                  className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-[#1a243a] hover:text-white"
-                >
+                <a key={link.label} href={link.href} onClick={closeMobile} className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-[#1a243a] hover:text-white">
                   {link.label}
                 </a>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-[#2f3c5b]/50 pt-4">
-                <Link
-                  href="/sign-in"
-                  onClick={closeMobile}
-                  className="rounded-lg px-3 py-2.5 text-center text-sm font-medium text-white/70"
-                >
-                  Sign In
-                </Link>
+                <Link href="/sign-in" onClick={closeMobile} className="rounded-lg px-3 py-2.5 text-center text-sm font-medium text-white/60">Sign In</Link>
                 <Link href="/sign-up" onClick={closeMobile}>
-                  <button className="w-full rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0F1729]">
-                    Start Free Trial
-                  </button>
+                  <button className="landing-btn-primary w-full rounded-full px-5 py-2.5 text-sm font-semibold text-white">Start Free Trial</button>
                 </Link>
               </div>
             </div>
@@ -415,40 +412,46 @@ export default function Home() {
       {/* ================================================================
           HERO SECTION
           ================================================================ */}
-      <section className="relative flex min-h-screen items-center overflow-hidden px-6 pt-20">
+      <section className="landing-hero-bg relative flex min-h-screen items-center overflow-hidden px-6 pt-20">
+        {/* Decorative orbs */}
+        <div className="landing-glow-orb animate-float left-[10%] top-[20%] h-[400px] w-[400px] bg-[#7C3AED]/[0.04]" />
+        <div className="landing-glow-orb animate-float left-[60%] top-[60%] h-[350px] w-[350px] bg-[#14B8A6]/[0.03]" style={{ animationDelay: "3s" }} />
+        <div className="landing-glow-orb left-[80%] top-[10%] h-[200px] w-[200px] bg-[#9D5CF5]/[0.05]" />
+
+        {/* Grid pattern */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage:
-              "radial-gradient(circle, rgba(124,58,237,0.5) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.6) 1px, transparent 1px)",
             backgroundSize: "40px 40px",
           }}
         />
-        <div className="pointer-events-none absolute left-1/2 top-1/3 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.06)_0%,transparent_70%)]" />
 
-        <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 lg:grid-cols-2">
+        <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-16 lg:grid-cols-2">
           {/* Left — Text */}
           <div className="flex flex-col gap-8">
             <div
-              className="animate-fade-in-up inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#1a243a]/60 px-4 py-1.5"
+              className="animate-fade-in-up inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] px-4 py-2 backdrop-blur-sm"
               style={{ animationDelay: "0.1s" }}
             >
-              <Sparkles className="h-3.5 w-3.5 text-[#7C3AED]" />
-              <span className="text-xs font-medium text-[#9D5CF5]">
+              <Sparkles className="h-3.5 w-3.5 text-[#9D5CF5]" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#9D5CF5]">
                 Intelligent Reconciliation Platform
               </span>
             </div>
 
             <h1
-              className="animate-fade-in-up text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
+              className="animate-fade-in-up text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]"
               style={{ animationDelay: "0.3s" }}
             >
-              Are your reconciliations actually delivering{" "}
-              <span className="text-[#7C3AED]">ROI</span>?
+              Are your reconciliations
+              <br />
+              actually delivering{" "}
+              <span className="landing-gradient-text">ROI</span>?
             </h1>
 
             <p
-              className="animate-fade-in-up max-w-lg text-lg leading-relaxed text-white/60"
+              className="animate-fade-in-up max-w-lg text-lg leading-relaxed text-white/50"
               style={{ animationDelay: "0.5s" }}
             >
               ReconArt is the only platform that combines AI-powered matching,
@@ -461,16 +464,37 @@ export default function Home() {
               style={{ animationDelay: "0.7s" }}
             >
               <Link href="/sign-up">
-                <button className="inline-flex items-center gap-2 rounded-full bg-[#7C3AED] px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/30">
+                <button className="landing-btn-primary inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-white">
                   Start Free Trial
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <a href="#advantages">
-                <button className="inline-flex items-center gap-2 rounded-full border border-[#9D5CF5] bg-transparent px-8 py-3.5 text-sm font-semibold text-[#9D5CF5] transition-all hover:bg-[#9D5CF5]/10">
+                <button className="inline-flex items-center gap-2 rounded-full border border-[#9D5CF5]/40 bg-[#9D5CF5]/[0.06] px-8 py-4 text-sm font-semibold text-[#9D5CF5] backdrop-blur-sm transition-all hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/60">
                   Learn More
+                  <ChevronDown className="h-4 w-4" />
                 </button>
               </a>
+            </div>
+
+            {/* Trust strip */}
+            <div
+              className="animate-fade-in-up flex items-center gap-6 pt-4"
+              style={{ animationDelay: "0.9s" }}
+            >
+              <div className="flex -space-x-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#0F1729] bg-gradient-to-br from-[#7C3AED]/40 to-[#14B8A6]/40 text-[10px] font-bold text-white/80">
+                    {["JP", "GS", "DB", "UB"][i]}
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star key={i} className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+                ))}
+                <span className="ml-2 text-xs text-white/40">Trusted by 60+ institutions</span>
+              </div>
             </div>
           </div>
 
@@ -479,220 +503,196 @@ export default function Home() {
             className="animate-fade-in-up hidden lg:block"
             style={{ animationDelay: "0.6s" }}
           >
-            <div className="rounded-3xl border border-[#2f3c5b] bg-[#1a243a] p-8 shadow-2xl shadow-[#7C3AED]/5">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C3AED]/20">
-                  <GitCompareArrows className="h-5 w-5 text-[#7C3AED]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    ReconArt Platform
-                  </h3>
-                  <p className="text-xs text-white/40">
-                    Reconciliation Intelligence
-                  </p>
-                </div>
-              </div>
+            <div className="relative">
+              {/* Glow behind card */}
+              <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-[#7C3AED]/10 to-[#14B8A6]/5 blur-2xl" />
 
-              <div className="mb-6 space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#14B8A6]">
-                  Core Features
-                </p>
-                {[
-                  "Multi-source transaction matching",
-                  "AI-powered exception detection",
-                  "Real-time analytics dashboards",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2 py-1.5 text-sm text-white/70"
-                  >
-                    <Check className="h-3.5 w-3.5 text-[#14B8A6]" />
-                    {item}
+              <div className="landing-card landing-card-glow relative rounded-3xl p-8">
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/30 to-[#14B8A6]/20">
+                      <GitCompareArrows className="h-5 w-5 text-[#9D5CF5]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">ReconArt Platform</h3>
+                      <p className="text-xs text-white/30">Reconciliation Intelligence</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="mb-6 space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-[#9D5CF5]">
-                  Advanced
-                </p>
-                {[
-                  "ML confidence scoring",
-                  "Automated compliance workflows",
-                  "Custom ROI reporting",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2 py-1.5 text-sm text-white/70"
-                  >
-                    <Check className="h-3.5 w-3.5 text-[#9D5CF5]" />
-                    {item}
+                  <div className="flex h-2 w-2 rounded-full bg-[#10b981] shadow-lg shadow-[#10b981]/50">
+                    <div className="h-2 w-2 animate-ping rounded-full bg-[#10b981]" />
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <div className="rounded-xl bg-[#0F1729] px-4 py-3 text-center">
-                <span className="text-xs text-white/40">Match Rate</span>
-                <div className="text-2xl font-bold text-[#7C3AED]">99.9%</div>
+                <div className="mb-5 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#14B8A6]">Core Features</p>
+                  {["Multi-source transaction matching", "AI-powered exception detection", "Real-time analytics dashboards"].map((item) => (
+                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
+                      <Check className="h-3.5 w-3.5 text-[#14B8A6]" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mb-6 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9D5CF5]">Advanced</p>
+                  {["ML confidence scoring", "Automated compliance workflows", "Custom ROI reporting"].map((item) => (
+                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
+                      <Check className="h-3.5 w-3.5 text-[#9D5CF5]" />
+                      {item}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F1729] to-[#1a243a] p-4 text-center">
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#7C3AED]/5 to-[#14B8A6]/5" />
+                  <span className="relative text-xs font-medium text-white/40">Match Rate</span>
+                  <div className="relative text-3xl font-bold tracking-tight">
+                    <span className="landing-gradient-text">99.9%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <a
-          href="#stats"
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/30 transition-colors hover:text-white/60"
-        >
+        <a href="#stats" className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/20 transition-colors hover:text-white/50">
           <ChevronDown className="h-6 w-6 animate-bounce" />
         </a>
       </section>
 
+      {/* Gradient divider */}
+      <div className="section-divider" />
+
       {/* ================================================================
           STATS SECTION
           ================================================================ */}
-      <section id="stats" className="border-y border-[#2f3c5b]/40 bg-[#0F1729] px-6 py-20">
+      <section id="stats" className="relative bg-[#0c1220] px-6 py-24">
+        <div className="landing-glow-orb left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
         <div
           ref={statsReveal.ref}
-          className={`mx-auto max-w-[1200px] transition-all duration-700 ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <p className="mb-12 text-center text-lg text-white/50">
+          <p className="mb-14 text-center text-lg text-white/40">
             Traditional reconciliation takes weeks.{" "}
-            <span className="text-[#9D5CF5] font-medium">
-              ReconArt does it in minutes.
-            </span>
+            <span className="landing-gradient-text font-semibold">ReconArt does it in minutes.</span>
           </p>
 
-          <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="text-4xl font-bold text-white md:text-5xl">
-                {(accuracyCount / 10).toFixed(1)}
-                <span className="text-[#7C3AED]">%</span>
-              </span>
-              <span className="text-sm font-medium text-white/50">
-                Match Accuracy
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="text-4xl font-bold text-white md:text-5xl">
-                {txCount}
-                <span className="text-[#7C3AED]">M+</span>
-              </span>
-              <span className="text-sm font-medium text-white/50">
-                Transactions Processed
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="text-4xl font-bold text-white md:text-5xl">
-                {reductionCount}
-                <span className="text-[#7C3AED]">%</span>
-              </span>
-              <span className="text-sm font-medium text-white/50">
-                Reduction in Manual Work
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-2 text-center">
-              <span className="text-4xl font-bold text-white md:text-5xl">
-                {integrationsCount}
-                <span className="text-[#7C3AED]">+</span>
-              </span>
-              <span className="text-sm font-medium text-white/50">
-                Integrations
-              </span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================================================================
-          ADVANTAGES
-          ================================================================ */}
-      <section id="advantages" className="bg-[#0F1729] px-6 py-24">
-        <div
-          ref={advantagesReveal.ref}
-          className={`mx-auto max-w-[1200px] transition-all duration-700 ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-        >
-          <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight md:text-5xl">
-            The ReconArt <span className="text-[#7C3AED]">Advantage</span>
-          </h2>
-          <p className="mx-auto mb-16 max-w-2xl text-center text-white/50">
-            Our platform delivers what traditional reconciliation tools
-            can&apos;t — speed, intelligence, and complete transparency.
-          </p>
-
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {advantages.map((item, i) => (
-              <div
-                key={item.title}
-                className="rounded-3xl border-l-[3px] border-l-[#7C3AED] bg-[#1a243a] p-7 transition-all duration-300 hover:shadow-lg hover:shadow-[#7C3AED]/10"
-                style={{
-                  transitionDelay: `${i * 80}ms`,
-                  opacity: advantagesReveal.isVisible ? 1 : 0,
-                  transform: advantagesReveal.isVisible
-                    ? "translateY(0)"
-                    : "translateY(20px)",
-                }}
-              >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#7C3AED]/15">
-                  <item.icon className="h-5 w-5 text-[#7C3AED]" />
+          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+            {[
+              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy" },
+              { val: txCount, suffix: "M+", label: "Transactions Processed" },
+              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work" },
+              { val: integrationsCount, suffix: "+", label: "Integrations" },
+            ].map((stat, i) => (
+              <div key={stat.label} className="group flex flex-col items-center gap-3 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="relative">
+                  <span className="text-4xl font-bold text-white md:text-5xl">
+                    {stat.val}
+                  </span>
+                  <span className="landing-gradient-text text-4xl font-bold md:text-5xl">{stat.suffix}</span>
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">
-                  {item.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-white/50">
-                  {item.description}
-                </p>
+                <span className="text-sm font-medium text-white/40 transition-colors group-hover:text-white/60">
+                  {stat.label}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      <div className="section-divider" />
+
+      {/* ================================================================
+          ADVANTAGES
+          ================================================================ */}
+      <section id="advantages" className="relative bg-[#0F1729] px-6 py-28">
+        <div className="landing-glow-orb right-0 top-0 h-[400px] w-[400px] bg-[#7C3AED]/[0.03]" />
+        <div
+          ref={advantagesReveal.ref}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Why ReconArt</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            The ReconArt <span className="landing-gradient-text">Advantage</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            Our platform delivers what traditional reconciliation tools can&apos;t — speed, intelligence, and complete transparency.
+          </p>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {advantages.map((item, i) => (
+              <div
+                key={item.title}
+                className="landing-card landing-card-glow rounded-2xl p-7"
+                style={{
+                  transitionDelay: `${i * 80}ms`,
+                  opacity: advantagesReveal.isVisible ? 1 : 0,
+                  transform: advantagesReveal.isVisible ? "translateY(0)" : "translateY(24px)",
+                }}
+              >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:from-[#7C3AED]/30">
+                  <item.icon className="h-5 w-5 text-[#9D5CF5]" />
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
+                <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
       {/* ================================================================
           SERVICES
           ================================================================ */}
-      <section id="services" className="bg-[#0F1729] px-6 py-24">
+      <section id="services" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb left-0 bottom-0 h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
         <div
           ref={servicesReveal.ref}
-          className={`mx-auto max-w-[1200px] transition-all duration-700 ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight md:text-5xl">
-            Our Specialized{" "}
-            <span className="text-[#7C3AED]">Services</span>
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Platform</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Our Specialized <span className="landing-gradient-text">Services</span>
           </h2>
-          <p className="mx-auto mb-16 max-w-2xl text-center text-white/50">
-            A comprehensive reconciliation platform covering the full lifecycle
-            — from data ingestion to compliance reporting.
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            A comprehensive reconciliation platform covering the full lifecycle — from data ingestion to compliance reporting.
           </p>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((service, i) => (
               <div
                 key={service.num}
-                className="group rounded-3xl border border-[#2f3c5b] bg-[#1a243a] p-7 transition-all duration-300 hover:border-[#7C3AED]/40 hover:shadow-lg hover:shadow-[#7C3AED]/10"
+                className="landing-card landing-card-glow group rounded-2xl p-7"
                 style={{
                   transitionDelay: `${i * 80}ms`,
                   opacity: servicesReveal.isVisible ? 1 : 0,
-                  transform: servicesReveal.isVisible
-                    ? "translateY(0)"
-                    : "translateY(20px)",
+                  transform: servicesReveal.isVisible ? "translateY(0)" : "translateY(24px)",
                 }}
               >
-                <span className="mb-3 block text-3xl font-bold text-[#7C3AED]/30">
-                  {service.num}
-                </span>
-                <h3 className="mb-3 text-xl font-semibold text-white">
-                  {service.title}
-                </h3>
-                <p className="mb-6 text-sm leading-relaxed text-white/50">
-                  {service.description}
-                </p>
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
+                    <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
+                  </div>
+                </div>
+                <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
+                <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
                 <Link
                   href="/sign-up"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-colors hover:text-[#7C3AED]"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
                 >
                   {service.cta}
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             ))}
@@ -700,111 +700,122 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="section-divider" />
+
       {/* ================================================================
           RESULTS / CASE STUDIES
           ================================================================ */}
-      <section id="results" className="bg-[#0F1729] px-6 py-24">
+      <section id="results" className="relative bg-[#0F1729] px-6 py-28">
         <div
           ref={resultsReveal.ref}
-          className={`mx-auto max-w-[1200px] transition-all duration-700 ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight md:text-5xl">
-            Proven <span className="text-[#7C3AED]">Results</span>
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Case Studies</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Proven <span className="landing-gradient-text">Results</span>
           </h2>
-          <p className="mx-auto mb-16 max-w-2xl text-center text-white/50">
-            Trusted by financial institutions across banking, payments,
-            insurance, and asset management.
+          <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
+            Trusted by financial institutions across banking, payments, insurance, and asset management.
           </p>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {caseStudies.map((study, i) => (
               <div
                 key={study.title}
-                className="rounded-3xl border border-[#2f3c5b] bg-[#1a243a] p-8 transition-all duration-300 hover:border-[#7C3AED]/40 hover:shadow-lg hover:shadow-[#7C3AED]/10"
+                className="landing-card landing-card-glow group rounded-2xl p-8"
                 style={{
                   transitionDelay: `${i * 100}ms`,
                   opacity: resultsReveal.isVisible ? 1 : 0,
-                  transform: resultsReveal.isVisible
-                    ? "translateY(0)"
-                    : "translateY(20px)",
+                  transform: resultsReveal.isVisible ? "translateY(0)" : "translateY(24px)",
                 }}
               >
-                <h3 className="mb-3 text-xl font-semibold text-white">
-                  {study.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-white/50">
-                  {study.description}
-                </p>
+                <div className="mb-5 flex items-start justify-between">
+                  <div>
+                    <span className="text-3xl font-bold text-white">{study.stat}</span>
+                    <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
+                  </div>
+                  <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
+                </div>
+                <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
+                <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      <div className="section-divider" />
+
       {/* ================================================================
           PRICING
           ================================================================ */}
-      <section id="pricing" className="bg-[#0F1729] px-6 py-24">
+      <section id="pricing" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb left-1/2 top-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.04]" />
         <div
           ref={pricingReveal.ref}
-          className={`mx-auto max-w-[1200px] transition-all duration-700 ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] transition-all duration-700 ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <h2 className="mb-4 text-center text-3xl font-semibold tracking-tight md:text-5xl">
-            Simple, <span className="text-[#7C3AED]">Transparent</span> Pricing
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Plans</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Simple, <span className="landing-gradient-text">Transparent</span> Pricing
           </h2>
-          <p className="mx-auto mb-16 max-w-xl text-center text-white/50">
-            Start free and scale as your operations grow. No credit card
-            required.
+          <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
+            Start free and scale as your operations grow. No credit card required.
           </p>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {pricingPlans.map((plan, i) => (
               <div
                 key={plan.name}
-                className={`relative rounded-3xl p-8 transition-all duration-300 ${
+                className={`relative rounded-2xl p-8 transition-all duration-500 ${
                   plan.highlighted
-                    ? "border-2 border-[#7C3AED] bg-[#1a243a] shadow-xl shadow-[#7C3AED]/10"
-                    : "border border-[#2f3c5b] bg-[#1a243a] hover:border-[#7C3AED]/40"
+                    ? "landing-card border-[#7C3AED]/50 shadow-2xl shadow-[#7C3AED]/10 scale-[1.02]"
+                    : "landing-card"
                 }`}
                 style={{
                   transitionDelay: `${i * 100}ms`,
                   opacity: pricingReveal.isVisible ? 1 : 0,
                   transform: pricingReveal.isVisible
-                    ? "translateY(0)"
-                    : "translateY(20px)",
+                    ? plan.highlighted ? "translateY(0) scale(1.02)" : "translateY(0)"
+                    : "translateY(24px)",
                 }}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#7C3AED] px-4 py-1 text-xs font-semibold text-white">
-                    Most Popular
-                  </div>
+                  <>
+                    <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-b from-[#7C3AED]/50 via-[#7C3AED]/20 to-transparent" />
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#9D5CF5] px-4 py-1 text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                      Most Popular
+                    </div>
+                  </>
                 )}
-                <h3 className="mb-2 text-lg font-semibold text-white">
-                  {plan.name}
-                </h3>
+                <h3 className="mb-2 text-lg font-semibold text-white">{plan.name}</h3>
                 <div className="mb-1 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">
-                    {plan.price}
-                  </span>
-                  {plan.period && (
-                    <span className="text-sm text-white/40">{plan.period}</span>
-                  )}
+                  <span className="text-4xl font-bold text-white">{plan.price}</span>
+                  {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
                 </div>
-                <p className="mb-8 text-sm text-white/50">{plan.description}</p>
+                <p className="mb-8 text-sm text-white/40">{plan.description}</p>
                 <ul className="mb-8 space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#14B8A6]" />
-                      <span className="text-sm text-white/60">{feature}</span>
+                      <span className="text-sm text-white/50">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 <Link href={plan.href} className="block">
                   <button
-                    className={`w-full rounded-full px-6 py-3 text-sm font-semibold transition-all ${
+                    className={`w-full rounded-full px-6 py-3.5 text-sm font-semibold transition-all ${
                       plan.highlighted
-                        ? "bg-[#7C3AED] text-white hover:bg-[#6D28D9] hover:shadow-lg hover:shadow-[#7C3AED]/30"
-                        : "border border-[#9D5CF5] bg-transparent text-[#9D5CF5] hover:bg-[#9D5CF5]/10"
+                        ? "landing-btn-primary text-white"
+                        : "border border-[#9D5CF5]/30 bg-[#9D5CF5]/[0.06] text-[#9D5CF5] hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/50"
                     }`}
                   >
                     {plan.cta}
@@ -816,33 +827,68 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="section-divider" />
+
       {/* ================================================================
-          CTA SECTION
+          QUOTE
           ================================================================ */}
-      <section className="px-6 py-24">
+      <section className="relative bg-[#0F1729] px-6 py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <div className="mb-6 text-4xl text-[#7C3AED]/20">&ldquo;</div>
+          <blockquote className="mb-6 text-xl font-medium italic leading-relaxed text-white/70 md:text-2xl">
+            Most teams spend more time managing their reconciliation tools than
+            actually reconciling. The right platform should eliminate complexity,
+            not add to it.
+          </blockquote>
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#7C3AED]/40" />
+            <span className="text-sm font-semibold tracking-wider text-[#9D5CF5]">The ReconArt Philosophy</span>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#7C3AED]/40" />
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
+          FINAL CTA
+          ================================================================ */}
+      <section className="relative px-6 py-28">
         <div
           ref={ctaReveal.ref}
-          className={`mx-auto max-w-[1200px] rounded-3xl bg-[#9D5CF5] px-8 py-20 text-center transition-all duration-700 ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+          className={`relative mx-auto max-w-[1200px] overflow-hidden rounded-3xl transition-all duration-700 ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
         >
-          <h2 className="mb-6 text-3xl font-semibold tracking-tight text-white md:text-5xl">
-            Ready to find out what your reconciliations are really costing you?
-          </h2>
-          <p className="mx-auto mb-10 max-w-xl text-white/80">
-            Join leading financial institutions using ReconArt to automate
-            matching, eliminate manual work, and deliver real operational ROI.
-          </p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/sign-up">
-              <button className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-[#0F1729] transition-all hover:bg-white/90 hover:shadow-lg">
-                Start Free Trial
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </Link>
-            <a href="#pricing">
-              <button className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-transparent px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-white/10">
-                View Pricing
-              </button>
-            </a>
+          {/* Animated gradient bg */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#7C3AED] via-[#6D28D9] to-[#9D5CF5]" />
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: "radial-gradient(circle at 20% 50%, rgba(20,184,166,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(124,58,237,0.3) 0%, transparent 50%)",
+          }} />
+          <div className="absolute inset-0 opacity-10" style={{
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }} />
+
+          <div className="relative px-8 py-20 text-center">
+            <h2 className="mb-6 text-3xl font-bold tracking-tight text-white md:text-5xl">
+              Ready to find out what your reconciliations are really costing you?
+            </h2>
+            <p className="mx-auto mb-10 max-w-xl text-white/80">
+              Join leading financial institutions using ReconArt to automate
+              matching, eliminate manual work, and deliver real operational ROI.
+            </p>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/sign-up">
+                <button className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-[#7C3AED] shadow-xl transition-all hover:shadow-2xl hover:shadow-white/20 hover:-translate-y-0.5">
+                  Start Free Trial
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </Link>
+              <a href="#pricing">
+                <button className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20">
+                  View Pricing
+                </button>
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -850,24 +896,24 @@ export default function Home() {
       {/* ================================================================
           FOOTER
           ================================================================ */}
-      <footer className="border-t border-[#2f3c5b]/40 bg-[#0F1729] px-6 py-16">
+      <footer className="border-t border-[#7C3AED]/10 bg-[#0a0f1d] px-6 py-16">
         <div className="mx-auto max-w-[1200px]">
-          <p className="mb-12 text-center text-lg font-medium text-white/50">
+          <p className="mb-14 text-center text-lg font-medium text-white/30">
             Vendor-agnostic. AI-powered. Reconciliations{" "}
-            <span className="text-[#7C3AED]">mastered</span>.
+            <span className="landing-gradient-text font-bold">mastered</span>.
           </p>
 
           <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <div className="mb-4 flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#7C3AED]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9]">
                   <GitCompareArrows className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-xl font-bold tracking-tight text-white">
-                  ReconArt
+                  Recon<span className="text-[#9D5CF5]">Art</span>
                 </span>
               </div>
-              <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/40">
+              <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/30">
                 AI-powered reconciliation platform that automates matching,
                 detects anomalies, and delivers real-time operational
                 intelligence for financial institutions.
@@ -877,7 +923,7 @@ export default function Home() {
                   <a
                     key={i}
                     href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#2f3c5b] text-white/40 transition-all hover:border-[#7C3AED]/40 hover:text-[#9D5CF5]"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#2f3c5b]/50 text-white/30 transition-all hover:border-[#7C3AED]/40 hover:text-[#9D5CF5] hover:shadow-lg hover:shadow-[#7C3AED]/10"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -887,18 +933,11 @@ export default function Home() {
 
             {footerSections.map((section) => (
               <div key={section.title}>
-                <h4 className="mb-4 text-sm font-semibold text-white">
-                  {section.title}
-                </h4>
+                <h4 className="mb-4 text-sm font-semibold text-white/80">{section.title}</h4>
                 <ul className="space-y-2.5">
                   {section.links.map((link) => (
                     <li key={link.label}>
-                      <a
-                        href={link.href}
-                        className="text-sm text-white/40 transition-colors hover:text-white/70"
-                      >
-                        {link.label}
-                      </a>
+                      <a href={link.href} className="text-sm text-white/30 transition-colors hover:text-white/60">{link.label}</a>
                     </li>
                   ))}
                 </ul>
@@ -906,23 +945,13 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#2f3c5b]/40 pt-8 sm:flex-row">
-            <p className="text-xs text-white/30">
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#2f3c5b]/30 pt-8 sm:flex-row">
+            <p className="text-xs text-white/20">
               &copy; {new Date().getFullYear()} ReconArt. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a
-                href="#"
-                className="text-xs text-white/30 transition-colors hover:text-white/50 hover:underline"
-              >
-                Privacy Policy
-              </a>
-              <a
-                href="#"
-                className="text-xs text-white/30 transition-colors hover:text-white/50 hover:underline"
-              >
-                Terms of Service
-              </a>
+              <a href="#" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Privacy Policy</a>
+              <a href="#" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Terms of Service</a>
             </div>
           </div>
         </div>
