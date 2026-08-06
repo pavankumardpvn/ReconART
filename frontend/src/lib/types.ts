@@ -56,6 +56,7 @@ export interface DataSourceFile {
   file_size_bytes: number;
   row_count: number | null;
   status: string;
+  error_message?: string;
   uploaded_by?: string;
   uploaded_at: string;
 }
