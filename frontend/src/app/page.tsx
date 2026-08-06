@@ -80,6 +80,24 @@ function useCountUp(target: number, duration: number, shouldStart: boolean) {
   return count;
 }
 
+function boxReveal(isVisible: boolean, i: number, stagger = 400) {
+  const delay = 300 + i * stagger;
+  return {
+    transition: `opacity 1.5s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 1.5s cubic-bezier(0.22,1,0.36,1) ${delay}ms, box-shadow 1.5s ease ${delay}ms`,
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible ? "translateY(0) scale(1)" : "translateY(50px) scale(0.93)",
+  } as React.CSSProperties;
+}
+
+function contentReveal(isVisible: boolean, i: number, stagger = 400) {
+  const delay = 300 + i * stagger + 800;
+  return {
+    transition: `opacity 1s ease-out ${delay}ms, transform 1s ease-out ${delay}ms`,
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible ? "translateX(0)" : "translateX(-35px)",
+  } as React.CSSProperties;
+}
+
 /* =========================================================================
    Data
    ========================================================================= */
@@ -627,18 +645,16 @@ export default function Home() {
             {advantages.map((item, i) => (
               <div
                 key={item.title}
-                className="landing-card landing-card-glow rounded-2xl p-7"
-                style={{
-                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
-                  opacity: advantagesReveal.isVisible ? 1 : 0,
-                  transform: advantagesReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
-                }}
+                className="landing-card landing-card-glow rounded-2xl p-7 overflow-hidden"
+                style={boxReveal(advantagesReveal.isVisible, i)}
               >
-                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:from-[#7C3AED]/30">
-                  <item.icon className="h-5 w-5 text-[#9D5CF5]" />
+                <div style={contentReveal(advantagesReveal.isVisible, i)}>
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
+                    <item.icon className="h-5 w-5 text-[#9D5CF5]" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
+                  <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-white/45">{item.description}</p>
               </div>
             ))}
           </div>
@@ -672,28 +688,26 @@ export default function Home() {
             {services.map((service, i) => (
               <div
                 key={service.num}
-                className="landing-card landing-card-glow group rounded-2xl p-7"
-                style={{
-                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
-                  opacity: servicesReveal.isVisible ? 1 : 0,
-                  transform: servicesReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
-                }}
+                className="landing-card landing-card-glow group rounded-2xl p-7 overflow-hidden"
+                style={boxReveal(servicesReveal.isVisible, i)}
               >
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
-                    <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
+                <div style={contentReveal(servicesReveal.isVisible, i)}>
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
+                      <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
+                    </div>
                   </div>
+                  <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
+                  <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
+                  <Link
+                    href="/sign-up"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+                  >
+                    {service.cta}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-                <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
-                <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
-                <Link
-                  href="/sign-up"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
-                >
-                  {service.cta}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
               </div>
             ))}
           </div>
@@ -726,22 +740,20 @@ export default function Home() {
             {caseStudies.map((study, i) => (
               <div
                 key={study.title}
-                className="landing-card landing-card-glow group rounded-2xl p-8"
-                style={{
-                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 250}ms`,
-                  opacity: resultsReveal.isVisible ? 1 : 0,
-                  transform: resultsReveal.isVisible ? "translateY(0) scale(1)" : "translateY(40px) scale(0.95)",
-                }}
+                className="landing-card landing-card-glow group rounded-2xl p-8 overflow-hidden"
+                style={boxReveal(resultsReveal.isVisible, i)}
               >
-                <div className="mb-5 flex items-start justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-white">{study.stat}</span>
-                    <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
+                <div style={contentReveal(resultsReveal.isVisible, i)}>
+                  <div className="mb-5 flex items-start justify-between">
+                    <div>
+                      <span className="text-3xl font-bold text-white">{study.stat}</span>
+                      <p className="text-xs font-medium text-[#14B8A6]">{study.statLabel}</p>
+                    </div>
+                    <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
                   </div>
-                  <TrendingUp className="h-5 w-5 text-[#14B8A6]/40 transition-colors group-hover:text-[#14B8A6]" />
+                  <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
+                  <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
                 </div>
-                <h3 className="mb-3 text-lg font-semibold text-white">{study.title}</h3>
-                <p className="text-sm leading-relaxed text-white/40">{study.description}</p>
               </div>
             ))}
           </div>
@@ -775,17 +787,14 @@ export default function Home() {
             {pricingPlans.map((plan, i) => (
               <div
                 key={plan.name}
-                className={`relative rounded-2xl p-8 transition-all duration-500 ${
+                className={`relative rounded-2xl p-8 overflow-hidden ${
                   plan.highlighted
-                    ? "landing-card border-[#7C3AED]/50 shadow-2xl shadow-[#7C3AED]/10 scale-[1.02]"
+                    ? "landing-card border-[#7C3AED]/50 shadow-2xl shadow-[#7C3AED]/10"
                     : "landing-card"
                 }`}
                 style={{
-                  transition: `opacity 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 300}ms, transform 0.9s cubic-bezier(0.22,1,0.36,1) ${300 + i * 300}ms`,
-                  opacity: pricingReveal.isVisible ? 1 : 0,
-                  transform: pricingReveal.isVisible
-                    ? plan.highlighted ? "translateY(0) scale(1.02)" : "translateY(0) scale(1)"
-                    : "translateY(40px) scale(0.95)",
+                  ...boxReveal(pricingReveal.isVisible, i, 450),
+                  ...(plan.highlighted && pricingReveal.isVisible ? { transform: "translateY(0) scale(1.02)" } : {}),
                 }}
               >
                 {plan.highlighted && (
@@ -796,31 +805,33 @@ export default function Home() {
                     </div>
                   </>
                 )}
-                <h3 className="mb-2 text-lg font-semibold text-white">{plan.name}</h3>
-                <div className="mb-1 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
+                <div style={contentReveal(pricingReveal.isVisible, i, 450)}>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{plan.name}</h3>
+                  <div className="mb-1 flex items-baseline gap-1">
+                    <span className="text-4xl font-bold text-white">{plan.price}</span>
+                    {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
+                  </div>
+                  <p className="mb-8 text-sm text-white/40">{plan.description}</p>
+                  <ul className="mb-8 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-3">
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#14B8A6]" />
+                        <span className="text-sm text-white/50">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={plan.href} className="block">
+                    <button
+                      className={`w-full rounded-full px-6 py-3.5 text-sm font-semibold transition-all ${
+                        plan.highlighted
+                          ? "landing-btn-primary text-white"
+                          : "border border-[#9D5CF5]/30 bg-[#9D5CF5]/[0.06] text-[#9D5CF5] hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/50"
+                      }`}
+                    >
+                      {plan.cta}
+                    </button>
+                  </Link>
                 </div>
-                <p className="mb-8 text-sm text-white/40">{plan.description}</p>
-                <ul className="mb-8 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#14B8A6]" />
-                      <span className="text-sm text-white/50">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Link href={plan.href} className="block">
-                  <button
-                    className={`w-full rounded-full px-6 py-3.5 text-sm font-semibold transition-all ${
-                      plan.highlighted
-                        ? "landing-btn-primary text-white"
-                        : "border border-[#9D5CF5]/30 bg-[#9D5CF5]/[0.06] text-[#9D5CF5] hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/50"
-                    }`}
-                  >
-                    {plan.cta}
-                  </button>
-                </Link>
               </div>
             ))}
           </div>
