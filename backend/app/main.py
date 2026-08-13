@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="Recon ART API",
     version="0.1.0",
-    docs_url="/docs" if settings.app_env == "development" else None,
-    redoc_url="/redoc" if settings.app_env == "development" else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # -- Clerk JWT auth (applied first — innermost middleware, runs first) --
