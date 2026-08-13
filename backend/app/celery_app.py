@@ -26,6 +26,7 @@ celery.conf.update(
         "app.tasks.export_tasks",
         "app.tasks.data_source_tasks",
         "app.tasks.schedule_tasks",
+        "app.tasks.health_monitor",
     ],
 )
 
@@ -33,6 +34,10 @@ celery.conf.update(
 celery.conf.beat_schedule = {
     "check-schedules": {
         "task": "tasks.check_schedules",
-        "schedule": 60.0,  # every 60 seconds
+        "schedule": 60.0,
+    },
+    "health-monitor": {
+        "task": "tasks.health_monitor",
+        "schedule": 300.0,  # every 5 minutes
     },
 }

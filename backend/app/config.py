@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     slack_webhook_url: str = ""
     teams_webhook_url: str = ""
 
+    health_check_email: str = ""
+
     app_env: str = "development"
     app_secret_key: str = "change-me"
     cors_origins: str = "http://localhost:3000"
