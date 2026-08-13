@@ -1,10 +1,11 @@
 """Dashboard endpoints — aggregated stats, match-rate trends, recent activity."""
 
+import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, cast, func, select, Float
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -22,7 +23,7 @@ router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
-# GET /summary — aggregated dashboard stats
+# GET /summary — aggregated dashboard stats (parallel queries + cached)
 # ---------------------------------------------------------------------------
 @router.get("/summary", response_model=DashboardSummary)
 async def dashboard_summary(
@@ -35,69 +36,61 @@ async def dashboard_summary(
     if cached:
         return DashboardSummary(**cached)
 
-    # Total active reconciliations
-    recon_count_result = await db.execute(
-        select(func.count(Reconciliation.id)).where(
-            Reconciliation.tenant_id == tenant.id,
-            Reconciliation.deleted_at.is_(None),
-        )
+    month_start = datetime.now(timezone.utc).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0
     )
-    total_reconciliations = recon_count_result.scalar_one()
 
-    # Total runs
-    run_count_result = await db.execute(
-        select(func.count(ReconRun.id)).where(ReconRun.tenant_id == tenant.id)
+    # Run all 6 queries in parallel instead of sequentially
+    recon_q, run_q, avg_q, exc_q, month_q, recent_q = await asyncio.gather(
+        db.execute(
+            select(func.count(Reconciliation.id)).where(
+                Reconciliation.tenant_id == tenant.id,
+                Reconciliation.deleted_at.is_(None),
+            )
+        ),
+        db.execute(
+            select(func.count(ReconRun.id)).where(
+                ReconRun.tenant_id == tenant.id
+            )
+        ),
+        db.execute(
+            select(func.avg(ReconRun.match_rate)).where(
+                ReconRun.tenant_id == tenant.id,
+                ReconRun.status == "completed",
+                ReconRun.match_rate.isnot(None),
+            )
+        ),
+        db.execute(
+            select(func.count(Exception_.id)).where(
+                Exception_.tenant_id == tenant.id,
+                Exception_.status == "open",
+            )
+        ),
+        db.execute(
+            select(func.count(ReconRun.id)).where(
+                ReconRun.tenant_id == tenant.id,
+                ReconRun.created_at >= month_start,
+            )
+        ),
+        db.execute(
+            select(ReconRun)
+            .where(ReconRun.tenant_id == tenant.id)
+            .order_by(ReconRun.created_at.desc())
+            .limit(10)
+        ),
     )
-    total_runs = run_count_result.scalar_one()
 
-    # Average match rate (across completed runs)
-    avg_result = await db.execute(
-        select(func.avg(ReconRun.match_rate)).where(
-            ReconRun.tenant_id == tenant.id,
-            ReconRun.status == "completed",
-            ReconRun.match_rate.isnot(None),
-        )
-    )
-    avg_match_rate = avg_result.scalar_one()
-    average_match_rate = float(avg_match_rate) if avg_match_rate is not None else 0.0
-
-    # Open exceptions
-    open_exc_result = await db.execute(
-        select(func.count(Exception_.id)).where(
-            Exception_.tenant_id == tenant.id,
-            Exception_.status == "open",
-        )
-    )
-    open_exceptions = open_exc_result.scalar_one()
-
-    # Runs this month
-    month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month_result = await db.execute(
-        select(func.count(ReconRun.id)).where(
-            ReconRun.tenant_id == tenant.id,
-            ReconRun.created_at >= month_start,
-        )
-    )
-    runs_this_month = month_result.scalar_one()
-
-    # Recent runs (last 10)
-    recent_result = await db.execute(
-        select(ReconRun)
-        .where(ReconRun.tenant_id == tenant.id)
-        .order_by(ReconRun.created_at.desc())
-        .limit(10)
-    )
-    recent_runs_models = list(recent_result.scalars().all())
+    avg_match_rate = avg_q.scalar_one()
     recent_runs = [
-        ReconRunResponse.model_validate(r) for r in recent_runs_models
+        ReconRunResponse.model_validate(r) for r in recent_q.scalars().all()
     ]
 
     summary = DashboardSummary(
-        total_reconciliations=total_reconciliations,
-        total_runs=total_runs,
-        average_match_rate=average_match_rate,
-        open_exceptions=open_exceptions,
-        runs_this_month=runs_this_month,
+        total_reconciliations=recon_q.scalar_one(),
+        total_runs=run_q.scalar_one(),
+        average_match_rate=float(avg_match_rate) if avg_match_rate is not None else 0.0,
+        open_exceptions=exc_q.scalar_one(),
+        runs_this_month=month_q.scalar_one(),
         recent_runs=recent_runs,
     )
     await cache_set(cache_key, summary.model_dump(), ttl=30)
@@ -151,7 +144,7 @@ async def match_rate_trends(
 
 
 # ---------------------------------------------------------------------------
-# GET /recent-activity — last 20 recon runs
+# GET /recent-activity — last 20 recon runs (cached)
 # ---------------------------------------------------------------------------
 @router.get("/recent-activity", response_model=list[ReconRunResponse])
 async def recent_activity(
@@ -159,10 +152,18 @@ async def recent_activity(
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
+    cache_key = f"dashboard:recent:{tenant.id}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return [ReconRunResponse(**r) for r in cached]
+
     result = await db.execute(
         select(ReconRun)
         .where(ReconRun.tenant_id == tenant.id)
         .order_by(ReconRun.created_at.desc())
         .limit(20)
     )
-    return list(result.scalars().all())
+    runs = list(result.scalars().all())
+    response = [ReconRunResponse.model_validate(r) for r in runs]
+    await cache_set(cache_key, [r.model_dump() for r in response], ttl=15)
+    return response

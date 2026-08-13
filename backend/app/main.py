@@ -49,4 +49,23 @@ async def on_startup() -> None:
     from app.auth.middleware import warm_jwks_cache
     await warm_jwks_cache()
 
-    logger.info("Recon ART API started — DB pool warmed, JWKS cached")
+    # Start background keepalive to prevent Neon DB from sleeping
+    import asyncio
+    asyncio.create_task(_db_keepalive())
+
+    logger.info("Recon ART API started — DB pool warmed, JWKS cached, keepalive started")
+
+
+async def _db_keepalive() -> None:
+    """Ping the DB every 4 minutes to prevent Neon serverless from sleeping."""
+    import asyncio
+    from sqlalchemy import text
+    from app.database import engine
+
+    while True:
+        await asyncio.sleep(240)
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+        except Exception:
+            logger.warning("DB keepalive ping failed", exc_info=True)
