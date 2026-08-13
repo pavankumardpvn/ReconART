@@ -20,3 +20,5 @@ slowapi
 aiofiles
 croniter
 boto3
+sse-starlette
+fpdf2

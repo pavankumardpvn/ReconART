@@ -22,21 +22,49 @@ def _get_async_session() -> AsyncSession:
 
 
 async def _run_recon(recon_id: str, run_id: str) -> dict:
+    from app.services.event_service import publish_event
+    from app.services.cache_service import cache_delete
+    from sqlalchemy import select
+    from app.models.reconciliation import Reconciliation
+
     async with _get_async_session() as session:
-        engine = MatchingEngine(session)
-        stats = await engine.run(
-            reconciliation_id=uuid.UUID(recon_id),
-            run_id=uuid.UUID(run_id),
+        recon_result = await session.execute(
+            select(Reconciliation).where(Reconciliation.id == uuid.UUID(recon_id))
         )
-        return {
-            "status": "completed",
-            "recon_id": recon_id,
-            "run_id": run_id,
-            "matched": stats.matched,
-            "unmatched_left": stats.unmatched_left,
-            "unmatched_right": stats.unmatched_right,
-            "match_rate": stats.match_rate,
-        }
+        recon = recon_result.scalar_one_or_none()
+        tenant_id = str(recon.tenant_id) if recon else ""
+        recon_name = recon.name if recon else "Unknown"
+
+        publish_event(tenant_id, "recon.started", {
+            "recon_id": recon_id, "run_id": run_id, "name": recon_name,
+        })
+
+        try:
+            engine = MatchingEngine(session)
+            stats = await engine.run(
+                reconciliation_id=uuid.UUID(recon_id),
+                run_id=uuid.UUID(run_id),
+            )
+            result = {
+                "status": "completed",
+                "recon_id": recon_id,
+                "run_id": run_id,
+                "name": recon_name,
+                "matched": stats.matched,
+                "unmatched_left": stats.unmatched_left,
+                "unmatched_right": stats.unmatched_right,
+                "match_rate": stats.match_rate,
+            }
+            publish_event(tenant_id, "recon.completed", result)
+            await cache_delete(f"dashboard:*:{tenant_id}")
+            return result
+
+        except Exception as e:
+            publish_event(tenant_id, "recon.failed", {
+                "recon_id": recon_id, "run_id": run_id, "name": recon_name,
+                "error": str(e),
+            })
+            raise
 
 
 @celery.task(bind=True, name="tasks.run_reconciliation")

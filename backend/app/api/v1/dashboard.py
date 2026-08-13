@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_tenant, get_current_user
+from app.services.cache_service import cache_get, cache_set
 from app.models.matching import Exception_, ReconRun
 from app.models.reconciliation import Reconciliation
 from app.models.tenant import Tenant
@@ -29,6 +30,11 @@ async def dashboard_summary(
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
+    cache_key = f"dashboard:summary:{tenant.id}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return DashboardSummary(**cached)
+
     # Total active reconciliations
     recon_count_result = await db.execute(
         select(func.count(Reconciliation.id)).where(
@@ -86,7 +92,7 @@ async def dashboard_summary(
         ReconRunResponse.model_validate(r) for r in recent_runs_models
     ]
 
-    return DashboardSummary(
+    summary = DashboardSummary(
         total_reconciliations=total_reconciliations,
         total_runs=total_runs,
         average_match_rate=average_match_rate,
@@ -94,6 +100,8 @@ async def dashboard_summary(
         runs_this_month=runs_this_month,
         recent_runs=recent_runs,
     )
+    await cache_set(cache_key, summary.model_dump(), ttl=30)
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +114,11 @@ async def match_rate_trends(
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
+    cache_key = f"dashboard:match-rates:{tenant.id}:{days}"
+    cached = await cache_get(cache_key)
+    if cached:
+        return [MatchRateTrend(**t) for t in cached]
+
     since = datetime.now(timezone.utc) - timedelta(days=days)
 
     result = await db.execute(
@@ -133,6 +146,7 @@ async def match_rate_trends(
                 run_count=row.run_count,
             )
         )
+    await cache_set(cache_key, [t.model_dump() for t in trends], ttl=60)
     return trends
 
 

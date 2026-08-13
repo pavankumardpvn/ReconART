@@ -82,6 +82,61 @@ def _compute_next_run(cron_expression: str, from_dt: datetime) -> datetime | Non
         return None
 
 
+def _dispatch_notifications_async(schedule, run, task_result):
+    """Fire-and-forget: wait for the Celery result and send notifications."""
+    import threading
+
+    def _worker():
+        try:
+            result = task_result.get(timeout=600)
+            status = result.get("status", "unknown") if isinstance(result, dict) else "unknown"
+
+            schedule_dict = {
+                "name": schedule.name or "Scheduled Reconciliation",
+                "notify_email": "",
+            }
+            run_dict = {
+                "id": str(run.id),
+                "status": status,
+                "match_rate": result.get("match_rate") if isinstance(result, dict) else None,
+                "matched_count": result.get("matched", 0) if isinstance(result, dict) else 0,
+                "unmatched_left": result.get("unmatched_left", 0) if isinstance(result, dict) else 0,
+                "unmatched_right": result.get("unmatched_right", 0) if isinstance(result, dict) else 0,
+            }
+
+            emails = schedule.notification_emails or []
+            if not emails:
+                return
+
+            from app.services.email_service import (
+                send_recon_complete_notification,
+                send_recon_failure_notification,
+            )
+
+            for email in emails:
+                schedule_dict["notify_email"] = email
+                if status == "completed" and schedule.notify_on_complete:
+                    send_recon_complete_notification(schedule_dict, run_dict)
+                elif status != "completed" and schedule.notify_on_failure:
+                    error = result.get("error", "Unknown error") if isinstance(result, dict) else "Task failed"
+                    send_recon_failure_notification(schedule_dict, run_dict, error)
+
+            logger.info("Notifications dispatched for schedule %s", schedule.id)
+        except Exception:
+            logger.warning("Notification dispatch failed for schedule %s", schedule.id, exc_info=True)
+            if schedule.notify_on_failure and schedule.notification_emails:
+                from app.services.email_service import send_recon_failure_notification
+                for email in schedule.notification_emails:
+                    send_recon_failure_notification(
+                        {"name": schedule.name or "Scheduled Reconciliation", "notify_email": email},
+                        {"id": str(run.id), "status": "failed"},
+                        "Task timed out or failed unexpectedly",
+                    )
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+
+
 async def _check_and_trigger_schedules() -> int:
     """Query for due schedules and trigger their reconciliation runs.
 
@@ -115,9 +170,12 @@ async def _check_and_trigger_schedules() -> int:
                 # 2. Queue the run_reconciliation Celery task
                 try:
                     from app.tasks.reconciliation_tasks import run_reconciliation
-                    run_reconciliation.delay(
+                    task_result = run_reconciliation.delay(
                         str(schedule.reconciliation_id), str(run.id)
                     )
+
+                    # 2b. Dispatch notifications after the run completes
+                    _dispatch_notifications_async(schedule, run, task_result)
                 except Exception:
                     logger.warning(
                         "Could not enqueue reconciliation task for schedule %s "

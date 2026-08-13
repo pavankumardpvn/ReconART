@@ -20,6 +20,54 @@ from app.storage import get_storage
 
 logger = logging.getLogger(__name__)
 
+
+def _generate_pdf(buf: io.BytesIO, df, job) -> None:
+    """Generate a PDF report from the export data."""
+    from fpdf import FPDF
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    # Header
+    pdf.set_font("Helvetica", "B", 20)
+    pdf.cell(0, 12, "ReconART", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(120, 120, 120)
+    pdf.cell(0, 6, f"Export Report | {job.export_scope.title()} | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(6)
+
+    # Summary
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 8, "Summary", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 6, f"Total Records: {len(df)}", new_x="LMARGIN", new_y="NEXT")
+
+    if "match_status" in df.columns:
+        matched = len(df[df["match_status"] == "matched"])
+        unmatched = len(df[df["match_status"] != "matched"])
+        pdf.cell(0, 6, f"Matched: {matched} | Unmatched: {unmatched}", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+
+    # Data table
+    if not df.empty:
+        cols = list(df.columns)[:8]
+        pdf.set_font("Helvetica", "B", 8)
+        col_width = (pdf.w - 20) / len(cols)
+        for col in cols:
+            pdf.cell(col_width, 7, str(col)[:18], border=1)
+        pdf.ln()
+
+        pdf.set_font("Helvetica", "", 7)
+        for _, row in df.head(200).iterrows():
+            for col in cols:
+                val = str(row.get(col, ""))[:20]
+                pdf.cell(col_width, 6, val, border=1)
+            pdf.ln()
+
+    pdf.output(buf)
+
 _engine = create_async_engine(settings.database_url, pool_pre_ping=True)
 _session_factory = async_sessionmaker(_engine, expire_on_commit=False)
 
@@ -109,6 +157,9 @@ async def _generate(export_id: str) -> dict:
             if job.export_type == "csv":
                 df.to_csv(buf, index=False)
                 ext = "csv"
+            elif job.export_type == "pdf":
+                ext = "pdf"
+                _generate_pdf(buf, df, job)
             else:
                 df.to_excel(buf, index=False, engine="openpyxl")
                 ext = "xlsx"
@@ -131,6 +182,16 @@ async def _generate(export_id: str) -> dict:
                 )
             )
             await session.commit()
+
+            try:
+                from app.services.event_service import publish_event
+                publish_event(str(job.tenant_id), "export.completed", {
+                    "export_id": export_id, "export_type": job.export_type,
+                    "file_size": len(content),
+                })
+            except Exception:
+                pass
+
             return {"status": "completed", "export_id": export_id, "path": path}
 
         except Exception as e:
