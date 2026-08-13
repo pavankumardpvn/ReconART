@@ -1,5 +1,6 @@
 """Health check endpoints."""
 
+import asyncio
 import logging
 import time
 
@@ -35,56 +36,61 @@ async def readiness_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
         )
 
 
-@router.get("/full")
-async def full_health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
-    """Full health check — tests all connected services with response times."""
-    results = {}
-
-    # 1. Database
+async def _check_db(db: AsyncSession) -> dict:
     try:
         t = time.time()
         await db.execute(text("SELECT 1"))
-        results["database"] = {"status": "healthy", "time": f"{time.time()-t:.3f}s"}
+        return {"status": "healthy", "time": f"{time.time()-t:.3f}s"}
     except Exception as e:
-        results["database"] = {"status": "down", "error": str(e)}
+        return {"status": "down", "error": str(e)}
 
-    # 2. Redis
+
+async def _check_redis() -> dict:
     try:
         t = time.time()
         from app.services.cache_service import _get_redis
         _get_redis().ping()
-        results["redis"] = {"status": "healthy", "time": f"{time.time()-t:.3f}s"}
+        return {"status": "healthy", "time": f"{time.time()-t:.3f}s"}
     except Exception as e:
-        results["redis"] = {"status": "down", "error": str(e)}
+        return {"status": "down", "error": str(e)}
 
-    # 3. Vercel Frontend
+
+async def _check_url(name: str, url: str) -> dict:
     try:
         import httpx
         t = time.time()
-        async with httpx.AsyncClient(timeout=10, follow_redirects=True) as c:
-            r = await c.get("https://recon-art.vercel.app/")
-            results["frontend"] = {"status": "healthy", "http": r.status_code, "time": f"{time.time()-t:.3f}s"}
+        async with httpx.AsyncClient(timeout=5, follow_redirects=True) as c:
+            r = await c.get(url)
+            return {"status": "healthy", "http": r.status_code, "time": f"{time.time()-t:.3f}s"}
     except Exception as e:
-        results["frontend"] = {"status": "down", "error": str(e)}
+        return {"status": "down", "error": str(e)}
 
-    # 4. Clerk Auth
-    try:
-        import httpx
-        from app.config import settings as s
-        t = time.time()
-        jwks_url = s.clerk_jwks_url.replace("/.well-known/jwks.json", "") if s.clerk_jwks_url else ""
-        if jwks_url:
-            async with httpx.AsyncClient(timeout=10) as c:
-                r = await c.get(f"{jwks_url}/.well-known/jwks.json")
-                results["clerk"] = {"status": "healthy", "http": r.status_code, "time": f"{time.time()-t:.3f}s"}
-        else:
-            results["clerk"] = {"status": "unconfigured"}
-    except Exception as e:
-        results["clerk"] = {"status": "down", "error": str(e)}
+
+@router.get("/full")
+async def full_health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
+    """Full health check — tests all services in parallel."""
+    from app.config import settings as s
+
+    jwks_url = s.clerk_jwks_url.replace("/.well-known/jwks.json", "") if s.clerk_jwks_url else ""
+    clerk_url = f"{jwks_url}/.well-known/jwks.json" if jwks_url else ""
+
+    # Run all checks in parallel
+    db_result, redis_result, frontend_result, clerk_result = await asyncio.gather(
+        _check_db(db),
+        _check_redis(),
+        _check_url("frontend", "https://recon-art.vercel.app/"),
+        _check_url("clerk", clerk_url) if clerk_url else asyncio.coroutine(lambda: {"status": "unconfigured"})(),
+    )
+
+    results = {
+        "database": db_result,
+        "redis": redis_result,
+        "frontend": frontend_result,
+        "clerk": clerk_result,
+    }
 
     healthy = sum(1 for r in results.values() if r.get("status") == "healthy")
     total = len(results)
-    code = 200 if healthy == total else 503
 
     return JSONResponse(
         content={
@@ -92,5 +98,5 @@ async def full_health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
             "services": results,
             "summary": f"{healthy}/{total} healthy",
         },
-        status_code=code,
+        status_code=200 if healthy == total else 503,
     )

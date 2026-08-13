@@ -57,15 +57,28 @@ async def on_startup() -> None:
 
 
 async def _db_keepalive() -> None:
-    """Ping the DB every 4 minutes to prevent Neon serverless from sleeping."""
+    """Ping DB + Redis + refresh JWKS every 2 minutes to keep everything warm."""
     import asyncio
     from sqlalchemy import text
     from app.database import engine
 
     while True:
-        await asyncio.sleep(240)
+        await asyncio.sleep(120)
+        # DB ping
         try:
             async with engine.connect() as conn:
                 await conn.execute(text("SELECT 1"))
         except Exception:
             logger.warning("DB keepalive ping failed", exc_info=True)
+        # Redis ping
+        try:
+            from app.services.cache_service import _get_redis
+            _get_redis().ping()
+        except Exception:
+            pass
+        # Refresh JWKS cache
+        try:
+            from app.auth.middleware import _get_jwks
+            await _get_jwks()
+        except Exception:
+            pass
