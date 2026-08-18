@@ -582,7 +582,7 @@ export default function Home() {
                 </button>
               </Link>
               <a href="#advantages">
-                <button className="inline-flex items-center gap-2 rounded-full border border-[#9D5CF5]/40 bg-[#9D5CF5]/[0.06] px-8 py-4 text-sm font-semibold text-[#9D5CF5] backdrop-blur-sm transition-all hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/60">
+                <button className="bubble-hover inline-flex items-center gap-2 rounded-full border border-[#9D5CF5]/40 bg-[#9D5CF5]/[0.06] px-8 py-4 text-sm font-semibold text-[#9D5CF5] backdrop-blur-sm hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/60">
                   Learn More
                   <ChevronDown className="h-4 w-4" />
                 </button>
@@ -726,7 +726,7 @@ export default function Home() {
             {[...logoPartners, ...logoPartners].map((name, i) => (
               <div
                 key={`${name}-${i}`}
-                className="mx-6 flex shrink-0 items-center gap-2 rounded-lg border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-2.5"
+                className="bubble-hover mx-6 flex shrink-0 items-center gap-2 rounded-lg border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-2.5"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 text-[8px] font-bold text-[#9D5CF5]">
                   {name.substring(0, 2).toUpperCase()}
@@ -793,7 +793,7 @@ export default function Home() {
 
                 {/* Icon box */}
                 <div className="relative">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C3AED]/20 bg-[#1a243a] shadow-lg shadow-[#7C3AED]/5">
+                  <div className="bubble-hover flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C3AED]/20 bg-[#1a243a] shadow-lg shadow-[#7C3AED]/5">
                     <step.icon className="h-8 w-8 text-[#9D5CF5]" />
                   </div>
                   {workflowReveal.isVisible && (
@@ -1154,7 +1154,7 @@ export default function Home() {
                   </ul>
                   <Link href={plan.href} className="block">
                     <button
-                      className={`w-full rounded-full px-6 py-3.5 text-sm font-semibold transition-all ${
+                      className={`bubble-hover w-full rounded-full px-6 py-3.5 text-sm font-semibold ${
                         plan.highlighted
                           ? "landing-btn-primary text-white"
                           : "border border-[#9D5CF5]/30 bg-[#9D5CF5]/[0.06] text-[#9D5CF5] hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/50"
@@ -1228,13 +1228,13 @@ export default function Home() {
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/sign-up">
-                <button className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-[#7C3AED] shadow-xl transition-all hover:shadow-2xl hover:shadow-white/20 hover:-translate-y-0.5">
+                <button className="bubble-hover inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-[#7C3AED] shadow-xl">
                   Start Free Trial
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <a href="#pricing">
-                <button className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/20">
+                <button className="bubble-hover inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20">
                   View Pricing
                 </button>
               </a>
@@ -1273,7 +1273,7 @@ export default function Home() {
                   <a
                     key={i}
                     href="#"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#2f3c5b]/50 text-white/30 transition-all hover:border-[#7C3AED]/40 hover:text-[#9D5CF5] hover:shadow-lg hover:shadow-[#7C3AED]/10"
+                    className="bubble-hover flex h-9 w-9 items-center justify-center rounded-lg border border-[#2f3c5b]/50 text-white/30 hover:border-[#7C3AED]/40 hover:text-[#9D5CF5]"
                   >
                     <Icon className="h-4 w-4" />
                   </a>

@@ -281,12 +281,14 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(124, 58, 237, 0.12);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+  perspective: 800px;
 }
 .landing-card:hover {
   border-color: rgba(124, 58, 237, 0.4);
-  box-shadow: 0 0 40px rgba(124, 58, 237, 0.08), 0 20px 60px rgba(0, 0, 0, 0.3);
-  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.12), 0 20px 50px rgba(0, 0, 0, 0.25);
+  transform: translateY(-8px) scale(1.02) rotateX(2deg);
 }
 
 .landing-card-glow {
@@ -309,11 +311,24 @@
 .landing-btn-primary {
   background: linear-gradient(135deg, #7C3AED, #6D28D9);
   box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .landing-btn-primary:hover {
-  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.5);
-  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.5);
+  transform: translateY(-4px) scale(1.05);
+}
+.landing-btn-primary:active {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+/* 3D bubble hover for all interactive elements */
+.bubble-hover {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bubble-hover:hover {
+  transform: translateY(-6px) scale(1.04);
+  box-shadow: 0 12px 35px rgba(124, 58, 237, 0.15), 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .landing-glow-orb {
