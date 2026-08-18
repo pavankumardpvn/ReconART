@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import { X, Send, Sparkles, Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -21,32 +22,46 @@ const QUICK_ACTIONS = [
   "How many data sources do I have?",
 ];
 
-async function getAssistantResponse(question: string): Promise<string> {
+async function getAssistantResponse(question: string, userName: string): Promise<string> {
   const q = question.toLowerCase().trim();
+  const name = userName || "there";
 
   // Handle casual conversation without API calls
   if (/^(hi|hello|hey|howdy|good\s*(morning|afternoon|evening)|what'?s\s*up)/i.test(q)) {
-    return `Hey there! 👋 I'm your ReconART assistant.\n\nI can help you with:\n\n` +
-      `📊 **"Show me my reconciliation summary"**\n` +
-      `⚠️ **"How many open exceptions do I have?"**\n` +
-      `📈 **"What is my average match rate?"**\n` +
-      `🏃 **"Show me recent runs"**\n` +
-      `💾 **"How many data sources do I have?"**\n\n` +
-      `What would you like to know?`;
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    return `${greeting}, **${name}**! 👋\n\nHow can I help you today? You can ask me about your reconciliations, exceptions, match rates, or anything else.`;
   }
 
-  if (/^(thanks|thank\s*you|ty|cheers|great|perfect|awesome|cool|ok|okay|got\s*it)/i.test(q)) {
-    return "You're welcome! Let me know if you need anything else. 😊";
+  if (/^(thanks|thank\s*you|ty|cheers|great|perfect|awesome|cool)/i.test(q)) {
+    return `You're welcome, ${name}! Let me know if you need anything else. 😊`;
+  }
+
+  if (/^(ok|okay|got\s*it|sure|alright|understood)/i.test(q)) {
+    return `Great! Anything else I can help you with, ${name}?`;
   }
 
   if (/^(bye|goodbye|see\s*you|later|exit|quit|close)/i.test(q)) {
-    return "Goodbye! I'm always here when you need me. Just click the AI Assistant button again anytime. 👋";
+    return `Goodbye, ${name}! I'm always here when you need me. Have a great day! 👋`;
   }
 
   if (q.includes("who are you") || q.includes("what are you") || q.includes("your name")) {
-    return "I'm **ReconART AI Assistant** — your intelligent reconciliation copilot.\n\n" +
-      "I can analyze your reconciliation data, surface exceptions, check match rates, and help you stay on top of your financial operations.\n\n" +
-      "Try asking me something like **\"Show me my reconciliation summary\"**!";
+    return `I'm **ReconART AI Assistant**, ${name} — your intelligent reconciliation copilot.\n\nI can analyze your reconciliation data, surface exceptions, check match rates, and help you stay on top of your financial operations.\n\nJust ask me anything!`;
+  }
+
+  if (/^(how are you|how'?s it going|how do you do)/i.test(q)) {
+    return `I'm doing great, ${name}! Ready to help you with your reconciliation data. What would you like to know?`;
+  }
+
+  if (q.includes("what can you do") || q.includes("what can you help") || q.includes("help me")) {
+    return `Sure, ${name}! Here's what I can help you with:\n\n` +
+      `📊 **Reconciliation** — "Show me my reconciliation summary"\n` +
+      `⚠️ **Exceptions** — "How many open exceptions do I have?"\n` +
+      `📈 **Performance** — "What is my average match rate?"\n` +
+      `🏃 **Activity** — "Show me recent runs"\n` +
+      `💾 **Data** — "How many data sources do I have?"\n` +
+      `🔍 **Analysis** — "Which reconciliation has the lowest match rate?"\n\n` +
+      `Just type your question!`;
   }
 
   try {
@@ -118,7 +133,7 @@ async function getAssistantResponse(question: string): Promise<string> {
     }
 
     if (q.includes("help") || q.includes("what can") || q.includes("how to")) {
-      return `I can help you with:\n\n` +
+      return `Sure, ${name}! I can help you with:\n\n` +
         `📊 **Data & Sources** — "How many data sources do I have?"\n` +
         `🔄 **Reconciliation** — "Show me my reconciliation summary"\n` +
         `⚠️ **Exceptions** — "How many open exceptions do I have?"\n` +
@@ -128,12 +143,12 @@ async function getAssistantResponse(question: string): Promise<string> {
         `Just type your question or click a quick action below!`;
     }
 
-    // Default response
-    return `Based on your data:\n\n` +
+    // Default — try to be helpful with whatever they asked
+    return `Hey ${name}, here's a quick overview of your data:\n\n` +
       `• **${summary.total_reconciliations}** reconciliations configured\n` +
       `• **${summary.average_match_rate?.toFixed(1) ?? 0}%** average match rate\n` +
       `• **${summary.open_exceptions}** open exceptions\n\n` +
-      `Try asking me something specific like "How many exceptions do I have?" or "Show me recent runs".`;
+      `Could you be more specific? Try asking something like "How many exceptions do I have?" or "Show me recent runs".`;
 
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -153,17 +168,28 @@ interface AIAssistantPanelProps {
 }
 
 export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      text: "Hi! I'm your Recon ART assistant. I can help you understand your reconciliation data, find exceptions, and suggest improvements.\n\nHow can I help you today?",
-      timestamp: new Date(),
-    },
-  ]);
+  const { user } = useUser();
+  const firstName = user?.firstName || user?.fullName?.split(" ")[0] || "there";
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [welcomed, setWelcomed] = useState(false);
+
+  useEffect(() => {
+    if (open && !welcomed && firstName) {
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+      setMessages([{
+        id: "welcome",
+        role: "assistant",
+        text: `${greeting}, **${firstName}**! 👋\n\nI'm your ReconART assistant. How can I help you today?`,
+        timestamp: new Date(),
+      }]);
+      setWelcomed(true);
+    }
+  }, [open, welcomed, firstName]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -183,7 +209,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     setInput("");
     setIsTyping(true);
 
-    const response = await getAssistantResponse(question);
+    const response = await getAssistantResponse(question, firstName);
 
     const assistantMsg: Message = {
       id: (Date.now() + 1).toString(),
