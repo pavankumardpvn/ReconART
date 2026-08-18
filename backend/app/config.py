@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     slack_webhook_url: str = ""
     teams_webhook_url: str = ""
 
+    gemini_api_key: str = ""
     health_check_email: str = ""
 
     app_env: str = "development"
