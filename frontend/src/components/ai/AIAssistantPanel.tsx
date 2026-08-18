@@ -25,6 +25,13 @@ async function getAssistantResponse(question: string): Promise<string> {
   const q = question.toLowerCase();
 
   try {
+    // Ensure auth token is ready before calling API
+    const { getAuthToken } = await import("@/lib/auth");
+    const token = await getAuthToken();
+    if (!token) {
+      return "I need you to be signed in to access your data. Please refresh the page and try again.";
+    }
+
     // Fetch dashboard data for context
     const { data: summary } = await api.get("/api/v1/dashboard/summary");
 
@@ -110,8 +117,15 @@ async function getAssistantResponse(question: string): Promise<string> {
       `• **${summary.open_exceptions}** open exceptions\n\n` +
       `Try asking me something specific like "How many exceptions do I have?" or "Show me recent runs".`;
 
-  } catch {
-    return "I couldn't fetch your data right now. Make sure you're logged in and try again.\n\nYou can ask me about:\n• Reconciliation summary\n• Open exceptions\n• Match rates\n• Recent runs\n• Data sources";
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("401") || msg.includes("Authorization")) {
+      return "Your session may have expired. Please refresh the page and try again.";
+    }
+    if (msg.includes("Network") || msg.includes("ERR_")) {
+      return "I can't reach the server right now. The backend may be waking up — please try again in a few seconds.";
+    }
+    return `Something went wrong: ${msg}\n\nTry refreshing the page, or ask me again in a moment.`;
   }
 }
 
