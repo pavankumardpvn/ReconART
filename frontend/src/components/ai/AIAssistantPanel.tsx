@@ -22,17 +22,35 @@ const QUICK_ACTIONS = [
 ];
 
 async function getAssistantResponse(question: string): Promise<string> {
-  const q = question.toLowerCase();
+  const q = question.toLowerCase().trim();
+
+  // Handle casual conversation without API calls
+  if (/^(hi|hello|hey|howdy|good\s*(morning|afternoon|evening)|what'?s\s*up)/i.test(q)) {
+    return `Hey there! 👋 I'm your ReconART assistant.\n\nI can help you with:\n\n` +
+      `📊 **"Show me my reconciliation summary"**\n` +
+      `⚠️ **"How many open exceptions do I have?"**\n` +
+      `📈 **"What is my average match rate?"**\n` +
+      `🏃 **"Show me recent runs"**\n` +
+      `💾 **"How many data sources do I have?"**\n\n` +
+      `What would you like to know?`;
+  }
+
+  if (/^(thanks|thank\s*you|ty|cheers|great|perfect|awesome|cool|ok|okay|got\s*it)/i.test(q)) {
+    return "You're welcome! Let me know if you need anything else. 😊";
+  }
+
+  if (/^(bye|goodbye|see\s*you|later|exit|quit|close)/i.test(q)) {
+    return "Goodbye! I'm always here when you need me. Just click the AI Assistant button again anytime. 👋";
+  }
+
+  if (q.includes("who are you") || q.includes("what are you") || q.includes("your name")) {
+    return "I'm **ReconART AI Assistant** — your intelligent reconciliation copilot.\n\n" +
+      "I can analyze your reconciliation data, surface exceptions, check match rates, and help you stay on top of your financial operations.\n\n" +
+      "Try asking me something like **\"Show me my reconciliation summary\"**!";
+  }
 
   try {
-    // Ensure auth token is ready before calling API
-    const { getAuthToken } = await import("@/lib/auth");
-    const token = await getAuthToken();
-    if (!token) {
-      return "I need you to be signed in to access your data. Please refresh the page and try again.";
-    }
-
-    // Fetch dashboard data for context
+    // Only fetch data when the question actually needs it
     const { data: summary } = await api.get("/api/v1/dashboard/summary");
 
     if (q.includes("summary") || q.includes("overview") || q.includes("status")) {
