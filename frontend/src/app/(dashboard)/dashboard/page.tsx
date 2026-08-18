@@ -122,8 +122,6 @@ export default function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
   const { data: trends, isLoading: trendsLoading } = useMatchRateTrends();
 
-  const isLoading = summaryLoading || trendsLoading;
-
   return (
     <PageContainer title="Dashboard">
       {/* AI Summary Card */}
@@ -156,7 +154,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <div>
-                {isLoading ? (
+                {summaryLoading ? (
                   <Skeleton className="h-9 w-24" />
                 ) : (
                   <div className="animate-float-in">
@@ -192,7 +190,7 @@ export default function DashboardPage() {
             <CardTitle className="text-[var(--foreground)]">Match Rate Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {trendsLoading ? (
               <Skeleton className="h-[350px] w-full" />
             ) : (
               <MatchRateChart data={trends ?? []} />
@@ -206,7 +204,7 @@ export default function DashboardPage() {
             <CardTitle className="text-[var(--foreground)]">Recent Runs</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {summaryLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-12 w-full" />
