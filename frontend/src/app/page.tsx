@@ -1132,7 +1132,7 @@ export default function Home() {
                 {plan.highlighted && (
                   <>
                     <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-b from-[#7C3AED]/50 via-[#7C3AED]/20 to-transparent" />
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#9D5CF5] px-4 py-1 text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                    <div className="absolute top-4 right-4 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#9D5CF5] px-4 py-1 text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
                       Most Popular
                     </div>
                   </>
