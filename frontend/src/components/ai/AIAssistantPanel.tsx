@@ -30,8 +30,23 @@ async function getResponse(q: string, name: string): Promise<string> {
       user_name: name,
     });
     return data.response || "I'm not sure how to respond to that. Could you rephrase?";
-  } catch {
-    return `I'm having trouble connecting right now, ${name}. The server may be waking up — please try again in a few seconds.`;
+  } catch (err: unknown) {
+    console.error("AI Chat error:", err);
+    const axiosErr = err as { response?: { status?: number; data?: { detail?: string; response?: string } }; message?: string };
+    if (axiosErr.response?.data?.response) {
+      return axiosErr.response.data.response;
+    }
+    if (axiosErr.response?.status === 401) {
+      return `Your session may have expired, ${name}. Please refresh the page and try again.`;
+    }
+    if (axiosErr.response?.status === 422) {
+      return `I had trouble processing that request, ${name}. Please try rephrasing your question.`;
+    }
+    const msg = axiosErr.message || "Unknown error";
+    if (msg.includes("Network") || msg.includes("ERR_")) {
+      return `I can't reach the server right now, ${name}. It may be waking up — try again in 10 seconds.`;
+    }
+    return `Something went wrong (${axiosErr.response?.status || msg}), ${name}. Try again in a moment.`;
   }
 }
 
