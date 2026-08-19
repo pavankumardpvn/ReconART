@@ -779,31 +779,31 @@ export default function Home() {
             {workflowSteps.map((step, i) => (
               <div
                 key={step.title}
-                className="landing-card landing-card-glow relative z-10 flex flex-col items-center gap-4 rounded-2xl px-6 py-8 text-center"
+                className="relative z-10 flex flex-col items-center gap-4 text-center"
                 style={{
                   transition: `opacity 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms, transform 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms`,
                   opacity: workflowReveal.isVisible ? 1 : 0,
                   transform: workflowReveal.isVisible ? "translateY(0)" : "translateY(20px)",
                 }}
               >
-                {/* Number */}
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                {/* Number above */}
+                <div className="bubble-hover flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
                   {i + 1}
                 </div>
 
-                {/* Icon */}
+                {/* Icon box */}
                 <div className="relative">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#7C3AED]/[0.08]">
-                    <step.icon className="h-7 w-7 text-[#9D5CF5]" />
+                  <div className="bubble-hover flex h-20 w-20 items-center justify-center rounded-2xl border border-[#7C3AED]/20 bg-[#1a243a] shadow-lg shadow-[#7C3AED]/5">
+                    <step.icon className="h-8 w-8 text-[#9D5CF5]" />
                   </div>
                   {workflowReveal.isVisible && (
-                    <div className="absolute inset-0 rounded-xl border-2 border-[#7C3AED]/30" style={{ animation: `pulse-ring 2s ease-out ${i * 0.4}s` }} />
+                    <div className="absolute inset-0 rounded-2xl border-2 border-[#7C3AED]/30" style={{ animation: `pulse-ring 2s ease-out ${i * 0.4}s` }} />
                   )}
                 </div>
 
-                {/* Text */}
+                {/* Text below */}
                 <h3 className="text-sm font-semibold text-white">{step.title}</h3>
-                <p className="max-w-[130px] text-xs text-white/40">{step.description}</p>
+                <p className="max-w-[120px] text-xs text-white/40">{step.description}</p>
               </div>
             ))}
           </div>
