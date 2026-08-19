@@ -472,7 +472,7 @@ export default function Home() {
               <a
                 key={link.label}
                 href={link.href}
-                className="relative text-sm font-medium text-white/60 transition-colors hover:text-white after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-[#7C3AED] after:transition-all hover:after:w-full"
+                className="bubble-hover relative rounded-lg px-2 py-1 text-sm font-medium text-white/60 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-[#7C3AED] after:transition-all hover:after:w-full"
               >
                 {link.label}
               </a>
@@ -543,7 +543,7 @@ export default function Home() {
           {/* Left — Text */}
           <div className="flex flex-col gap-8">
             <div
-              className="animate-fade-in-up inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] px-4 py-2 backdrop-blur-sm"
+              className="animate-fade-in-up bubble-hover inline-flex w-fit items-center gap-2 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/[0.08] px-4 py-2 backdrop-blur-sm"
               style={{ animationDelay: "0.1s" }}
             >
               <Sparkles className="h-3.5 w-3.5 text-[#9D5CF5]" />
@@ -596,7 +596,7 @@ export default function Home() {
             >
               <div className="flex -space-x-2">
                 {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#0F1729] bg-gradient-to-br from-[#7C3AED]/40 to-[#14B8A6]/40 text-[10px] font-bold text-white/80">
+                  <div key={i} className="bubble-hover flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#0F1729] bg-gradient-to-br from-[#7C3AED]/40 to-[#14B8A6]/40 text-[10px] font-bold text-white/80">
                     {["JP", "GS", "DB", "UB"][i]}
                   </div>
                 ))}
@@ -696,7 +696,7 @@ export default function Home() {
               { val: reductionCount, suffix: "%", label: "Reduction in Manual Work" },
               { val: integrationsCount, suffix: "+", label: "Integrations" },
             ].map((stat, i) => (
-              <div key={stat.label} className="group flex flex-col items-center gap-3 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
+              <div key={stat.label} className="bubble-hover group flex flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="relative">
                   <span className="text-4xl font-bold text-white md:text-5xl">
                     {stat.val}
@@ -787,7 +787,7 @@ export default function Home() {
                 }}
               >
                 {/* Number above */}
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
+                <div className="bubble-hover flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
                   {i + 1}
                 </div>
 
@@ -1178,7 +1178,7 @@ export default function Home() {
       <section className="relative bg-[#0F1729] px-6 py-24">
         <div className="landing-glow-orb left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
         <div className="relative mx-auto max-w-3xl">
-          <div className="landing-card rounded-3xl px-10 py-14 text-center">
+          <div className="landing-card landing-card-glow rounded-3xl px-10 py-14 text-center">
             <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
               <span className="text-2xl font-bold text-[#7C3AED]">&ldquo;</span>
             </div>
