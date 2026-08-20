@@ -229,6 +229,165 @@ async def send_message(
     }
 
 
+@router.post("/execute-action")
+async def execute_action(
+    action_type: str = Body(..., embed=True),
+    params: dict = Body({}, embed=True),
+    db: AsyncSession = Depends(get_db),
+    tenant: Tenant = Depends(get_current_tenant),
+    _user: dict = Depends(get_current_user),
+):
+    """Execute an AI agent action on the backend."""
+    import uuid as _u
+    from app.models.data_source import DataSource, DataSourceColumn
+    from app.models.reconciliation import Reconciliation
+    from app.models.matching import ReconRun
+    from app.models.transform import Union, UnionMember
+    from datetime import datetime, timezone
+
+    try:
+        if action_type == "create_source":
+            source = DataSource(
+                tenant_id=tenant.id,
+                name=params.get("name", "Untitled"),
+                source_type=params.get("source_type", "file_upload"),
+                description=params.get("description"),
+                status="active",
+            )
+            db.add(source)
+            await db.flush()
+            await db.refresh(source)
+            return {"result": f"Source **{source.name}** created! (ID: `{source.id}`)"}
+
+        elif action_type == "delete_source":
+            sid = _u.UUID(params["source_id"])
+            result = await db.execute(
+                select(DataSource).where(DataSource.id == sid, DataSource.tenant_id == tenant.id)
+            )
+            source = result.scalar_one_or_none()
+            if not source:
+                return {"result": "Source not found."}
+            source.deleted_at = datetime.now(timezone.utc)
+            await db.flush()
+            return {"result": f"Source **{source.name}** deleted!"}
+
+        elif action_type == "delete_reconciliation":
+            rid = _u.UUID(params["recon_id"])
+            result = await db.execute(
+                select(Reconciliation).where(Reconciliation.id == rid, Reconciliation.tenant_id == tenant.id)
+            )
+            recon = result.scalar_one_or_none()
+            if not recon:
+                return {"result": "Reconciliation not found."}
+            recon.deleted_at = datetime.now(timezone.utc)
+            await db.flush()
+            return {"result": f"Reconciliation **{recon.name}** deleted!"}
+
+        elif action_type == "create_reconciliation":
+            recon = Reconciliation(
+                tenant_id=tenant.id,
+                name=params.get("name", "Untitled"),
+                recon_type=params.get("recon_type", "one_to_one"),
+                left_source_id=_u.UUID(params["left_source_id"]) if params.get("left_source_id") else None,
+                right_source_id=_u.UUID(params["right_source_id"]) if params.get("right_source_id") else None,
+                left_source_label=params.get("left_source_label", "Source A"),
+                right_source_label=params.get("right_source_label", "Source B"),
+                status="draft",
+            )
+            db.add(recon)
+            await db.flush()
+            await db.refresh(recon)
+
+            from app.models.reconciliation import ReconRule, ReconRuleCondition
+            for rule_data in params.get("rules", []):
+                rule = ReconRule(
+                    tenant_id=tenant.id,
+                    reconciliation_id=recon.id,
+                    name=rule_data.get("name", "Rule"),
+                    match_type=rule_data.get("match_type", "one_to_one"),
+                    priority=rule_data.get("priority", 1),
+                    is_active=True,
+                )
+                db.add(rule)
+                await db.flush()
+                await db.refresh(rule)
+                for cond in rule_data.get("conditions", []):
+                    db.add(ReconRuleCondition(
+                        rule_id=rule.id,
+                        left_column=cond["left_column"],
+                        right_column=cond["right_column"],
+                        comparison=cond.get("comparison", "exact"),
+                        tolerance_value=cond.get("tolerance_value"),
+                        fuzzy_threshold=cond.get("fuzzy_threshold"),
+                        is_key=cond.get("is_key", False),
+                    ))
+            await db.flush()
+            return {"result": f"Reconciliation **{recon.name}** created! (ID: `{recon.id}`)\n\nWant me to run it?"}
+
+        elif action_type == "run_reconciliation":
+            rid = _u.UUID(params["recon_id"])
+            result = await db.execute(
+                select(Reconciliation).where(Reconciliation.id == rid, Reconciliation.tenant_id == tenant.id)
+            )
+            recon = result.scalar_one_or_none()
+            if not recon:
+                return {"result": "Reconciliation not found."}
+            if recon.status == "draft":
+                recon.status = "active"
+            run = ReconRun(reconciliation_id=recon.id, tenant_id=tenant.id, status="pending", triggered_by="agent")
+            db.add(run)
+            await db.flush()
+            await db.refresh(run)
+            try:
+                from app.tasks.reconciliation_tasks import run_reconciliation
+                run_reconciliation.delay(str(recon.id), str(run.id))
+            except Exception:
+                pass
+            return {"result": f"Run started! (Run ID: `{run.id}`). Check Reconciliations page for results."}
+
+        elif action_type == "list_sources":
+            result = await db.execute(
+                select(DataSource).where(DataSource.tenant_id == tenant.id, DataSource.deleted_at.is_(None))
+            )
+            sources = result.scalars().all()
+            if not sources:
+                return {"result": "No data sources found. Upload a file or create one to get started."}
+            lines = [f"• **{s.name}** — {s.row_count or 0} rows ({s.status}) `{s.id}`" for s in sources]
+            return {"result": f"**{len(sources)}** source(s):\n\n" + "\n".join(lines)}
+
+        elif action_type == "list_reconciliations":
+            result = await db.execute(
+                select(Reconciliation).where(Reconciliation.tenant_id == tenant.id, Reconciliation.deleted_at.is_(None))
+            )
+            recons = result.scalars().all()
+            if not recons:
+                return {"result": "No reconciliations found. Create one to get started."}
+            lines = [f"• **{r.name}** — {r.recon_type} ({r.status}) `{r.id}`" for r in recons]
+            return {"result": f"**{len(recons)}** reconciliation(s):\n\n" + "\n".join(lines)}
+
+        elif action_type == "create_union":
+            union = Union(tenant_id=tenant.id, name=params.get("name", "Untitled"))
+            db.add(union)
+            await db.flush()
+            await db.refresh(union)
+            for i, m in enumerate(params.get("members", [])):
+                db.add(UnionMember(
+                    union_id=union.id,
+                    data_source_id=_u.UUID(m["data_source_id"]),
+                    column_mapping=m.get("column_mapping", {}),
+                    ordinal=i,
+                ))
+            await db.flush()
+            return {"result": f"Union **{union.name}** created! (ID: `{union.id}`)"}
+
+        else:
+            return {"result": f"Unknown action: {action_type}"}
+
+    except Exception as e:
+        logger.exception("Action execution failed")
+        return {"result": f"Failed: {str(e)}"}
+
+
 @router.patch("/sessions/{session_id}/messages/{message_id}")
 async def update_message_action(
     session_id: str,

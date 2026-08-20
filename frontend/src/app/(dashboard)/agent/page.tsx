@@ -7,11 +7,7 @@ import {
   Loader2, Trash2, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  api, createSource, createReconciliation, runReconciliation,
-  createUnion, getDataSources, getReconciliations, uploadDataSource,
-  getDataSourceColumns,
-} from "@/lib/api";
+import { api, uploadDataSource, getDataSourceColumns } from "@/lib/api";
 import PageContainer from "@/components/layout/PageContainer";
 
 interface Action {
@@ -37,77 +33,25 @@ interface Session {
 
 async function executeAction(action: Action): Promise<string> {
   try {
-    switch (action.type) {
-      case "create_source": {
-        const p = action.params as { name: string; source_type?: string; description?: string };
-        const result = await createSource({ name: p.name, source_type: p.source_type || "file_upload", description: p.description });
-        return `Source **${result.name}** created! (ID: \`${result.id}\`)\n\nYou can now upload files to it or use it in a reconciliation.`;
-      }
-      case "create_reconciliation": {
-        const result = await createReconciliation(action.params);
-        return `Reconciliation **${(result as { name: string }).name}** created! (ID: \`${(result as { id: string }).id}\`)\n\nWant me to run it?`;
-      }
-      case "run_reconciliation": {
-        const p = action.params as { recon_id: string };
-        const result = await runReconciliation(p.recon_id);
-        return `Run started! (Run ID: \`${result.id}\`) Status: **${result.status}**\n\nCheck the Reconciliations page for results.`;
-      }
-      case "create_union": {
-        const result = await createUnion(action.params);
-        return `Union **${(result as { name: string }).name}** created! (ID: \`${(result as { id: string }).id}\`)`;
-      }
-      case "list_sources": {
-        const result = await getDataSources();
-        const items = result.items || [];
-        if (!items.length) return "No data sources found. Upload a file or create one to get started.";
-        return `**${items.length}** source(s):\n\n` + items.map((s: { name: string; id: string; row_count: number | null; status: string }) =>
-          `• **${s.name}** — ${s.row_count?.toLocaleString() || 0} rows (${s.status}) \`${s.id}\``).join("\n");
-      }
-      case "delete_source": {
-        const p = action.params as { source_id: string };
-        const sid = p.source_id?.trim();
-        if (!sid || sid.length < 10) return `Invalid source ID: "${sid}". Try "list my sources" first to see the correct IDs.`;
-        await api.delete(`/api/v1/data-sources/${sid}`);
-        return `Source deleted successfully!`;
-      }
-      case "delete_reconciliation": {
-        const p = action.params as { recon_id: string };
-        const rid = p.recon_id?.trim();
-        if (!rid || rid.length < 10) return `Invalid reconciliation ID: "${rid}". Try "list my reconciliations" first.`;
-        await api.delete(`/api/v1/reconciliations/${rid}`);
-        return `Reconciliation deleted successfully!`;
-      }
-      case "list_reconciliations": {
-        const result = await getReconciliations();
-        const items = result.items || [];
-        if (!items.length) return "No reconciliations found. Create one to get started.";
-        return `**${items.length}** reconciliation(s):\n\n` + items.map((r: { name: string; id: string; status: string; recon_type: string }) =>
-          `• **${r.name}** — ${r.recon_type} (${r.status}) \`${r.id}\``).join("\n");
-      }
-      case "suggest_rules": {
-        const p = action.params as { left_source_id: string; right_source_id: string };
-        const { data } = await api.post("/api/v1/ai/analyze-columns", { left_source_id: p.left_source_id, right_source_id: p.right_source_id });
-        const sug = data.suggestions || [];
-        if (!sug.length) return "No obvious column matches found. Specify the columns manually.";
-        return `Suggested rules:\n\n` + sug.map((s: { left_column: string; right_column: string; comparison: string; confidence: number }) =>
-          `• **${s.left_column}** ↔ **${s.right_column}** (${s.comparison}, ${Math.round(s.confidence * 100)}%)`).join("\n");
-      }
-      default: return `Unknown action: ${action.type}`;
-    }
+    const { data } = await api.post("/api/v1/agent/execute-action", {
+      action_type: action.type,
+      params: action.params,
+    });
+    return data.result || "Done!";
   } catch (err: unknown) {
-    const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string };
-    const detail = axiosErr.response?.data ? JSON.stringify(axiosErr.response.data) : axiosErr.message || String(err);
-    console.error("Action failed:", action.type, action.params, err);
-    return `Failed to execute **${action.type}**: ${detail}`;
+    const axiosErr = err as { response?: { status?: number; data?: { result?: string; detail?: string } }; message?: string };
+    if (axiosErr.response?.data?.result) return axiosErr.response.data.result;
+    if (axiosErr.response?.data?.detail) return `Failed: ${axiosErr.response.data.detail}`;
+    return `Failed: ${axiosErr.message || String(err)}`;
   }
 }
 
 function getActionLabel(action: Action): string {
   const labels: Record<string, string> = {
     create_source: `Create source "${(action.params as { name?: string }).name || ""}"`,
-    delete_source: `Delete source`,
+    delete_source: "Delete source",
     create_reconciliation: `Create reconciliation "${(action.params as { name?: string }).name || ""}"`,
-    delete_reconciliation: `Delete reconciliation`,
+    delete_reconciliation: "Delete reconciliation",
     run_reconciliation: "Run reconciliation",
     create_union: `Create union "${(action.params as { name?: string }).name || ""}"`,
     list_sources: "List data sources",
@@ -150,9 +94,7 @@ export default function AgentPage() {
     try {
       const { data } = await api.get(`/api/v1/agent/sessions/${sessionId}/messages`);
       setMessages((data.messages || []).map((m: Message) => ({
-        ...m,
-        action: m.action || null,
-        actionStatus: m.actionStatus || null,
+        ...m, action: m.action || null, actionStatus: m.actionStatus || null,
       })));
     } catch { /* ignore */ }
   }, []);
@@ -200,10 +142,8 @@ export default function AgentPage() {
       } else {
         setMessages((prev) => [...prev, {
           id: data.messageId || (Date.now() + 1).toString(),
-          role: "assistant",
-          text: data.response,
-          action: data.action,
-          actionStatus: data.action ? "pending" : null,
+          role: "assistant", text: data.response,
+          action: data.action, actionStatus: data.action ? "pending" : null,
         }]);
       }
       await loadSessions();
@@ -225,7 +165,7 @@ export default function AgentPage() {
       { id: (Date.now() + 2).toString(), role: "system", text: result },
     ]);
     if (activeSession) {
-      try { await api.patch(`/api/v1/agent/sessions/${activeSession}/messages/${msgId}`, { action_status: "done" }); } catch { /* ignore */ }
+      try { await api.patch(`/api/v1/agent/sessions/${activeSession}/messages/${msgId}`, { action_status: "done" }); } catch { /* */ }
     }
     setIsTyping(false);
   }
@@ -251,8 +191,7 @@ export default function AgentPage() {
       try { const cols = await getDataSourceColumns(source.id); colsStr = cols.map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`).join(", "); } catch { /* */ }
 
       setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "system",
+        id: (Date.now() + 1).toString(), role: "system",
         text: `Uploaded **${file.name}** — **${source.row_count?.toLocaleString() || 0}** rows.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nWhat would you like to do with this data?`,
       }]);
     } catch (err: unknown) {
@@ -261,6 +200,8 @@ export default function AgentPage() {
     setIsUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
+
+  if (!useUser) return null;
 
   return (
     <PageContainer title="AI Agent">
@@ -275,29 +216,20 @@ export default function AgentPage() {
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {sessions.length === 0 ? (
               <p className="px-3 py-8 text-center text-xs text-[var(--foreground-subtle)]">No conversations yet.<br />Click "New Chat" to start.</p>
-            ) : (
-              sessions.map((s) => (
-                <button
-                  key={s.sessionId}
-                  onClick={() => selectSession(s.sessionId)}
-                  className={cn(
-                    "group flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-all",
-                    activeSession === s.sessionId
-                      ? "bg-[var(--background-tertiary)] border border-cyan-500/20"
-                      : "hover:bg-[var(--background-tertiary)] border border-transparent"
-                  )}
-                >
-                  <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--foreground-subtle)]" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-[var(--foreground)]">{s.title || "New conversation"}</p>
-                    <p className="text-[10px] text-[var(--foreground-subtle)]">{timeAgo(s.updatedAt)}</p>
-                  </div>
-                  <button onClick={(e) => deleteSession(s.sessionId, e)} className="hidden group-hover:flex h-5 w-5 items-center justify-center rounded text-[var(--foreground-subtle)] hover:bg-red-500/20 hover:text-red-400">
-                    <Trash2 className="h-3 w-3" />
-                  </button>
+            ) : sessions.map((s) => (
+              <button key={s.sessionId} onClick={() => selectSession(s.sessionId)}
+                className={cn("group flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-all",
+                  activeSession === s.sessionId ? "bg-[var(--background-tertiary)] border border-cyan-500/20" : "hover:bg-[var(--background-tertiary)] border border-transparent")}>
+                <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--foreground-subtle)]" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-medium text-[var(--foreground)]">{s.title || "New conversation"}</p>
+                  <p className="text-[10px] text-[var(--foreground-subtle)]">{timeAgo(s.updatedAt)}</p>
+                </div>
+                <button onClick={(e) => deleteSession(s.sessionId, e)} className="hidden group-hover:flex h-5 w-5 items-center justify-center rounded text-[var(--foreground-subtle)] hover:bg-red-500/20 hover:text-red-400">
+                  <Trash2 className="h-3 w-3" />
                 </button>
-              ))
-            )}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -310,7 +242,7 @@ export default function AgentPage() {
               </div>
               <h2 className="text-xl font-semibold text-[var(--foreground)]">ReconART Agent</h2>
               <p className="max-w-sm text-center text-sm text-[var(--foreground-muted)]">
-                I can create data sources, set up reconciliations, run matching, and analyze your data. Click "New Chat" to start.
+                I can create, delete, and manage data sources, reconciliations, and more. Click "New Chat" to start.
               </p>
               <button onClick={createNewSession} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-3 text-sm font-semibold text-white hover:shadow-lg">
                 <Plus className="h-4 w-4" /> Start a conversation
@@ -318,7 +250,6 @@ export default function AgentPage() {
             </div>
           ) : (
             <>
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center gap-3 pt-20">
@@ -330,16 +261,15 @@ export default function AgentPage() {
                   <div key={msg.id}>
                     <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
                       {msg.role !== "user" && (
-                        <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", msg.role === "system" ? "bg-emerald-500/20" : "bg-gradient-to-br from-purple-500/20 to-cyan-500/20")}>
+                        <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                          msg.role === "system" ? "bg-emerald-500/20" : "bg-gradient-to-br from-purple-500/20 to-cyan-500/20")}>
                           {msg.role === "system" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Bot className="h-3.5 w-3.5 text-cyan-400" />}
                         </div>
                       )}
-                      <div className={cn(
-                        "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                      <div className={cn("max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
                         msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
                           : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
-                          : "bg-[var(--background)] text-[var(--foreground)] border border-[var(--card-border)]"
-                      )}>
+                          : "bg-[var(--background)] text-[var(--foreground)] border border-[var(--card-border)]")}>
                         {msg.text.split("\n").map((line, i) => (
                           <p key={i} className={i > 0 ? "mt-1" : ""}>
                             {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
@@ -381,21 +311,14 @@ export default function AgentPage() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
               <div className="border-t border-[var(--card-border)] p-4">
                 <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 focus-within:border-cyan-500/30">
                   <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.xlsx,.xls,.json,.txt" className="hidden" />
                   <button onClick={() => fileInputRef.current?.click()} disabled={isTyping || isUploading} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-muted)] hover:bg-[var(--background-tertiary)] hover:text-[var(--foreground)] disabled:opacity-30" title="Upload file">
                     {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
                   </button>
-                  <input
-                    type="text" value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                    placeholder="Ask me anything or upload a file..."
-                    className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
-                    disabled={isTyping || isUploading}
-                  />
+                  <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                    placeholder="Ask me anything or upload a file..." className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none" disabled={isTyping || isUploading} />
                   <button onClick={() => handleSend()} disabled={!input.trim() || isTyping || isUploading} className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white disabled:opacity-30">
                     <Send className="h-3.5 w-3.5" />
                   </button>
