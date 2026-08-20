@@ -231,12 +231,11 @@ export default function AgentPage() {
       let colsStr = "";
       try { const cols = await getDataSourceColumns(source.id); colsStr = cols.map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`).join(", "); } catch { /* */ }
 
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "system", text: `Uploaded **${file.name}** — **${source.row_count?.toLocaleString() || 0}** rows. ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}` }]);
-
-      const aiMsg = `I uploaded "${file.name}" with ${source.row_count || 0} rows. Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
-      const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: aiMsg, user_name: firstName });
-      setMessages((prev) => [...prev, { id: data.messageId || (Date.now() + 2).toString(), role: "assistant", text: data.response, action: data.action, actionStatus: data.action ? "pending" : null }]);
-      await loadSessions();
+      setMessages((prev) => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: "system",
+        text: `Uploaded **${file.name}** — **${source.row_count?.toLocaleString() || 0}** rows.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nWhat would you like to do with this data?`,
+      }]);
     } catch (err: unknown) {
       setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "system", text: `Upload failed: ${err instanceof Error ? err.message : String(err)}` }]);
     }
