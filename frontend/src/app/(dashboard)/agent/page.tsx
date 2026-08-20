@@ -63,6 +63,16 @@ async function executeAction(action: Action): Promise<string> {
         return `**${items.length}** source(s):\n\n` + items.map((s: { name: string; id: string; row_count: number | null; status: string }) =>
           `• **${s.name}** — ${s.row_count?.toLocaleString() || 0} rows (${s.status}) \`${s.id}\``).join("\n");
       }
+      case "delete_source": {
+        const p = action.params as { source_id: string };
+        await api.delete(`/api/v1/data-sources/${p.source_id}`);
+        return `Source deleted successfully! (\`${p.source_id}\`)`;
+      }
+      case "delete_reconciliation": {
+        const p = action.params as { recon_id: string };
+        await api.delete(`/api/v1/reconciliations/${p.recon_id}`);
+        return `Reconciliation deleted successfully! (\`${p.recon_id}\`)`;
+      }
       case "list_reconciliations": {
         const result = await getReconciliations();
         const items = result.items || [];
@@ -88,7 +98,9 @@ async function executeAction(action: Action): Promise<string> {
 function getActionLabel(action: Action): string {
   const labels: Record<string, string> = {
     create_source: `Create source "${(action.params as { name?: string }).name || ""}"`,
+    delete_source: `Delete source`,
     create_reconciliation: `Create reconciliation "${(action.params as { name?: string }).name || ""}"`,
+    delete_reconciliation: `Delete reconciliation`,
     run_reconciliation: "Run reconciliation",
     create_union: `Create union "${(action.params as { name?: string }).name || ""}"`,
     list_sources: "List data sources",
