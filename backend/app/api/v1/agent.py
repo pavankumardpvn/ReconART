@@ -18,6 +18,56 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def _execute_action_internal(action_type: str, params: dict, db: AsyncSession, tenant: Tenant) -> str:
+    """Execute an action directly on the backend — no second API call needed."""
+    import uuid as _u
+    from app.models.data_source import DataSource
+    from app.models.reconciliation import Reconciliation
+    from datetime import datetime, timezone
+
+    if action_type == "list_sources":
+        result = await db.execute(
+            select(DataSource).where(DataSource.tenant_id == tenant.id, DataSource.deleted_at.is_(None))
+        )
+        sources = result.scalars().all()
+        if not sources:
+            return "No data sources found. Upload a file or create one to get started."
+        lines = [f"• **{s.name}** — {s.row_count or 0} rows ({s.status}) `{s.id}`" for s in sources]
+        return f"**{len(sources)}** source(s):\n\n" + "\n".join(lines)
+
+    elif action_type == "list_reconciliations":
+        result = await db.execute(
+            select(Reconciliation).where(Reconciliation.tenant_id == tenant.id, Reconciliation.deleted_at.is_(None))
+        )
+        recons = result.scalars().all()
+        if not recons:
+            return "No reconciliations found. Create one to get started."
+        lines = [f"• **{r.name}** — {r.recon_type} ({r.status}) `{r.id}`" for r in recons]
+        return f"**{len(recons)}** reconciliation(s):\n\n" + "\n".join(lines)
+
+    elif action_type == "delete_source":
+        sid = _u.UUID(params["source_id"])
+        result = await db.execute(select(DataSource).where(DataSource.id == sid, DataSource.tenant_id == tenant.id))
+        source = result.scalar_one_or_none()
+        if not source:
+            return "Source not found."
+        source.deleted_at = datetime.now(timezone.utc)
+        await db.flush()
+        return f"Source **{source.name}** deleted!"
+
+    elif action_type == "delete_reconciliation":
+        rid = _u.UUID(params["recon_id"])
+        result = await db.execute(select(Reconciliation).where(Reconciliation.id == rid, Reconciliation.tenant_id == tenant.id))
+        recon = result.scalar_one_or_none()
+        if not recon:
+            return "Reconciliation not found."
+        recon.deleted_at = datetime.now(timezone.utc)
+        await db.flush()
+        return f"Reconciliation **{recon.name}** deleted!"
+
+    return f"Unknown action: {action_type}"
+
+
 @router.post("/sessions", status_code=201)
 async def create_session(
     db: AsyncSession = Depends(get_db),
@@ -200,6 +250,16 @@ async def send_message(
         except Exception as e:
             logger.exception("Agent AI call failed")
             ai_text = f"Something went wrong, {name}. Try again!"
+
+    # Auto-execute list actions on the backend — no second call needed
+    auto_result = None
+    if action and action.get("type") in ("list_sources", "list_reconciliations"):
+        try:
+            auto_result = await _execute_action_internal(action.get("type", ""), action.get("params", {}), db, tenant)
+            ai_text = auto_result
+            action = None
+        except Exception:
+            pass
 
     # Save assistant message
     assistant_msg = ChatMessage(

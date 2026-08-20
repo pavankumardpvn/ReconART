@@ -136,16 +136,11 @@ export default function AgentPage() {
     try {
       const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: q, user_name: firstName });
 
-      if (data.action && (data.action.type === "list_sources" || data.action.type === "list_reconciliations")) {
-        const result = await executeAction(data.action);
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: result }]);
-      } else {
-        setMessages((prev) => [...prev, {
-          id: data.messageId || (Date.now() + 1).toString(),
-          role: "assistant", text: data.response,
-          action: data.action, actionStatus: data.action ? "pending" : null,
-        }]);
-      }
+      setMessages((prev) => [...prev, {
+        id: data.messageId || (Date.now() + 1).toString(),
+        role: "assistant", text: data.response,
+        action: data.action || null, actionStatus: data.action ? "pending" : null,
+      }]);
       await loadSessions();
     } catch {
       setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: "Something went wrong. Try again." }]);
@@ -155,18 +150,26 @@ export default function AgentPage() {
 
   async function handleConfirm(msgId: string) {
     const msg = messages.find((m) => m.id === msgId);
-    if (!msg?.action) return;
+    if (!msg?.action || !activeSession) return;
 
     setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, actionStatus: "confirmed" } : m));
     setIsTyping(true);
-    const result = await executeAction(msg.action);
+
+    let result = "Done!";
+    try {
+      const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, {
+        message: `Execute action: ${msg.action.type} with params ${JSON.stringify(msg.action.params)}`,
+        user_name: firstName,
+      });
+      result = data.response || "Done!";
+    } catch (err: unknown) {
+      result = `Failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+
     setMessages((prev) => [
       ...prev.map((m) => m.id === msgId ? { ...m, actionStatus: "done" } : m),
       { id: (Date.now() + 2).toString(), role: "system", text: result },
     ]);
-    if (activeSession) {
-      try { await api.patch(`/api/v1/agent/sessions/${activeSession}/messages/${msgId}`, { action_status: "done" }); } catch { /* */ }
-    }
     setIsTyping(false);
   }
 
