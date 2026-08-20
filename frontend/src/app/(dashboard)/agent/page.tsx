@@ -65,13 +65,23 @@ async function executeAction(action: Action): Promise<string> {
       }
       case "delete_source": {
         const p = action.params as { source_id: string };
-        await api.delete(`/api/v1/data-sources/${p.source_id}`);
-        return `Source deleted successfully! (\`${p.source_id}\`)`;
+        try {
+          await api.delete(`/api/v1/data-sources/${p.source_id}`);
+        } catch (e: unknown) {
+          const err = e as { response?: { status?: number } };
+          if (err.response?.status !== 204) throw e;
+        }
+        return `Source deleted successfully!`;
       }
       case "delete_reconciliation": {
         const p = action.params as { recon_id: string };
-        await api.delete(`/api/v1/reconciliations/${p.recon_id}`);
-        return `Reconciliation deleted successfully! (\`${p.recon_id}\`)`;
+        try {
+          await api.delete(`/api/v1/reconciliations/${p.recon_id}`);
+        } catch (e: unknown) {
+          const err = e as { response?: { status?: number } };
+          if (err.response?.status !== 204) throw e;
+        }
+        return `Reconciliation deleted successfully!`;
       }
       case "list_reconciliations": {
         const result = await getReconciliations();
