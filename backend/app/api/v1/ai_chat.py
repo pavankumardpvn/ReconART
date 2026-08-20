@@ -146,6 +146,9 @@ async def ai_chat(
 
             if use_groq:
                 text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                # Strip Qwen's <think>...</think> reasoning block
+                import re
+                text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
             else:
                 text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
 
