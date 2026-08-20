@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     accounting,
     aging,
+    ai_chat,
     analytics,
     anomalies,
     api_keys,
@@ -38,6 +39,9 @@ from app.api.v1 import (
 
 api_router = APIRouter()
 
+import logging as _log
+_log.getLogger(__name__).info("ai_chat module loaded: %s, routes: %s", ai_chat, [r.path for r in ai_chat.router.routes])
+
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(resources.router, prefix="/resources", tags=["resources"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
@@ -69,3 +73,4 @@ api_router.include_router(api_keys.router, prefix="/api-keys", tags=["api-keys"]
 api_router.include_router(notebook.router, prefix="/notebook", tags=["notebook"])
 api_router.include_router(lineage.router, prefix="/lineage", tags=["lineage"])
 api_router.include_router(events.router, prefix="/events", tags=["events"])
+api_router.include_router(ai_chat.router, prefix="/ai", tags=["ai"])
