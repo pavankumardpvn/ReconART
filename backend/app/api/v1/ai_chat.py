@@ -179,7 +179,6 @@ async def ai_chat(
                             {"role": "user", "content": message},
                         ],
                         "max_tokens": 2048,
-                        "chat_template_kwargs": {"enable_thinking": False},
                     },
                 )
             else:
