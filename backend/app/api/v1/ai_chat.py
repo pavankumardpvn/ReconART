@@ -49,7 +49,9 @@ Available action types:
 - list_reconciliations: no params needed
 - suggest_rules: params {"left_source_id": "uuid", "right_source_id": "uuid"}
 
-RULES:
+CRITICAL RULES:
+- NEVER include your thinking process, reasoning, analysis steps, or internal thoughts in the response
+- Go DIRECTLY to the answer — no preamble like "Here's a thinking process" or numbered analysis steps
 - Only include an action when the user explicitly wants to create/run/list something
 - For casual conversation, do NOT include actions
 - Always explain what you're about to do BEFORE the action block
@@ -177,6 +179,7 @@ async def ai_chat(
                             {"role": "user", "content": message},
                         ],
                         "max_tokens": 2048,
+                        "chat_template_kwargs": {"enable_thinking": False},
                     },
                 )
             else:
@@ -197,7 +200,11 @@ async def ai_chat(
 
             if use_groq:
                 text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+                # Strip all thinking patterns from Qwen
+                text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+                text = re.sub(r"^.*?(?:thinking process|thought process|analysis|reasoning).*?(?:\n\n|\n(?=[A-Z]))", "", text, flags=re.DOTALL | re.IGNORECASE)
+                text = re.sub(r"^\s*\d+\.\s*(?:Analyze|Identify|Formulate|Check|Draft).*?(?=\n[A-Z][a-z]+ [A-Z]|\nHi |\nHey |\nHello |\nSure)", "", text, flags=re.DOTALL)
+                text = text.strip()
             else:
                 text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
 
