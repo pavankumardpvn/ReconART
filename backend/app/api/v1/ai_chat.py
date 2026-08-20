@@ -124,7 +124,7 @@ async def ai_chat(
             )
 
             if resp.status_code == 429:
-                return {"response": f"I'm getting a lot of requests, {user_name}. Try again in a minute!"}
+                return {"response": f"Hey {user_name}, I've reached my request limit (15 per minute on the free plan). Please wait **60 seconds** and try again.\n\n⏱️ The limit resets automatically every minute. In the meantime, you can explore the dashboard, data sources, or reconciliations directly from the sidebar."}
 
             resp.raise_for_status()
             data = resp.json()
