@@ -16,7 +16,7 @@ from app.models.matching import Exception_, ReconRun
 from app.models.reconciliation import Reconciliation
 from app.models.data_source import DataSource
 from app.models.tenant import Tenant
-from app.services.cache_service import cache_get, cache_set
+from app.services.cache_service import cache_get, cache_set, cache_delete
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,7 @@ async def ai_chat(
             )
 
             if resp.status_code == 429:
+                await cache_delete(f"ai:resp:{tenant.id}:*")
                 return {"response": f"Hey {name}, I've reached my limit. Please wait **60 seconds** and try again. ⏱️"}
 
             resp.raise_for_status()
