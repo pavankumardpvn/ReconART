@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     teams_webhook_url: str = ""
 
     gemini_api_key: str = ""
+    groq_api_key: str = ""
     health_check_email: str = ""
 
     app_env: str = "development"
