@@ -14,13 +14,17 @@ const AIAssistantPanel = dynamic(() => import('@/components/ai/AIAssistantPanel'
 interface SidebarProps {
   collapsed?: boolean;
   onToggle?: () => void;
+  aiOpen?: boolean;
+  onAiToggle?: (open: boolean) => void;
 }
 
-export default function Sidebar({ collapsed: controlledCollapsed, onToggle }: SidebarProps = {}) {
+export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOpen: controlledAiOpen, onAiToggle }: SidebarProps = {}) {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
+  const [internalAiOpen, setInternalAiOpen] = useState(false);
   const collapsed = controlledCollapsed ?? internalCollapsed;
   const toggleCollapse = onToggle ?? (() => setInternalCollapsed(!internalCollapsed));
+  const aiOpen = controlledAiOpen ?? internalAiOpen;
+  const setAiOpen = onAiToggle ?? setInternalAiOpen;
   const pathname = usePathname();
 
   return (

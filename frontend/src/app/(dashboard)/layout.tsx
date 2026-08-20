@@ -12,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   return (
     <CommandPaletteProvider>
@@ -19,11 +20,14 @@ export default function DashboardLayout({
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+          aiOpen={aiPanelOpen}
+          onAiToggle={setAiPanelOpen}
         />
         <div
           className={cn(
             "transition-all duration-300",
-            sidebarCollapsed ? "ml-16" : "ml-64"
+            sidebarCollapsed ? "ml-16" : "ml-64",
+            aiPanelOpen ? "mr-[420px]" : "mr-0"
           )}
         >
           <Header />
