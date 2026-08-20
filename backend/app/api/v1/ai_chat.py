@@ -1,8 +1,9 @@
-"""AI Chat endpoint — powered by Google Gemini for intelligent finance copilot."""
+"""AI Chat endpoint — calls Google Gemini REST API directly (no SDK needed)."""
 
 import logging
 from datetime import datetime, timezone
 
+import httpx
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -63,9 +64,10 @@ Important rules:
 - Never make up data — only use the real data provided in the context
 - For general conversation (hello, how are you, etc.), be friendly and natural, then offer to help with their data"""
 
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+
 
 async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
-    """Fetch current platform data to give Gemini context."""
     lines = []
     now = datetime.now(timezone.utc)
 
@@ -157,29 +159,35 @@ async def ai_chat(
 
     context = await _get_context(db, tenant)
 
+    full_prompt = (
+        f"{SYSTEM_PROMPT}\n\n"
+        f"The user's first name is: {user_name or 'User'}\n\n"
+        f"Current platform data:\n{context}\n\n"
+        f"User message: {message}"
+    )
+
     try:
-        from google import genai
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{GEMINI_URL}?key={settings.gemini_api_key}",
+                json={
+                    "contents": [{"parts": [{"text": full_prompt}]}],
+                    "generationConfig": {"maxOutputTokens": 1024},
+                },
+            )
 
-        client = genai.Client(api_key=settings.gemini_api_key)
+            if resp.status_code == 429:
+                return {"response": f"I'm getting a lot of requests right now, {user_name or 'there'}. Please try again in a minute!"}
 
-        full_prompt = (
-            f"{SYSTEM_PROMPT}\n\n"
-            f"The user's first name is: {user_name or 'User'}\n\n"
-            f"Current platform data:\n{context}\n\n"
-            f"User message: {message}"
-        )
+            resp.raise_for_status()
+            data = resp.json()
 
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=full_prompt,
-        )
+            text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            return {"response": text or "I'm not sure how to respond to that. Could you rephrase?"}
 
-        text = response.text if response.text else "I'm not sure how to respond to that. Could you rephrase?"
-        return {"response": text}
-
+    except httpx.HTTPStatusError as e:
+        logger.exception("Gemini API error")
+        return {"response": f"I had a momentary issue, {user_name or 'there'}. Error: {e.response.status_code}. Try again!"}
     except Exception as e:
         logger.exception("AI chat failed")
-        error_msg = str(e)
-        if "429" in error_msg or "quota" in error_msg.lower():
-            return {"response": f"I'm getting a lot of requests right now, {user_name or 'there'}. Please try again in a minute! (Rate limit reached)"}
-        return {"response": f"I had a momentary issue, {user_name or 'there'}. Try again in a few seconds!\n\nError: {error_msg}"}
+        return {"response": f"Something went wrong, {user_name or 'there'}. Try again in a few seconds!"}
