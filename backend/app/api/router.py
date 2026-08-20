@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     accounting,
+    agent,
     aging,
     ai_chat,
     analytics,
@@ -74,3 +75,4 @@ api_router.include_router(notebook.router, prefix="/notebook", tags=["notebook"]
 api_router.include_router(lineage.router, prefix="/lineage", tags=["lineage"])
 api_router.include_router(events.router, prefix="/events", tags=["events"])
 api_router.include_router(ai_chat.router, prefix="/ai", tags=["ai"])
+api_router.include_router(agent.router, prefix="/agent", tags=["agent"])

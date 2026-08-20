@@ -18,6 +18,7 @@ from app.models.transform import CalculatedColumn, Group, Join, Union, UnionMemb
 from app.models.dispute import Dispute
 from app.models.notebook import SavedNotebookQuery
 from app.models.workflow import Attachment, Comment, ReconciliationSignoff, ReconciliationTask
+from app.models.chat import ChatSession, ChatMessage
 
 __all__ = [
     # Tenant
