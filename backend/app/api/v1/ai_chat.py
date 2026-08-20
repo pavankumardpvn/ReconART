@@ -98,8 +98,10 @@ async def ai_chat(
     tenant: Tenant = Depends(get_current_tenant),
     _user: dict = Depends(get_current_user),
 ):
+    name = (user_name or "there").strip().capitalize()
+
     if not settings.gemini_api_key:
-        return {"response": f"Hey {user_name or 'there'}! AI isn't configured yet. Set GEMINI_API_KEY."}
+        return {"response": f"Hey {name}! AI isn't configured yet. Set GEMINI_API_KEY."}
 
     context = await _get_context(db, tenant)
 
@@ -111,7 +113,7 @@ async def ai_chat(
     if cached_resp:
         return {"response": cached_resp}
 
-    prompt = f"{SYSTEM_PROMPT}\nUser: {user_name or 'User'}\nData: {context}\nMessage: {message}"
+    prompt = f"{SYSTEM_PROMPT}\nUser's name: {name} (always capitalize first letter)\nData: {context}\nMessage: {message}"
 
     try:
         async with httpx.AsyncClient(timeout=45) as client:
@@ -124,7 +126,7 @@ async def ai_chat(
             )
 
             if resp.status_code == 429:
-                return {"response": f"Hey {user_name}, I've reached my limit. Please wait **60 seconds** and try again. ⏱️"}
+                return {"response": f"Hey {name}, I've reached my limit. Please wait **60 seconds** and try again. ⏱️"}
 
             resp.raise_for_status()
             data = resp.json()
