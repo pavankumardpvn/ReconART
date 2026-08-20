@@ -102,6 +102,15 @@ async def ai_chat(
         return {"response": f"Hey {user_name or 'there'}! AI isn't configured yet. Set GEMINI_API_KEY."}
 
     context = await _get_context(db, tenant)
+
+    # Cache common responses to avoid hitting Gemini rate limits
+    import hashlib
+    msg_hash = hashlib.md5(message.lower().strip().encode()).hexdigest()[:10]
+    resp_cache_key = f"ai:resp:{tenant.id}:{msg_hash}"
+    cached_resp = await cache_get(resp_cache_key)
+    if cached_resp:
+        return {"response": cached_resp}
+
     prompt = f"{SYSTEM_PROMPT}\nUser: {user_name or 'User'}\nData: {context}\nMessage: {message}"
 
     try:
@@ -120,6 +129,8 @@ async def ai_chat(
             resp.raise_for_status()
             data = resp.json()
             text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            if text:
+                await cache_set(resp_cache_key, text, ttl=120)
             return {"response": text or "Could you rephrase that?"}
 
     except httpx.TimeoutException:
