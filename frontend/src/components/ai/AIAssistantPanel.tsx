@@ -24,23 +24,31 @@ const QUICK_ACTIONS = [
 
 
 async function getResponse(q: string, name: string): Promise<string> {
+  const doCall = () => api.post("/api/v1/ai/chat", { message: q, user_name: name });
+
   try {
-    const { data } = await api.post("/api/v1/ai/chat", {
-      message: q,
-      user_name: name,
-    });
+    const { data } = await doCall();
     return data.response || "I'm not sure how to respond to that. Could you rephrase?";
   } catch (err: unknown) {
-    console.error("AI Chat error:", err);
     const axiosErr = err as { response?: { status?: number; data?: { detail?: string; response?: string } }; message?: string };
+
+    // On 401, refresh the token and retry once
+    if (axiosErr.response?.status === 401) {
+      try {
+        const { refreshToken } = await import("@/lib/auth");
+        await refreshToken();
+        const { data } = await doCall();
+        return data.response || "I'm not sure how to respond to that. Could you rephrase?";
+      } catch {
+        return `Your session may have expired, ${name}. Please refresh the page and try again.`;
+      }
+    }
+
     if (axiosErr.response?.data?.response) {
       return axiosErr.response.data.response;
     }
-    if (axiosErr.response?.status === 401) {
-      return `Your session may have expired, ${name}. Please refresh the page and try again.`;
-    }
     if (axiosErr.response?.status === 422) {
-      return `I had trouble processing that request, ${name}. Please try rephrasing your question.`;
+      return `I had trouble processing that, ${name}. Try rephrasing your question.`;
     }
     const msg = axiosErr.message || "Unknown error";
     if (msg.includes("Network") || msg.includes("ERR_")) {

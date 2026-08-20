@@ -36,6 +36,23 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const orig = error.config;
+    if (error.response?.status === 401 && !orig._retry && typeof window !== "undefined") {
+      orig._retry = true;
+      const { refreshToken } = await import("@/lib/auth");
+      const newToken = await refreshToken();
+      if (newToken) {
+        orig.headers.Authorization = `Bearer ${newToken}`;
+        return api(orig);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export { api };
 
 // ---------------------------------------------------------------------------

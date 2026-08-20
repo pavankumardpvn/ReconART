@@ -14,8 +14,14 @@ export async function getAuthToken(): Promise<string | null> {
   }
   if (tokenGetter) {
     cachedToken = await tokenGetter();
-    tokenExpiry = Date.now() + 50_000;
+    tokenExpiry = Date.now() + 30_000;
     return cachedToken;
   }
   return null;
+}
+
+export async function refreshToken(): Promise<string | null> {
+  cachedToken = null;
+  tokenExpiry = 0;
+  return getAuthToken();
 }
