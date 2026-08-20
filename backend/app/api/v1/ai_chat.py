@@ -120,7 +120,7 @@ async def ai_chat(
                     GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "llama-3.3-70b-versatile",
+                        "model": "qwen/qwen3.6-27b",
                         "messages": [
                             {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name} (capitalize first letter)\nData: {context}"},
                             {"role": "user", "content": message},
