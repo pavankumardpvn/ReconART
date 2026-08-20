@@ -22,24 +22,39 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-SYSTEM_PROMPT = """You are ReconART AI — a finance operations copilot inside a reconciliation platform.
-Address the user by name. Be warm, concise, and actionable.
-Use **bold** and bullet points. Keep responses 3-6 lines for simple questions.
-Use the platform data provided as context. Never make up data.
-For casual chat (hello, thanks, bye), be friendly and brief.
-Suggest a follow-up action at the end."""
+SYSTEM_PROMPT = """You are ReconART AI — a finance operations copilot. Address the user by name. Be warm and actionable.
+
+Platform features you know about:
+- Data Sources: Upload CSV/Excel/JSON or connect PostgreSQL/MySQL/Databricks
+- Reconciliations: Match two sources with exact/tolerance/fuzzy/contains rules
+- Exception Management: Auto-detect unmatched items, severity classification, bulk resolve
+- Analytics & Dashboards: Match rate trends, KPIs, recent activity
+- Scheduled Runs: Cron-based automated reconciliation (daily/weekly/monthly)
+- Exports: CSV, Excel, PDF reports
+- Cross-border Currency: 150+ currencies with real-time FX rates
+- Data Pipeline: Unions (combine sources), Groups (aggregate), Joins, Calculated Columns, Segments
+- Sweeps & Compensations: Auto-resolve exceptions by rules
+- Compliance: SOX reports, audit trails, PCI DSS, ISO 27001
+- Workflow: Sign-offs, tasks, comments, attachments
+- AI Features: Suggested matching rules, anomaly detection, ML confidence scoring
+- SQL Notebook: Ad-hoc queries on your data
+- Data Lineage: Track data flow and impact analysis
+- API Keys: Programmatic access for integrations
+- Connectors: Plaid, Stripe, PayPal, Razorpay (coming soon)
+
+Rules: Use **bold** and bullets. Never make up data — use the context provided. Suggest a follow-up."""
 
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
 
 
 async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
-    now = datetime.now(timezone.utc)
     cache_key = f"ai:context:{tenant.id}"
     cached = await cache_get(cache_key)
     if cached:
         return cached
 
     try:
+        now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
         recon_q, run_q, avg_q, exc_q, src_q, month_q, recent_q = await asyncio.gather(
@@ -60,21 +75,19 @@ async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
 
         avg_rate = avg_q.scalar_one()
         recent = list(recent_q.scalars().all())
-        runs_str = ", ".join(
-            f"{r.status} {r.match_rate:.1f}%" for r in recent
-        ) if recent else "none"
+        runs_str = ", ".join(f"{r.status} {r.match_rate:.1f}%" for r in recent) if recent else "none"
 
         ctx = (
             f"Date: {now.strftime('%Y-%m-%d')} | "
             f"Recons: {recon_q.scalar_one()} | Sources: {src_q.scalar_one()} | "
-            f"Runs: {run_q.scalar_one()} (this month: {month_q.scalar_one()}) | "
-            f"Match rate: {float(avg_rate):.1f}%" if avg_rate else "Match rate: N/A" + f" | "
-            f"Open exceptions: {exc_q.scalar_one()} | Recent: {runs_str}"
+            f"Runs: {run_q.scalar_one()} (month: {month_q.scalar_one()}) | "
+            f"Avg match rate: {float(avg_rate):.1f}% | " if avg_rate else "Avg match rate: N/A | "
+            f"Open exceptions: {exc_q.scalar_one()} | Recent runs: {runs_str}"
         )
         await cache_set(cache_key, ctx, ttl=20)
         return ctx
     except Exception as e:
-        return f"Error fetching data: {e}"
+        return f"Data unavailable: {e}"
 
 
 @router.post("/chat")
@@ -89,7 +102,6 @@ async def ai_chat(
         return {"response": f"Hey {user_name or 'there'}! AI isn't configured yet. Set GEMINI_API_KEY."}
 
     context = await _get_context(db, tenant)
-
     prompt = f"{SYSTEM_PROMPT}\nUser: {user_name or 'User'}\nData: {context}\nMessage: {message}"
 
     try:
@@ -98,7 +110,7 @@ async def ai_chat(
                 f"{GEMINI_URL}?key={settings.gemini_api_key}",
                 json={
                     "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {"maxOutputTokens": 512},
+                    "generationConfig": {"maxOutputTokens": 2048},
                 },
             )
 
@@ -111,7 +123,7 @@ async def ai_chat(
             return {"response": text or "Could you rephrase that?"}
 
     except httpx.TimeoutException:
-        return {"response": f"That took too long, {user_name or 'there'}. Try a simpler question or try again."}
+        return {"response": f"That took too long, {user_name or 'there'}. Try again in a moment."}
     except Exception as e:
         logger.exception("AI chat failed")
         return {"response": f"Something went wrong, {user_name or 'there'}. Try again!"}
