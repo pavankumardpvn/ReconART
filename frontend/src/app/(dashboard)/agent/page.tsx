@@ -101,7 +101,10 @@ async function executeAction(action: Action): Promise<string> {
       default: return `Unknown action: ${action.type}`;
     }
   } catch (err: unknown) {
-    return `Failed: ${err instanceof Error ? err.message : String(err)}`;
+    const axiosErr = err as { response?: { status?: number; data?: unknown }; message?: string };
+    const detail = axiosErr.response?.data ? JSON.stringify(axiosErr.response.data) : axiosErr.message || String(err);
+    console.error("Action failed:", action.type, action.params, err);
+    return `Failed to execute **${action.type}**: ${detail}`;
   }
 }
 

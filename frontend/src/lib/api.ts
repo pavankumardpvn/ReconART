@@ -30,7 +30,7 @@ api.interceptors.request.use(async (config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
-  if (!(config.data instanceof FormData)) {
+  if (config.data && !(config.data instanceof FormData)) {
     config.headers["Content-Type"] = "application/json";
   }
   return config;
