@@ -93,7 +93,7 @@ async def ai_chat(
     prompt = f"{SYSTEM_PROMPT}\nUser: {user_name or 'User'}\nData: {context}\nMessage: {message}"
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=45) as client:
             resp = await client.post(
                 f"{GEMINI_URL}?key={settings.gemini_api_key}",
                 json={
