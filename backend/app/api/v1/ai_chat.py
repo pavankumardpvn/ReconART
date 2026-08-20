@@ -211,6 +211,16 @@ async def ai_chat(
                 text = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
 
             display_text, action = _parse_action(text)
+
+            # Auto-execute list/delete actions on backend
+            if action and action.get("type") in ("list_sources", "list_reconciliations", "delete_source", "delete_reconciliation"):
+                try:
+                    from app.api.v1.agent import _execute_action_internal
+                    result = await _execute_action_internal(action["type"], action.get("params", {}), db, tenant)
+                    return {"response": result, "action": None}
+                except Exception:
+                    pass
+
             return {"response": display_text or "Could you rephrase that?", "action": action}
 
     except httpx.TimeoutException:

@@ -4,17 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { X, Send, Sparkles, Bot, User, Check, XCircle, Paperclip, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  api,
-  createSource,
-  createReconciliation,
-  runReconciliation,
-  createUnion,
-  getDataSources,
-  getReconciliations,
-  uploadDataSource,
-  getDataSourceColumns,
-} from "@/lib/api";
+import { api, uploadDataSource, getDataSourceColumns } from "@/lib/api";
 
 interface Action {
   type: string;
@@ -63,78 +53,32 @@ async function callAI(q: string, name: string): Promise<{ response: string; acti
   }
 }
 
-async function executeAction(action: Action): Promise<string> {
+async function executeAction(action: Action, name: string): Promise<string> {
   try {
-    switch (action.type) {
-      case "create_source": {
-        const p = action.params as { name: string; source_type?: string; description?: string };
-        const result = await createSource({ name: p.name, source_type: p.source_type || "file_upload", description: p.description });
-        return `Source **${result.name}** created successfully! (ID: ${result.id})\n\nYou can now upload files to this source or use it in a reconciliation.`;
-      }
-      case "create_reconciliation": {
-        const result = await createReconciliation(action.params);
-        return `Reconciliation **${(result as { name: string }).name}** created! (ID: ${(result as { id: string }).id})\n\nWant me to run it now?`;
-      }
-      case "run_reconciliation": {
-        const p = action.params as { recon_id: string };
-        const result = await runReconciliation(p.recon_id);
-        return `Reconciliation run started! (Run ID: ${result.id})\n\nStatus: **${result.status}**. The matching engine is processing — check the Reconciliations page for results.`;
-      }
-      case "create_union": {
-        const result = await createUnion(action.params);
-        return `Union **${(result as { name: string }).name}** created! (ID: ${(result as { id: string }).id})`;
-      }
-      case "list_sources": {
-        const result = await getDataSources();
-        const items = result.items || [];
-        if (items.length === 0) return "No data sources found. Would you like to create one or upload a file?";
-        const lines = items.map((s: { name: string; id: string; row_count: number | null; status: string }) =>
-          `• **${s.name}** — ${s.row_count?.toLocaleString() || 0} rows (${s.status}) [ID: ${s.id}]`
-        );
-        return `Found **${items.length}** data source(s):\n\n${lines.join("\n")}`;
-      }
-      case "list_reconciliations": {
-        const result = await getReconciliations();
-        const items = result.items || [];
-        if (items.length === 0) return "No reconciliations found. Would you like to create one?";
-        const lines = items.map((r: { name: string; id: string; status: string; recon_type: string }) =>
-          `• **${r.name}** — ${r.recon_type} (${r.status}) [ID: ${r.id}]`
-        );
-        return `Found **${items.length}** reconciliation(s):\n\n${lines.join("\n")}`;
-      }
-      case "suggest_rules": {
-        const p = action.params as { left_source_id: string; right_source_id: string };
-        const { data } = await api.post("/api/v1/ai/analyze-columns", {
-          left_source_id: p.left_source_id,
-          right_source_id: p.right_source_id,
-        });
-        const sug = data.suggestions || [];
-        if (sug.length === 0) return "I couldn't find obvious column matches. Please specify the matching columns manually.";
-        const lines = sug.map((s: { left_column: string; right_column: string; comparison: string; confidence: number }) =>
-          `• **${s.left_column}** ↔ **${s.right_column}** (${s.comparison}, ${Math.round(s.confidence * 100)}% confidence)`
-        );
-        return `Suggested matching rules:\n\n${lines.join("\n")}\n\nWant me to create a reconciliation with these rules?`;
-      }
-      default:
-        return `Unknown action type: ${action.type}`;
-    }
+    const { data } = await api.post("/api/v1/ai/chat", {
+      message: `Execute action: ${action.type} with params ${JSON.stringify(action.params)}`,
+      user_name: name,
+    });
+    return data.response || "Done!";
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    return `Failed to execute: ${msg}`;
+    return `Failed: ${msg}`;
   }
 }
 
 function getActionLabel(action: Action): string {
-  switch (action.type) {
-    case "create_source": return `Create source "${(action.params as { name: string }).name}"`;
-    case "create_reconciliation": return `Create reconciliation "${(action.params as { name: string }).name}"`;
-    case "run_reconciliation": return "Run reconciliation";
-    case "create_union": return `Create union "${(action.params as { name: string }).name}"`;
-    case "list_sources": return "List data sources";
-    case "list_reconciliations": return "List reconciliations";
-    case "suggest_rules": return "Analyze columns & suggest rules";
-    default: return action.type;
-  }
+  const labels: Record<string, string> = {
+    create_source: `Create source "${(action.params as { name?: string }).name || ""}"`,
+    delete_source: "Delete source",
+    create_reconciliation: `Create reconciliation "${(action.params as { name?: string }).name || ""}"`,
+    delete_reconciliation: "Delete reconciliation",
+    run_reconciliation: "Run reconciliation",
+    create_union: `Create union "${(action.params as { name?: string }).name || ""}"`,
+    list_sources: "List data sources",
+    list_reconciliations: "List reconciliations",
+    suggest_rules: "Analyze & suggest rules",
+  };
+  return labels[action.type] || action.type;
 }
 
 interface AIAssistantPanelProps {
@@ -188,18 +132,6 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     const { response, action } = await callAI(question, firstName);
 
     // Auto-execute list actions without confirmation
-    if (action && (action.type === "list_sources" || action.type === "list_reconciliations")) {
-      const result = await executeAction(action);
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        text: result,
-        timestamp: new Date(),
-      }]);
-      setIsTyping(false);
-      return;
-    }
-
     setMessages((prev) => [...prev, {
       id: (Date.now() + 1).toString(),
       role: "assistant",
@@ -218,7 +150,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, actionStatus: "confirmed" as const } : m));
     setIsTyping(true);
 
-    const result = await executeAction(msg.action);
+    const result = await executeAction(msg.action, firstName);
 
     setMessages((prev) => [
       ...prev.map((m) => m.id === msgId ? { ...m, actionStatus: "done" as const } : m),
