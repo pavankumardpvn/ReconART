@@ -65,22 +65,16 @@ async function executeAction(action: Action): Promise<string> {
       }
       case "delete_source": {
         const p = action.params as { source_id: string };
-        try {
-          await api.delete(`/api/v1/data-sources/${p.source_id}`);
-        } catch (e: unknown) {
-          const err = e as { response?: { status?: number } };
-          if (err.response?.status !== 204) throw e;
-        }
+        const sid = p.source_id?.trim();
+        if (!sid || sid.length < 10) return `Invalid source ID: "${sid}". Try "list my sources" first to see the correct IDs.`;
+        await api.delete(`/api/v1/data-sources/${sid}`);
         return `Source deleted successfully!`;
       }
       case "delete_reconciliation": {
         const p = action.params as { recon_id: string };
-        try {
-          await api.delete(`/api/v1/reconciliations/${p.recon_id}`);
-        } catch (e: unknown) {
-          const err = e as { response?: { status?: number } };
-          if (err.response?.status !== 204) throw e;
-        }
+        const rid = p.recon_id?.trim();
+        if (!rid || rid.length < 10) return `Invalid reconciliation ID: "${rid}". Try "list my reconciliations" first.`;
+        await api.delete(`/api/v1/reconciliations/${rid}`);
         return `Reconciliation deleted successfully!`;
       }
       case "list_reconciliations": {
