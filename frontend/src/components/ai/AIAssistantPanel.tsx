@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { X, Send, Sparkles, Bot, User, Check, XCircle, Paperclip, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, uploadDataSource, getDataSourceColumns } from "@/lib/api";
+import { api, createSource, uploadFileToSource, getDataSourceColumns } from "@/lib/api";
 
 interface Action {
   type: string;
@@ -97,6 +97,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [welcomed, setWelcomed] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (open && !welcomed && firstName) {
@@ -127,11 +128,63 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
       timestamp: new Date(),
     }]);
     setInput("");
-    setIsTyping(true);
 
+    if (pendingFile) {
+      const file = pendingFile;
+      const sourceName = question.trim();
+      setPendingFile(null);
+      setIsTyping(true);
+
+      try {
+        const source = await createSource({ name: sourceName, source_type: "file_upload" });
+        const formData = new FormData();
+        formData.append("file", file);
+        await uploadFileToSource(source.id, formData);
+
+        let colsStr = "";
+        try {
+          const cols = await getDataSourceColumns(source.id);
+          colsStr = cols
+            .filter((c: { name: string }) => !c.name.startsWith("art_"))
+            .map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`)
+            .join(", ");
+        } catch { /* ignore */ }
+
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "system",
+          text: `Source **${sourceName}** created with **${file.name}** synced.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nAll rows have been assigned unique **ART IDs** automatically.`,
+          timestamp: new Date(),
+        }]);
+
+        const aiMsg = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
+        const { response, action } = await callAI(aiMsg, firstName);
+
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 2).toString(),
+          role: "assistant",
+          text: response,
+          timestamp: new Date(),
+          action,
+          actionStatus: action ? "pending" : undefined,
+        }]);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "system",
+          text: `Failed to create source: ${msg}`,
+          timestamp: new Date(),
+        }]);
+      }
+
+      setIsTyping(false);
+      return;
+    }
+
+    setIsTyping(true);
     const { response, action } = await callAI(question, firstName);
 
-    // Auto-execute list actions without confirmation
     setMessages((prev) => [...prev, {
       id: (Date.now() + 1).toString(),
       role: "assistant",
@@ -178,56 +231,26 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
-    setMessages((prev) => [...prev, {
-      id: Date.now().toString(),
-      role: "user",
-      text: `📎 Uploading **${file.name}**...`,
-      timestamp: new Date(),
-    }]);
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const ext = file.name.split(".").pop()?.toUpperCase() || "FILE";
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const source = await uploadDataSource(formData);
+    setPendingFile(file);
 
-      let colsStr = "";
-      try {
-        const cols = await getDataSourceColumns(source.id);
-        colsStr = cols.map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`).join(", ");
-      } catch { /* ignore */ }
-
-      setMessages((prev) => [...prev, {
+    setMessages((prev) => [...prev,
+      {
+        id: Date.now().toString(),
+        role: "user" as const,
+        text: `📎 Selected **${file.name}**`,
+        timestamp: new Date(),
+      },
+      {
         id: (Date.now() + 1).toString(),
-        role: "system",
-        text: `Uploaded **${file.name}** — **${source.row_count?.toLocaleString() || 0}** rows.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}`,
+        role: "assistant" as const,
+        text: `I've read your file:\n\n**File:** ${file.name}\n**Type:** ${ext}\n**Size:** ${sizeMB} MB\n\nWhat would you like to **name this source**? Type your preferred name below.`,
         timestamp: new Date(),
-      }]);
+      },
+    ]);
 
-      setIsTyping(true);
-      const aiMsg = `I just uploaded "${file.name}" with ${source.row_count || 0} rows. Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
-      const { response, action } = await callAI(aiMsg, firstName);
-
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 2).toString(),
-        role: "assistant",
-        text: response,
-        timestamp: new Date(),
-        action,
-        actionStatus: action ? "pending" : undefined,
-      }]);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(),
-        role: "system",
-        text: `Upload failed: ${msg}`,
-        timestamp: new Date(),
-      }]);
-    }
-
-    setIsUploading(false);
-    setIsTyping(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -359,7 +382,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-            placeholder="Ask me or upload a file..."
+            placeholder={pendingFile ? "Type your preferred source name..." : "Ask me or upload a file..."}
             className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
             disabled={isTyping || isUploading}
           />

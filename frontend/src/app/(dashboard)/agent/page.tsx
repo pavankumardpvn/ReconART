@@ -7,7 +7,7 @@ import {
   Loader2, Trash2, MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api, uploadDataSource, getDataSourceColumns } from "@/lib/api";
+import { api, createSource, uploadFileToSource, getDataSourceColumns } from "@/lib/api";
 import PageContainer from "@/components/layout/PageContainer";
 
 interface Action {
@@ -80,6 +80,7 @@ export default function AgentPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -131,8 +132,49 @@ export default function AgentPage() {
 
     setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", text: q }]);
     setInput("");
-    setIsTyping(true);
 
+    if (pendingFile) {
+      const file = pendingFile;
+      const sourceName = q.trim();
+      setPendingFile(null);
+      setIsTyping(true);
+
+      try {
+        const source = await createSource({ name: sourceName, source_type: "file_upload" });
+        const formData = new FormData();
+        formData.append("file", file);
+        await uploadFileToSource(source.id, formData);
+
+        let colsStr = "";
+        try {
+          const cols = await getDataSourceColumns(source.id);
+          colsStr = cols
+            .filter((c: { name: string }) => !c.name.startsWith("art_"))
+            .map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`)
+            .join(", ");
+        } catch { /* ignore */ }
+
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(), role: "system",
+          text: `Source **${sourceName}** created with **${file.name}** synced.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nAll rows have been assigned unique **ART IDs** automatically.`,
+        }]);
+
+        const aiMsg = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
+        const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: aiMsg, user_name: firstName });
+        setMessages((prev) => [...prev, {
+          id: data.messageId || (Date.now() + 2).toString(),
+          role: "assistant", text: data.response,
+          action: data.action || null, actionStatus: data.action ? "pending" : null,
+        }]);
+        await loadSessions();
+      } catch (err: unknown) {
+        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "system", text: `Failed: ${err instanceof Error ? err.message : String(err)}` }]);
+      }
+      setIsTyping(false);
+      return;
+    }
+
+    setIsTyping(true);
     try {
       const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: q, user_name: firstName });
 
@@ -183,24 +225,20 @@ export default function AgentPage() {
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !activeSession) return;
-    setIsUploading(true);
-    setMessages((prev) => [...prev, { id: Date.now().toString(), role: "user", text: `📎 Uploading **${file.name}**...` }]);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const source = await uploadDataSource(formData);
-      let colsStr = "";
-      try { const cols = await getDataSourceColumns(source.id); colsStr = cols.map((c: { name: string; data_type: string }) => `${c.name} (${c.data_type})`).join(", "); } catch { /* */ }
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+    const ext = file.name.split(".").pop()?.toUpperCase() || "FILE";
 
-      setMessages((prev) => [...prev, {
-        id: (Date.now() + 1).toString(), role: "system",
-        text: `Uploaded **${file.name}** — **${source.row_count?.toLocaleString() || 0}** rows.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nWhat would you like to do with this data?`,
-      }]);
-    } catch (err: unknown) {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "system", text: `Upload failed: ${err instanceof Error ? err.message : String(err)}` }]);
-    }
-    setIsUploading(false);
+    setPendingFile(file);
+
+    setMessages((prev) => [...prev,
+      { id: Date.now().toString(), role: "user" as const, text: `📎 Selected **${file.name}**` },
+      {
+        id: (Date.now() + 1).toString(), role: "assistant" as const,
+        text: `I've read your file:\n\n**File:** ${file.name}\n**Type:** ${ext}\n**Size:** ${sizeMB} MB\n\nWhat would you like to **name this source**? Type your preferred name below.`,
+      },
+    ]);
+
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -321,7 +359,7 @@ export default function AgentPage() {
                     {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
                   </button>
                   <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                    placeholder="Ask me anything or upload a file..." className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none" disabled={isTyping || isUploading} />
+                    placeholder={pendingFile ? "Type your preferred source name..." : "Ask me anything or upload a file..."} className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none" disabled={isTyping || isUploading} />
                   <button onClick={() => handleSend()} disabled={!input.trim() || isTyping || isUploading} className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white disabled:opacity-30">
                     <Send className="h-3.5 w-3.5" />
                   </button>
