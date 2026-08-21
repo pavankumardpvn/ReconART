@@ -237,21 +237,22 @@ async def preview_calculated_column(
     if not calc_col:
         raise NotFoundError("Calculated column")
 
-    # Fetch the first 10 rows from the data source
-    row_result = await db.execute(
+    # Fetch all rows (needed for aggregate functions like SLOPE, CORREL)
+    all_rows_result = await db.execute(
         select(DataSourceRow)
         .where(DataSourceRow.data_source_id == calc_col.data_source_id)
         .order_by(DataSourceRow.row_number)
-        .limit(10)
     )
-    rows = row_result.scalars().all()
+    all_rows_objs = all_rows_result.scalars().all()
+    all_rows_data = [r.data or {} for r in all_rows_objs]
+    rows = all_rows_objs[:10]
 
     # Evaluate the expression against each row
     preview_results: list[dict] = []
     for row in rows:
         row_data = row.data or {}
         try:
-            computed = evaluate_expression(calc_col.expression, row_data)
+            computed = evaluate_expression(calc_col.expression, row_data, all_rows_data)
             preview_results.append({
                 "row_number": row.row_number,
                 "original_data": row_data,

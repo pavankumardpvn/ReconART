@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useState, useCallback } from "react";
+import { use, useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useDropzone } from "react-dropzone";
+import { api } from "@/lib/api";
 import {
   useDataSource,
   useDataSources,
@@ -55,6 +56,11 @@ import {
   ArrowRightLeft,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  FlaskConical,
+  BookOpen,
+  X,
+  Loader2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
@@ -104,6 +110,43 @@ export default function DataSourceDetailPage({
   const [moveFileId, setMoveFileId] = useState<string | null>(null);
   const [moveTarget, setMoveTarget] = useState<string>("new");
   const [newSourceName, setNewSourceName] = useState("");
+
+  // Calculated column state
+  const [calcDialogOpen, setCalcDialogOpen] = useState(false);
+  const [calcName, setCalcName] = useState("");
+  const [calcExpression, setCalcExpression] = useState("");
+  const [calcCreating, setCalcCreating] = useState(false);
+  const [showFormulaRef, setShowFormulaRef] = useState(false);
+  const [formulaRef, setFormulaRef] = useState<Record<string, Array<{ name: string; syntax: string; description: string; example: string }>>>({});
+  const [formulaFilter, setFormulaFilter] = useState("");
+
+  useEffect(() => {
+    if (calcDialogOpen && Object.keys(formulaRef).length === 0) {
+      api.get("/api/v1/calculated-columns/formulas").then(({ data }) => {
+        setFormulaRef(data.categories || {});
+      }).catch(() => {});
+    }
+  }, [calcDialogOpen, formulaRef]);
+
+  async function handleCreateCalcColumn() {
+    if (!calcName.trim() || !calcExpression.trim()) return;
+    setCalcCreating(true);
+    try {
+      await api.post("/api/v1/calculated-columns/", {
+        data_source_id: id,
+        name: calcName.trim(),
+        expression: calcExpression.trim(),
+      });
+      toast({ title: "Column created", description: `Calculated column "${calcName}" created successfully.`, type: "success" });
+      setCalcDialogOpen(false);
+      setCalcName("");
+      setCalcExpression("");
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Failed to create column";
+      toast({ title: "Error", description: msg, type: "error" });
+    }
+    setCalcCreating(false);
+  }
 
   function handleDelete() {
     if (
@@ -495,11 +538,17 @@ export default function DataSourceDetailPage({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Columns</CardTitle>
-                {dataSource.columns && dataSource.columns.length > 0 && (
-                  <p className="text-sm text-[var(--foreground-muted)]">
-                    {dataSource.columns.filter((c) => c.name.startsWith("art_")).length} system · {dataSource.columns.filter((c) => !c.name.startsWith("art_")).length} raw
-                  </p>
-                )}
+                <div className="flex items-center gap-3">
+                  {dataSource.columns && dataSource.columns.length > 0 && (
+                    <p className="text-sm text-[var(--foreground-muted)]">
+                      {dataSource.columns.filter((c) => c.name.startsWith("art_")).length} system · {dataSource.columns.filter((c) => !c.name.startsWith("art_")).length} raw
+                    </p>
+                  )}
+                  <Button size="sm" onClick={() => setCalcDialogOpen(true)}>
+                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                    Create Column
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -687,6 +736,130 @@ export default function DataSourceDetailPage({
           </Card>
         </TabsContent>
       </Tabs>
+      {/* Create Calculated Column Dialog */}
+      <Dialog open={calcDialogOpen} onOpenChange={setCalcDialogOpen}>
+        <DialogContent className="glass-card border-[var(--border)] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-purple-400" />
+              Create Calculated Column
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex gap-4 flex-1 min-h-0 pt-2">
+            {/* Left — Form */}
+            <div className="flex-1 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--foreground)]">Column Name</label>
+                <Input
+                  placeholder="e.g. total_with_tax"
+                  value={calcName}
+                  onChange={(e) => setCalcName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-[var(--foreground)]">Formula</label>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={() => setShowFormulaRef(!showFormulaRef)}
+                  >
+                    <BookOpen className="h-3 w-3" />
+                    {showFormulaRef ? "Hide" : "Show"} Reference
+                  </Button>
+                </div>
+                <textarea
+                  placeholder='e.g. amount * 1.18 or IF(status == "active", amount, 0)'
+                  value={calcExpression}
+                  onChange={(e) => setCalcExpression(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 font-mono text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:border-purple-500/50 focus:outline-none"
+                />
+              </div>
+
+              {/* Available columns hint */}
+              {dataSource.columns && dataSource.columns.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-[var(--foreground-subtle)]">Available Columns (click to insert)</p>
+                  <div className="flex flex-wrap gap-1">
+                    {dataSource.columns
+                      .filter((c) => !c.name.startsWith("art_"))
+                      .map((col) => (
+                        <button
+                          key={col.name}
+                          onClick={() => setCalcExpression((prev) => prev + col.name)}
+                          className="rounded-md border border-[var(--border)] bg-[var(--background-tertiary)] px-2 py-0.5 font-mono text-[11px] text-cyan-400 transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
+                        >
+                          {col.name}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setCalcDialogOpen(false)}>Cancel</Button>
+                <Button
+                  onClick={handleCreateCalcColumn}
+                  disabled={!calcName.trim() || !calcExpression.trim() || calcCreating}
+                  className="gap-1.5"
+                >
+                  {calcCreating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
+                  {calcCreating ? "Creating..." : "Create Column"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right — Formula Reference */}
+            {showFormulaRef && (
+              <div className="w-80 shrink-0 border-l border-[var(--border)] pl-4 overflow-y-auto max-h-[60vh]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-[var(--foreground)]">Formula Reference</h4>
+                  <button onClick={() => setShowFormulaRef(false)} className="text-[var(--foreground-subtle)] hover:text-[var(--foreground)]">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <Input
+                  placeholder="Search formulas..."
+                  value={formulaFilter}
+                  onChange={(e) => setFormulaFilter(e.target.value)}
+                  className="mb-3 h-8 text-xs"
+                />
+                {Object.entries(formulaRef).map(([category, funcs]) => {
+                  const filtered = funcs.filter((f) =>
+                    formulaFilter === "" ||
+                    f.name.toLowerCase().includes(formulaFilter.toLowerCase()) ||
+                    f.description.toLowerCase().includes(formulaFilter.toLowerCase())
+                  );
+                  if (filtered.length === 0) return null;
+                  return (
+                    <div key={category} className="mb-4">
+                      <h5 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400">{category}</h5>
+                      <div className="space-y-1.5">
+                        {filtered.map((f) => (
+                          <button
+                            key={f.name}
+                            onClick={() => setCalcExpression((prev) => prev + (f.syntax.includes("(") ? f.name + "(" : f.name))}
+                            className="block w-full rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] p-2 text-left transition-colors hover:border-purple-500/30 hover:bg-purple-500/5"
+                          >
+                            <p className="font-mono text-xs font-semibold text-[var(--foreground)]">{f.syntax}</p>
+                            <p className="mt-0.5 text-[10px] text-[var(--foreground-muted)]">{f.description}</p>
+                            <p className="mt-0.5 font-mono text-[10px] text-purple-400/60">{f.example}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Move File Dialog */}
       <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
         <DialogContent className="glass-card border-[var(--border)]">

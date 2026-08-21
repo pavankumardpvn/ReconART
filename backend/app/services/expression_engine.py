@@ -65,6 +65,9 @@ _ALLOWED_FUNCTIONS = {
     "coalesce", "ifnull", "ifs", "switch",
     # Type conversion
     "value", "int", "float", "str",
+    # Statistics & Regression (aggregate — operate on all rows)
+    "stdev", "variance", "median", "percentile", "count", "countblank",
+    "slope", "intercept", "forecast", "rsq", "correl",
 }
 
 
@@ -151,6 +154,35 @@ def _coerce_numeric(value: Any) -> float | int:
         raise ExpressionError(f"Cannot convert '{value}' to a number")
 
 
+def _extract_column_values(col_name: str, all_rows: list[dict]) -> list[float]:
+    vals = []
+    for row in all_rows:
+        v = row.get(col_name)
+        if v is None:
+            continue
+        try:
+            vals.append(float(str(v)))
+        except (ValueError, TypeError):
+            continue
+    return vals
+
+
+def _linear_regression(x_vals: list[float], y_vals: list[float]) -> tuple[float, float]:
+    n = len(x_vals)
+    if n < 2:
+        raise ExpressionError("Need at least 2 data points for regression")
+    sum_x = sum(x_vals)
+    sum_y = sum(y_vals)
+    sum_xy = sum(x * y for x, y in zip(x_vals, y_vals))
+    sum_x2 = sum(x * x for x in x_vals)
+    denom = n * sum_x2 - sum_x * sum_x
+    if denom == 0:
+        raise ExpressionError("Cannot compute regression — zero variance in X")
+    slope = (n * sum_xy - sum_x * sum_y) / denom
+    intercept = (sum_y - slope * sum_x) / n
+    return slope, intercept
+
+
 def _parse_date(value: Any) -> date:
     s = str(value).strip() if value is not None else ""
     for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
@@ -171,11 +203,11 @@ def _parse_datetime(value: Any) -> datetime:
     raise ExpressionError(f"Cannot parse datetime: {s}")
 
 
-def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:
+def _eval_node(node: ast.AST, variables: dict[str, Any], all_rows: list[dict] | None = None) -> Any:
     """Evaluate a single AST node against the provided variable namespace."""
 
     if isinstance(node, ast.Expression):
-        return _eval_node(node.body, variables)
+        return _eval_node(node.body, variables, all_rows)
 
     if isinstance(node, ast.Constant):
         return node.value
@@ -197,23 +229,23 @@ def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:
         op_func = _UNARY_OPS.get(type(node.op))
         if op_func is None:
             raise ExpressionError(f"Unsupported unary operator: {type(node.op).__name__}")
-        operand = _eval_node(node.operand, variables)
+        operand = _eval_node(node.operand, variables, all_rows)
         return op_func(_coerce_numeric(operand))
 
     if isinstance(node, ast.BinOp):
         op_func = _BIN_OPS.get(type(node.op))
         if op_func is None:
             raise ExpressionError(f"Unsupported operator: {type(node.op).__name__}")
-        left = _coerce_numeric(_eval_node(node.left, variables))
-        right = _coerce_numeric(_eval_node(node.right, variables))
+        left = _coerce_numeric(_eval_node(node.left, variables, all_rows))
+        right = _coerce_numeric(_eval_node(node.right, variables, all_rows))
         if isinstance(node.op, ast.Div) and right == 0:
             raise ExpressionError("Division by zero")
         return op_func(left, right)
 
     if isinstance(node, ast.Compare):
-        left = _eval_node(node.left, variables)
+        left = _eval_node(node.left, variables, all_rows)
         for op, comparator in zip(node.ops, node.comparators):
-            right = _eval_node(comparator, variables)
+            right = _eval_node(comparator, variables, all_rows)
             op_func = _CMP_OPS.get(type(op))
             if op_func is None:
                 raise ExpressionError(f"Unsupported comparison: {type(op).__name__}")
@@ -229,20 +261,20 @@ def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:
 
     if isinstance(node, ast.BoolOp):
         if isinstance(node.op, ast.And):
-            return all(_eval_node(v, variables) for v in node.values)
+            return all(_eval_node(v, variables, all_rows) for v in node.values)
         elif isinstance(node.op, ast.Or):
-            return any(_eval_node(v, variables) for v in node.values)
+            return any(_eval_node(v, variables, all_rows) for v in node.values)
 
     if isinstance(node, ast.IfExp):
         # Python ternary: then_val if condition else else_val
-        condition = _eval_node(node.test, variables)
+        condition = _eval_node(node.test, variables, all_rows)
         if condition:
-            return _eval_node(node.body, variables)
-        return _eval_node(node.orelse, variables)
+            return _eval_node(node.body, variables, all_rows)
+        return _eval_node(node.orelse, variables, all_rows)
 
     if isinstance(node, ast.Call):
         func_name = node.func.id.upper()  # type: ignore[union-attr]
-        args = [_eval_node(a, variables) for a in node.args]
+        args = [_eval_node(a, variables, all_rows) for a in node.args]
         n = len(args)
         _s = lambda v: str(v) if v is not None else ""
 
@@ -458,6 +490,93 @@ def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:
         if func_name == "STR":
             return _s(args[0])
 
+        # === STATISTICS & REGRESSION (aggregate) ===
+        rows = all_rows or []
+        if func_name == "STDEV":
+            vals = _extract_column_values(_s(args[0]), rows) if rows else [_coerce_numeric(a) for a in args]
+            if len(vals) < 2:
+                return 0
+            mean = sum(vals) / len(vals)
+            return math.sqrt(sum((v - mean) ** 2 for v in vals) / (len(vals) - 1))
+        if func_name == "VARIANCE":
+            vals = _extract_column_values(_s(args[0]), rows) if rows else [_coerce_numeric(a) for a in args]
+            if len(vals) < 2:
+                return 0
+            mean = sum(vals) / len(vals)
+            return sum((v - mean) ** 2 for v in vals) / (len(vals) - 1)
+        if func_name == "MEDIAN":
+            vals = _extract_column_values(_s(args[0]), rows) if rows else [_coerce_numeric(a) for a in args]
+            if not vals:
+                return 0
+            vals.sort()
+            mid = len(vals) // 2
+            return (vals[mid] + vals[mid - 1]) / 2 if len(vals) % 2 == 0 else vals[mid]
+        if func_name == "PERCENTILE":
+            vals = _extract_column_values(_s(args[0]), rows)
+            pct = _coerce_numeric(args[1]) if n >= 2 else 50
+            if not vals:
+                return 0
+            vals.sort()
+            idx = (pct / 100) * (len(vals) - 1)
+            lower = int(math.floor(idx))
+            upper = int(math.ceil(idx))
+            if lower == upper:
+                return vals[lower]
+            return vals[lower] + (vals[upper] - vals[lower]) * (idx - lower)
+        if func_name == "COUNT":
+            if rows:
+                col = _s(args[0])
+                return sum(1 for r in rows if r.get(col) is not None)
+            return sum(1 for a in args if a is not None)
+        if func_name == "COUNTBLANK":
+            if rows:
+                col = _s(args[0])
+                return sum(1 for r in rows if r.get(col) is None or str(r.get(col, "")).strip() == "")
+            return sum(1 for a in args if a is None or _s(a).strip() == "")
+        if func_name == "SLOPE":
+            y_vals = _extract_column_values(_s(args[0]), rows)
+            x_vals = _extract_column_values(_s(args[1]), rows)
+            mn = min(len(x_vals), len(y_vals))
+            slope, _ = _linear_regression(x_vals[:mn], y_vals[:mn])
+            return round(slope, 6)
+        if func_name == "INTERCEPT":
+            y_vals = _extract_column_values(_s(args[0]), rows)
+            x_vals = _extract_column_values(_s(args[1]), rows)
+            mn = min(len(x_vals), len(y_vals))
+            _, intercept = _linear_regression(x_vals[:mn], y_vals[:mn])
+            return round(intercept, 6)
+        if func_name == "FORECAST":
+            x_val = _coerce_numeric(args[0])
+            y_vals = _extract_column_values(_s(args[1]), rows)
+            x_vals = _extract_column_values(_s(args[2]), rows)
+            mn = min(len(x_vals), len(y_vals))
+            slope, intercept = _linear_regression(x_vals[:mn], y_vals[:mn])
+            return round(slope * x_val + intercept, 6)
+        if func_name == "RSQ":
+            y_vals = _extract_column_values(_s(args[0]), rows)
+            x_vals = _extract_column_values(_s(args[1]), rows)
+            mn = min(len(x_vals), len(y_vals))
+            x_vals, y_vals = x_vals[:mn], y_vals[:mn]
+            if mn < 2:
+                return 0
+            slope, intercept = _linear_regression(x_vals, y_vals)
+            y_mean = sum(y_vals) / mn
+            ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in zip(x_vals, y_vals))
+            ss_tot = sum((y - y_mean) ** 2 for y in y_vals)
+            return round(1 - ss_res / ss_tot, 6) if ss_tot != 0 else 0
+        if func_name == "CORREL":
+            vals_a = _extract_column_values(_s(args[0]), rows)
+            vals_b = _extract_column_values(_s(args[1]), rows)
+            mn = min(len(vals_a), len(vals_b))
+            if mn < 2:
+                return 0
+            a, b = vals_a[:mn], vals_b[:mn]
+            ma, mb = sum(a) / mn, sum(b) / mn
+            num = sum((ai - ma) * (bi - mb) for ai, bi in zip(a, b))
+            da = math.sqrt(sum((ai - ma) ** 2 for ai in a))
+            db = math.sqrt(sum((bi - mb) ** 2 for bi in b))
+            return round(num / (da * db), 6) if da * db != 0 else 0
+
         raise ExpressionError(f"Unknown function: {func_name}")
 
     raise ExpressionError(f"Unsupported node type: {type(node).__name__}")
@@ -530,6 +649,17 @@ FORMULA_REFERENCE = [
     {"category": "Operators", "name": "/", "syntax": "a / b", "description": "Division", "example": "total / count"},
     {"category": "Operators", "name": "%", "syntax": "a % b", "description": "Modulo (remainder)", "example": "amount % 100"},
     {"category": "Operators", "name": "**", "syntax": "a ** b", "description": "Power", "example": "rate ** 2"},
+    {"category": "Statistics", "name": "STDEV", "syntax": 'STDEV("column")', "description": "Standard deviation of a column", "example": 'STDEV("amount")'},
+    {"category": "Statistics", "name": "VARIANCE", "syntax": 'VARIANCE("column")', "description": "Variance of a column", "example": 'VARIANCE("amount")'},
+    {"category": "Statistics", "name": "MEDIAN", "syntax": 'MEDIAN("column")', "description": "Median value of a column", "example": 'MEDIAN("price")'},
+    {"category": "Statistics", "name": "PERCENTILE", "syntax": 'PERCENTILE("column", pct)', "description": "Nth percentile of a column", "example": 'PERCENTILE("amount", 95)'},
+    {"category": "Statistics", "name": "COUNT", "syntax": 'COUNT("column")', "description": "Count of non-null values", "example": 'COUNT("email")'},
+    {"category": "Statistics", "name": "COUNTBLANK", "syntax": 'COUNTBLANK("column")', "description": "Count of null/empty values", "example": 'COUNTBLANK("phone")'},
+    {"category": "Regression", "name": "SLOPE", "syntax": 'SLOPE("y_col", "x_col")', "description": "Linear regression slope (m in y=mx+b)", "example": 'SLOPE("revenue", "spend")'},
+    {"category": "Regression", "name": "INTERCEPT", "syntax": 'INTERCEPT("y_col", "x_col")', "description": "Linear regression intercept (b in y=mx+b)", "example": 'INTERCEPT("revenue", "spend")'},
+    {"category": "Regression", "name": "FORECAST", "syntax": 'FORECAST(x_value, "y_col", "x_col")', "description": "Predict Y for a given X value", "example": 'FORECAST(1000, "revenue", "spend")'},
+    {"category": "Regression", "name": "RSQ", "syntax": 'RSQ("y_col", "x_col")', "description": "R-squared — how well the line fits (0-1)", "example": 'RSQ("revenue", "spend")'},
+    {"category": "Regression", "name": "CORREL", "syntax": 'CORREL("col1", "col2")', "description": "Pearson correlation coefficient (-1 to 1)", "example": 'CORREL("price", "quantity")'},
 ]
 
 
@@ -546,12 +676,18 @@ def validate_expression(expression: str) -> None:
     _validate_ast(tree)
 
 
-def evaluate_expression(expression: str, row_data: dict[str, Any]) -> Any:
+def evaluate_expression(
+    expression: str,
+    row_data: dict[str, Any],
+    all_rows: list[dict] | None = None,
+) -> Any:
     """Evaluate an expression against a single row of data.
 
     Args:
         expression: The formula string (e.g. ``"amount * 1.1"``).
         row_data: A dict mapping column names to their values for this row.
+        all_rows: Optional list of all row dicts — needed for aggregate
+                  functions like STDEV, SLOPE, CORREL, etc.
 
     Returns:
         The computed result.
@@ -567,7 +703,7 @@ def evaluate_expression(expression: str, row_data: dict[str, Any]) -> Any:
     _validate_ast(tree)
 
     try:
-        return _eval_node(tree, row_data)
+        return _eval_node(tree, row_data, all_rows)
     except ExpressionError:
         raise
     except Exception as exc:
