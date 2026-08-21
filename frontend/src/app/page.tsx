@@ -457,7 +457,7 @@ export default function Home() {
             : "bg-transparent"
         }`}
       >
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4">
           <Link href="/" className="group flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] shadow-lg shadow-[#7C3AED]/25 transition-shadow group-hover:shadow-[#7C3AED]/40">
               <GitCompareArrows className="h-5 w-5 text-white" />
@@ -539,7 +539,7 @@ export default function Home() {
           }}
         />
 
-        <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-16 lg:grid-cols-2">
+        <div className="relative z-10 mx-auto grid max-w-[1440px] grid-cols-1 items-center gap-16 lg:grid-cols-2">
           {/* Left — Text */}
           <div className="flex flex-col gap-8">
             <div
@@ -682,7 +682,7 @@ export default function Home() {
         <div className="landing-glow-orb left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
         <div
           ref={statsReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <p className="mb-14 text-center text-lg text-white/40">
             Traditional reconciliation takes weeks.{" "}
@@ -719,7 +719,7 @@ export default function Home() {
         <p className="mb-6 text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/20">
           Integrations & Counterparties
         </p>
-        <div className="relative mx-auto max-w-[1200px] overflow-hidden">
+        <div className="relative mx-auto max-w-[1440px] overflow-hidden">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-r from-[#0a0f1d] to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-l from-[#0a0f1d] to-transparent" />
           <div className="logo-ticker">
@@ -819,7 +819,7 @@ export default function Home() {
         <div className="landing-glow-orb right-0 top-0 h-[400px] w-[400px] bg-[#7C3AED]/[0.03]" />
         <div
           ref={advantagesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${advantagesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -867,7 +867,7 @@ export default function Home() {
         <div className="landing-glow-orb left-[20%] top-[30%] h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
         <div
           ref={domainsReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${domainsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${domainsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -908,7 +908,7 @@ export default function Home() {
         <div className="landing-glow-orb left-0 bottom-0 h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
         <div
           ref={servicesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${servicesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -965,7 +965,7 @@ export default function Home() {
         <div className="landing-glow-orb right-[10%] top-[20%] h-[350px] w-[350px] bg-[#7C3AED]/[0.03]" />
         <div
           ref={templatesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${templatesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${templatesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -1014,7 +1014,7 @@ export default function Home() {
       <section id="results" className="relative bg-[#0F1729] px-6 py-28">
         <div
           ref={resultsReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${resultsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -1063,7 +1063,7 @@ export default function Home() {
         <div className="landing-glow-orb left-1/2 bottom-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.03]" />
         <div
           ref={industriesReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${industriesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${industriesReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -1104,7 +1104,7 @@ export default function Home() {
         <div className="landing-glow-orb left-1/2 top-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.04]" />
         <div
           ref={pricingReveal.ref}
-          className={`relative mx-auto max-w-[1200px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
@@ -1206,7 +1206,7 @@ export default function Home() {
       <section className="relative px-6 py-28">
         <div
           ref={ctaReveal.ref}
-          className={`relative mx-auto max-w-[1200px] overflow-hidden rounded-3xl transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+          className={`relative mx-auto max-w-[1440px] overflow-hidden rounded-3xl transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${ctaReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           {/* Animated gradient bg */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#7C3AED] via-[#6D28D9] to-[#9D5CF5]" />
@@ -1247,7 +1247,7 @@ export default function Home() {
           FOOTER
           ================================================================ */}
       <footer className="border-t border-[#7C3AED]/10 bg-[#0a0f1d] px-6 py-16">
-        <div className="mx-auto max-w-[1200px]">
+        <div className="mx-auto max-w-[1440px]">
           <p className="mb-14 text-center text-lg font-medium text-white/30">
             Vendor-agnostic. AI-powered. Reconciliations{" "}
             <span className="landing-gradient-text font-bold">mastered</span>.

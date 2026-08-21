@@ -25,13 +25,13 @@ export default function DashboardLayout({
         />
         <div
           className={cn(
-            "transition-all duration-300",
+            "min-w-0 transition-all duration-300",
             sidebarCollapsed ? "ml-16" : "ml-64",
             aiPanelOpen ? "mr-[420px]" : "mr-0"
           )}
         >
           <Header />
-          <main className="p-0">{children}</main>
+          <main className="min-w-0 p-0">{children}</main>
         </div>
       </div>
     </CommandPaletteProvider>

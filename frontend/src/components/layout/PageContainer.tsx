@@ -16,7 +16,7 @@ export default function PageContainer({
   action,
 }: PageContainerProps) {
   return (
-    <div className={cn('mx-auto w-full max-w-7xl p-6 animate-float-in', className)}>
+    <div className={cn('w-full p-6 animate-float-in', className)}>
       {title && (
         <div className="mb-6 flex items-center justify-between">
           <div>
