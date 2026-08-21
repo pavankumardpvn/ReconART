@@ -105,7 +105,7 @@ export default function DataSourceDetailPage({
     (s: { id: string }) => s.id !== id
   );
 
-  const [activeTab, setActiveTab] = useState("files");
+  const [activeTab, setActiveTab] = useState("preview");
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
   const [moveFileId, setMoveFileId] = useState<string | null>(null);
   const [moveTarget, setMoveTarget] = useState<string>("new");
@@ -374,20 +374,13 @@ export default function DataSourceDetailPage({
       {/* ----------------------------------------------------------------- */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="files" className="gap-1.5">
-            <Files className="h-4 w-4" />
-            Files
-          </TabsTrigger>
-          <TabsTrigger value="schema" className="gap-1.5">
-            <FlaskConical className="h-4 w-4" />
-            Transformations
-            {calcColumns.length > 0 && (
-              <Badge className="ml-1 bg-amber-500/15 text-amber-400 border-0 text-[10px] px-1.5 py-0">{calcColumns.length}</Badge>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="preview" className="gap-1.5">
             <Eye className="h-4 w-4" />
             Data Preview
+          </TabsTrigger>
+          <TabsTrigger value="files" className="gap-1.5">
+            <Files className="h-4 w-4" />
+            Files
           </TabsTrigger>
         </TabsList>
 
@@ -537,87 +530,6 @@ export default function DataSourceDetailPage({
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* ----- Schema Tab ----- */}
-        <TabsContent value="schema">
-          <Card className="glass-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Transformation Columns</CardTitle>
-                <Button size="sm" onClick={() => setCalcDialogOpen(true)}>
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Create Transformation
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {calcColumns.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Formula</TableHead>
-                      <TableHead>Result Type</TableHead>
-                      <TableHead className="w-16">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {calcColumns.map((cc, idx) => (
-                      <TableRow key={cc.id} className="bg-amber-500/[0.03]">
-                        <TableCell className="font-mono text-xs text-[var(--foreground-muted)]">
-                          {idx + 1}
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px]">
-                              GENERATED
-                            </Badge>
-                            {cc.name}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-[var(--foreground-muted)]">
-                          {cc.expression}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-mono text-[10px]">
-                            {cc.result_type || "auto"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <button
-                            onClick={async () => {
-                              await api.delete(`/api/v1/calculated-columns/${cc.id}`);
-                              loadCalcColumns();
-                              toast({ title: "Deleted", description: `Column "${cc.name}" removed.`, type: "success" });
-                            }}
-                            className="rounded p-1 text-[var(--foreground-subtle)] hover:bg-red-500/20 hover:text-red-400"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FlaskConical className="mb-3 h-10 w-10 text-[var(--foreground-subtle)]" />
-                  <p className="text-sm font-medium text-[var(--foreground)]">
-                    No transformations yet
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-                    Create a calculated column to add computed values to your data
-                  </p>
-                  <Button size="sm" className="mt-4" onClick={() => setCalcDialogOpen(true)}>
-                    <Plus className="mr-1.5 h-3.5 w-3.5" />
-                    Create Transformation
-                  </Button>
                 </div>
               )}
             </CardContent>
