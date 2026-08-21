@@ -111,6 +111,13 @@ export default function DataSourceDetailPage({
   const [moveTarget, setMoveTarget] = useState<string>("new");
   const [newSourceName, setNewSourceName] = useState("");
 
+  // Calculated columns list
+  const [calcColumns, setCalcColumns] = useState<Array<{ id: string; name: string; expression: string; result_type: string | null }>>([]);
+  const loadCalcColumns = useCallback(() => {
+    api.get(`/api/v1/calculated-columns/?data_source_id=${id}`).then(({ data }) => setCalcColumns(data)).catch(() => {});
+  }, [id]);
+  useEffect(() => { loadCalcColumns(); }, [loadCalcColumns]);
+
   // Calculated column state
   const [calcDialogOpen, setCalcDialogOpen] = useState(false);
   const [calcName, setCalcName] = useState("");
@@ -141,6 +148,7 @@ export default function DataSourceDetailPage({
       setCalcDialogOpen(false);
       setCalcName("");
       setCalcExpression("");
+      loadCalcColumns();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Failed to create column";
       toast({ title: "Error", description: msg, type: "error" });
@@ -552,7 +560,7 @@ export default function DataSourceDetailPage({
               </div>
             </CardHeader>
             <CardContent>
-              {dataSource.columns && dataSource.columns.length > 0 ? (
+              {(dataSource.columns && dataSource.columns.length > 0) || calcColumns.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -561,10 +569,11 @@ export default function DataSourceDetailPage({
                       <TableHead>Display Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Column Type</TableHead>
+                      <TableHead className="w-16">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {[...dataSource.columns]
+                    {[...(dataSource.columns || [])]
                       .sort((a, b) => {
                         const aSystem = a.name.startsWith("art_") ? 0 : 1;
                         const bSystem = b.name.startsWith("art_") ? 0 : 1;
@@ -599,9 +608,47 @@ export default function DataSourceDetailPage({
                                 </Badge>
                               )}
                             </TableCell>
+                            <TableCell>
+                              <span className="text-xs text-[var(--foreground-subtle)]">—</span>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
+                    {calcColumns.map((cc, idx) => (
+                      <TableRow key={cc.id} className="bg-amber-500/[0.03]">
+                        <TableCell className="font-mono text-xs text-[var(--foreground-muted)]">
+                          {(dataSource.columns?.length || 0) + idx + 1}
+                        </TableCell>
+                        <TableCell className="font-medium font-mono text-sm">
+                          {cc.name}
+                        </TableCell>
+                        <TableCell className="text-[var(--foreground-muted)] font-mono text-xs">
+                          {cc.expression}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="font-mono text-[10px]">
+                            {cc.result_type || "auto"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[10px]">
+                            GENERATED
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            onClick={async () => {
+                              await api.delete(`/api/v1/calculated-columns/${cc.id}`);
+                              loadCalcColumns();
+                              toast({ title: "Deleted", description: `Column "${cc.name}" removed.`, type: "success" });
+                            }}
+                            className="rounded p-1 text-[var(--foreground-subtle)] hover:bg-red-500/20 hover:text-red-400"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               ) : (
@@ -646,16 +693,25 @@ export default function DataSourceDetailPage({
                             .sort((a, b) => {
                               const aS = a.name.startsWith("art_") ? 0 : 1;
                               const bS = b.name.startsWith("art_") ? 0 : 1;
-                              return aS - bS;
+                              if (aS !== bS) return aS - bS;
+                              const aG = (a as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                              const bG = (b as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                              return aG - bG;
                             })
                             .map((col) => {
                               const isSystem = col.name.startsWith("art_");
+                              const isGenerated = (col as Record<string, unknown>).column_type === "generated";
                               return (
                                 <TableHead
                                   key={col.name}
-                                  className={isSystem ? "bg-purple-500/[0.06] text-purple-300 text-[11px] uppercase tracking-wider" : ""}
+                                  className={
+                                    isSystem ? "bg-purple-500/[0.06] text-purple-300 text-[11px] uppercase tracking-wider"
+                                    : isGenerated ? "bg-amber-500/[0.06] text-amber-300 text-[11px] uppercase tracking-wider"
+                                    : ""
+                                  }
                                 >
                                   {col.display_name || col.name}
+                                  {isGenerated && <span className="ml-1 text-[9px] text-amber-500/60">fx</span>}
                                 </TableHead>
                               );
                             })}
@@ -671,14 +727,22 @@ export default function DataSourceDetailPage({
                               .sort((a, b) => {
                                 const aS = a.name.startsWith("art_") ? 0 : 1;
                                 const bS = b.name.startsWith("art_") ? 0 : 1;
-                                return aS - bS;
+                                if (aS !== bS) return aS - bS;
+                                const aG = (a as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                                const bG = (b as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                                return aG - bG;
                               })
                               .map((col) => {
                                 const isSystem = col.name.startsWith("art_");
+                                const isGenerated = (col as Record<string, unknown>).column_type === "generated";
                                 return (
                                   <TableCell
                                     key={col.name}
-                                    className={`whitespace-nowrap ${isSystem ? "bg-purple-500/[0.03] font-mono text-xs text-purple-300/70" : ""}`}
+                                    className={`whitespace-nowrap ${
+                                      isSystem ? "bg-purple-500/[0.03] font-mono text-xs text-purple-300/70"
+                                      : isGenerated ? "bg-amber-500/[0.03] font-mono text-xs text-amber-300/80 font-semibold"
+                                      : ""
+                                    }`}
                                   >
                                     {row[col.name] != null
                                       ? String(row[col.name])

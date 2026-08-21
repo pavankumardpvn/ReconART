@@ -643,12 +643,22 @@ async def preview_data_source(
     if not ds:
         raise NotFoundError("Data source")
 
+    from app.models.transform import CalculatedColumn
+    from app.services.expression_engine import evaluate_expression, ExpressionError
+
     col_result = await db.execute(
         select(DataSourceColumn)
         .where(DataSourceColumn.data_source_id == data_source_id)
         .order_by(DataSourceColumn.ordinal_position)
     )
     columns = list(col_result.scalars().all())
+
+    calc_result = await db.execute(
+        select(CalculatedColumn)
+        .where(CalculatedColumn.data_source_id == data_source_id, CalculatedColumn.tenant_id == tenant.id)
+        .order_by(CalculatedColumn.created_at)
+    )
+    calc_cols = list(calc_result.scalars().all())
 
     total_result = await db.execute(
         select(func.count(DataSourceRow.id))
@@ -667,8 +677,28 @@ async def preview_data_source(
     )
     rows = [r.data for r in row_result.scalars().all()]
 
+    all_rows_data: list[dict] | None = None
+    if calc_cols:
+        all_rows_q = await db.execute(
+            select(DataSourceRow)
+            .where(DataSourceRow.data_source_id == data_source_id)
+            .order_by(DataSourceRow.row_number)
+        )
+        all_rows_data = [r.data or {} for r in all_rows_q.scalars().all()]
+
+        for row in rows:
+            for cc in calc_cols:
+                try:
+                    row[cc.name] = evaluate_expression(cc.expression, row, all_rows_data)
+                except ExpressionError:
+                    row[cc.name] = None
+
+    col_list = [{"name": c.name, "data_type": c.data_type, "display_name": c.display_name, "ordinal_position": c.ordinal_position} for c in columns]
+    for cc in calc_cols:
+        col_list.append({"name": cc.name, "data_type": cc.result_type or "generated", "display_name": cc.name, "ordinal_position": 9999, "column_type": "generated", "expression": cc.expression})
+
     return {
-        "columns": [{"name": c.name, "data_type": c.data_type, "ordinal_position": c.ordinal_position} for c in columns],
+        "columns": col_list,
         "rows": rows,
         "total_rows": total_rows,
         "page": page,
