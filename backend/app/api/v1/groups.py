@@ -14,6 +14,7 @@ from app.database import get_db
 from app.dependencies import get_current_tenant, get_current_user
 from app.exceptions import BadRequestError, NotFoundError
 from app.models.data_source import DataSource, DataSourceColumn, DataSourceRow
+from app.utils.art_metadata import ART_SYSTEM_COLUMNS, inject_art_metadata
 from app.models.tenant import Tenant
 from app.models.transform import Group
 
@@ -257,8 +258,16 @@ async def materialize_group(
         alias = agg.get("alias", f"{agg.get('function', 'agg')}_{agg.get('column', '')}")
         col_names.append(alias)
 
+    for col_info in ART_SYSTEM_COLUMNS:
+        db.add(DataSourceColumn(
+            data_source_id=materialized_ds.id,
+            tenant_id=tenant.id,
+            name=col_info["name"],
+            display_name=col_info["display_name"],
+            data_type=col_info["data_type"],
+            ordinal_position=col_info["ordinal_position"],
+        ))
     for idx, col_name in enumerate(col_names):
-        # Infer data type: group-by columns keep "string", aggregation columns are "number"
         data_type = "number" if col_name not in group_by_cols else "string"
         db.add(DataSourceColumn(
             data_source_id=materialized_ds.id,
@@ -269,8 +278,9 @@ async def materialize_group(
             ordinal_position=idx,
         ))
 
-    # 7. Create DataSourceRow records for each grouped row
+    # 7. Create DataSourceRow records with ART metadata
     for idx, row_data in enumerate(grouped_results):
+        row_data = inject_art_metadata(row_data, idx + 1)
         db.add(DataSourceRow(
             data_source_id=materialized_ds.id,
             tenant_id=tenant.id,

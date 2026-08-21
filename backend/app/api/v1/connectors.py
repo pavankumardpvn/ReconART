@@ -13,6 +13,7 @@ from app.database import get_db
 from app.dependencies import get_current_tenant, get_current_user
 from app.exceptions import BadRequestError, NotFoundError
 from app.models.data_source import DataSource, DataSourceColumn, DataSourceRow
+from app.utils.art_metadata import ART_SYSTEM_COLUMNS, inject_art_metadata
 from app.models.tenant import Tenant
 
 logger = logging.getLogger(__name__)
@@ -149,20 +150,20 @@ async def import_from_database(
     )
     existing_names = {c.name for c in existing_cols.scalars().all()}
 
-    for col_info in schema_cols:
+    all_cols = ART_SYSTEM_COLUMNS + schema_cols
+    for col_info in all_cols:
         if col_info["name"] not in existing_names:
-            db.add(
-                DataSourceColumn(
-                    data_source_id=ds.id,
-                    tenant_id=tenant.id,
-                    name=col_info["name"],
-                    display_name=col_info["name"],
-                    data_type=col_info.get("data_type", "string"),
-                    ordinal_position=col_info.get("ordinal_position", 0),
-                )
-            )
+            db.add(DataSourceColumn(
+                data_source_id=ds.id,
+                tenant_id=tenant.id,
+                name=col_info["name"],
+                display_name=col_info.get("display_name", col_info["name"]),
+                data_type=col_info.get("data_type", "string"),
+                ordinal_position=col_info.get("ordinal_position", 0),
+            ))
+            existing_names.add(col_info["name"])
 
-    # Store rows as JSONB
+    # Store rows as JSONB with ART metadata
     records = df.where(df.notna(), None).to_dict(orient="records")
     for idx, row_data in enumerate(records):
         safe_row: dict = {}
@@ -173,14 +174,13 @@ async def import_from_database(
                 safe_row[k] = v.isoformat()
             else:
                 safe_row[k] = v
-        db.add(
-            DataSourceRow(
-                data_source_id=ds.id,
-                tenant_id=tenant.id,
-                row_number=idx + 1,
-                data=safe_row,
-            )
-        )
+        safe_row = inject_art_metadata(safe_row, idx + 1)
+        db.add(DataSourceRow(
+            data_source_id=ds.id,
+            tenant_id=tenant.id,
+            row_number=idx + 1,
+            data=safe_row,
+        ))
 
     # Update source totals
     total_rows_result = await db.execute(
@@ -336,18 +336,22 @@ async def import_from_databricks(
     )
     existing_names = {c.name for c in existing_cols.scalars().all()}
 
-    for col_info in schema_cols:
+    all_cols = ART_SYSTEM_COLUMNS + schema_cols
+    for col_info in all_cols:
         if col_info["name"] not in existing_names:
             db.add(DataSourceColumn(
                 data_source_id=ds.id, tenant_id=tenant.id,
-                name=col_info["name"], display_name=col_info["name"],
+                name=col_info["name"],
+                display_name=col_info.get("display_name", col_info["name"]),
                 data_type=col_info.get("data_type", "string"),
                 ordinal_position=col_info.get("ordinal_position", 0),
             ))
+            existing_names.add(col_info["name"])
 
     records = df.where(df.notna(), None).to_dict(orient="records")
     for idx, row_data in enumerate(records):
         safe = {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in row_data.items()}
+        safe = inject_art_metadata(safe, idx + 1)
         db.add(DataSourceRow(
             data_source_id=ds.id, tenant_id=tenant.id,
             row_number=idx + 1, data=safe,

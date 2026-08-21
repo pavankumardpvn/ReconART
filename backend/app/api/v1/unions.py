@@ -13,6 +13,7 @@ from app.database import get_db
 from app.dependencies import get_current_tenant, get_current_user
 from app.exceptions import NotFoundError
 from app.models.data_source import DataSource, DataSourceColumn, DataSourceRow
+from app.utils.art_metadata import ART_SYSTEM_COLUMNS, inject_art_metadata
 from app.models.tenant import Tenant
 from app.models.transform import Union, UnionMember
 
@@ -323,7 +324,16 @@ async def materialize_union(
     db.add(materialized_ds)
     await db.flush()
 
-    # 6. Create DataSourceColumn records from the combined column set
+    # 6. Create DataSourceColumn records (ART system + combined user columns)
+    for col_info in ART_SYSTEM_COLUMNS:
+        db.add(DataSourceColumn(
+            data_source_id=materialized_ds.id,
+            tenant_id=tenant.id,
+            name=col_info["name"],
+            display_name=col_info["display_name"],
+            data_type=col_info["data_type"],
+            ordinal_position=col_info["ordinal_position"],
+        ))
     for idx, col_name in enumerate(sorted(all_columns)):
         db.add(DataSourceColumn(
             data_source_id=materialized_ds.id,
@@ -334,8 +344,9 @@ async def materialize_union(
             ordinal_position=idx,
         ))
 
-    # 7. Create DataSourceRow records for each combined row
+    # 7. Create DataSourceRow records with ART metadata
     for idx, row_data in enumerate(combined_rows):
+        row_data = inject_art_metadata(row_data, idx + 1)
         db.add(DataSourceRow(
             data_source_id=materialized_ds.id,
             tenant_id=tenant.id,

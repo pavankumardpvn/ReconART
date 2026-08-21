@@ -26,6 +26,7 @@ from app.schemas.data_source import (
     DataSourceUpdate,
 )
 from app.storage import get_storage
+from app.utils.art_metadata import ART_SYSTEM_COLUMNS, inject_art_metadata
 from app.utils.pagination import paginate
 
 logger = logging.getLogger(__name__)
@@ -222,17 +223,21 @@ async def _insert_file_data(
     )
     existing_names = {c.name for c in existing_cols.scalars().all()}
 
-    for col_info in schema_cols:
+    all_cols = ART_SYSTEM_COLUMNS + schema_cols
+    for col_info in all_cols:
         if col_info["name"] not in existing_names:
             db.add(DataSourceColumn(
                 data_source_id=ds.id,
                 tenant_id=tenant.id,
                 name=col_info["name"],
-                display_name=col_info["name"],
+                display_name=col_info.get("display_name", col_info["name"]),
                 data_type=col_info.get("data_type", "string"),
                 ordinal_position=col_info.get("ordinal_position", 0),
             ))
+            existing_names.add(col_info["name"])
 
+    file_id_str = str(source_file.id)
+    file_name = source_file.original_filename
     records = df.where(df.notna(), None).to_dict(orient="records")
     bulk_rows = []
     for idx, row_data in enumerate(records):
@@ -244,6 +249,9 @@ async def _insert_file_data(
                 safe_row[k] = v.isoformat()
             else:
                 safe_row[k] = v
+        safe_row = inject_art_metadata(
+            safe_row, idx + 1, file_id=file_id_str, file_name=file_name,
+        )
         bulk_rows.append(DataSourceRow(
             data_source_id=ds.id,
             tenant_id=tenant.id,
@@ -491,19 +499,18 @@ async def upload_data_source(
     db.add(data_source)
     await db.flush()
 
-    # --- create DataSourceColumn records ---
-    for col_info in schema_cols:
-        col = DataSourceColumn(
+    # --- create DataSourceColumn records (ART system + user columns) ---
+    for col_info in ART_SYSTEM_COLUMNS + schema_cols:
+        db.add(DataSourceColumn(
             data_source_id=data_source.id,
             tenant_id=tenant.id,
             name=col_info["name"],
-            display_name=col_info["name"],
+            display_name=col_info.get("display_name", col_info["name"]),
             data_type=col_info.get("data_type", "string"),
             ordinal_position=col_info.get("ordinal_position", 0),
-        )
-        db.add(col)
+        ))
 
-    # --- store rows as JSONB (bulk insert) ---
+    # --- store rows as JSONB with ART metadata (bulk insert) ---
     records = df.where(df.notna(), None).to_dict(orient="records")
     bulk_rows = []
     for idx, row_data in enumerate(records):
@@ -515,6 +522,9 @@ async def upload_data_source(
                 safe_row[k] = v.isoformat()
             else:
                 safe_row[k] = v
+        safe_row = inject_art_metadata(
+            safe_row, idx + 1, file_name=original_filename,
+        )
         bulk_rows.append(DataSourceRow(
             data_source_id=data_source.id,
             tenant_id=tenant.id,
@@ -822,8 +832,9 @@ async def filter_data_source(
             ordinal_position=col.ordinal_position,
         ))
 
-    # Create rows
+    # Create rows with ART metadata
     for idx, row_data in enumerate(filtered_rows):
+        row_data = inject_art_metadata(row_data, idx + 1)
         db.add(DataSourceRow(
             data_source_id=filtered_ds.id,
             tenant_id=tenant.id,
