@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import {
   Plus, Send, Sparkles, Bot, User, Check, XCircle, Paperclip,
@@ -72,6 +73,7 @@ function timeAgo(dateStr: string | null): string {
 
 export default function AgentPage() {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const firstName = user?.firstName || user?.fullName?.split(" ")[0] || "there";
 
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -158,6 +160,9 @@ export default function AgentPage() {
           id: (Date.now() + 1).toString(), role: "system",
           text: `Source **${sourceName}** created with **${file.name}** synced.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nAll rows have been assigned unique **ART IDs** automatically.`,
         }]);
+
+        queryClient.invalidateQueries({ queryKey: ["resources"] });
+        queryClient.invalidateQueries({ queryKey: ["data-sources"] });
 
         const aiMsg = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
         const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: aiMsg, user_name: firstName });

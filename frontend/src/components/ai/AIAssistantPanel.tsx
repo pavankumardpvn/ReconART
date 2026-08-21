@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUser } from "@clerk/nextjs";
 import { X, Send, Sparkles, Bot, User, Check, XCircle, Paperclip, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,7 @@ interface AIAssistantPanelProps {
 
 export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProps) {
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const firstName = user?.firstName || user?.fullName?.split(" ")[0] || "there";
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -156,6 +158,9 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           text: `Source **${sourceName}** created with **${file.name}** synced.\n\nSource ID: \`${source.id}\`${colsStr ? `\nColumns: ${colsStr}` : ""}\n\nAll rows have been assigned unique **ART IDs** automatically.`,
           timestamp: new Date(),
         }]);
+
+        queryClient.invalidateQueries({ queryKey: ["resources"] });
+        queryClient.invalidateQueries({ queryKey: ["data-sources"] });
 
         const aiMsg = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
         const { response, action } = await callAI(aiMsg, firstName);
