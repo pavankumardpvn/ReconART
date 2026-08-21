@@ -217,6 +217,9 @@ export default function AgentPage() {
       ...prev.map((m) => m.id === msgId ? { ...m, actionStatus: "done" } : m),
       { id: (Date.now() + 2).toString(), role: "system", text: result },
     ]);
+    queryClient.invalidateQueries({ queryKey: ["resources"] });
+    queryClient.invalidateQueries({ queryKey: ["data-sources"] });
+    queryClient.invalidateQueries({ queryKey: ["reconciliations"] });
     setIsTyping(false);
   }
 

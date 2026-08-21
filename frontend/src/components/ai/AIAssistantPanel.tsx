@@ -219,6 +219,9 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
         timestamp: new Date(),
       },
     ]);
+    queryClient.invalidateQueries({ queryKey: ["resources"] });
+    queryClient.invalidateQueries({ queryKey: ["data-sources"] });
+    queryClient.invalidateQueries({ queryKey: ["reconciliations"] });
     setIsTyping(false);
   }
 

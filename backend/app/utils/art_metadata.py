@@ -1,7 +1,9 @@
 """ART system metadata — auto-injected columns for every data row."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 ART_SYSTEM_COLUMNS = [
     {"name": "art_id", "display_name": "ART ID", "data_type": "string", "ordinal_position": -6},
@@ -24,11 +26,11 @@ def inject_art_metadata(
     file_id: str | None = None,
     file_name: str | None = None,
 ) -> dict:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(IST)
     ms = now.strftime("%f")[:3]
     return {
         "art_id": f"ART_{now.strftime('%Y%m%d-%H%M%S')}{ms}-{uuid.uuid4().hex[:8].upper()}",
-        "art_created_at": now.isoformat(),
+        "art_created_at": now.strftime("%Y-%m-%d %H:%M:%S IST"),
         "art_created_date": now.strftime("%Y-%m-%d"),
         "art_file_id": _uuid_to_numeric(file_id) if file_id else None,
         "art_file_name": file_name,
