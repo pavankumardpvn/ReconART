@@ -329,7 +329,7 @@ export default function DataSourceDetailPage({
           </TabsTrigger>
           <TabsTrigger value="schema" className="gap-1.5">
             <Database className="h-4 w-4" />
-            Schema
+            Columns
           </TabsTrigger>
           <TabsTrigger value="preview" className="gap-1.5">
             <Eye className="h-4 w-4" />
@@ -493,46 +493,76 @@ export default function DataSourceDetailPage({
         <TabsContent value="schema">
           <Card className="glass-card">
             <CardHeader>
-              <CardTitle>Schema</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Columns</CardTitle>
+                {dataSource.columns && dataSource.columns.length > 0 && (
+                  <p className="text-sm text-[var(--foreground-muted)]">
+                    {dataSource.columns.filter((c) => c.name.startsWith("art_")).length} system · {dataSource.columns.filter((c) => !c.name.startsWith("art_")).length} raw
+                  </p>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {dataSource.columns && dataSource.columns.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">#</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead>Display Name</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead>Nullable</TableHead>
-                      <TableHead>Sample Values</TableHead>
+                      <TableHead>Column Type</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dataSource.columns.map((col) => (
-                      <TableRow key={col.name}>
-                        <TableCell className="font-medium">
-                          {col.name}
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {col.data_type}
-                        </TableCell>
-                        <TableCell>
-                          {col.is_nullable ? "Yes" : "No"}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate text-[var(--foreground-muted)]">
-                          {col.sample_values?.join(", ") ?? "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {[...dataSource.columns]
+                      .sort((a, b) => {
+                        const aSystem = a.name.startsWith("art_") ? 0 : 1;
+                        const bSystem = b.name.startsWith("art_") ? 0 : 1;
+                        return aSystem - bSystem;
+                      })
+                      .map((col, idx) => {
+                        const isSystem = col.name.startsWith("art_");
+                        return (
+                          <TableRow key={col.name} className={isSystem ? "bg-purple-500/[0.03]" : ""}>
+                            <TableCell className="font-mono text-xs text-[var(--foreground-muted)]">
+                              {idx + 1}
+                            </TableCell>
+                            <TableCell className="font-medium font-mono text-sm">
+                              {col.name}
+                            </TableCell>
+                            <TableCell className="text-[var(--foreground-muted)]">
+                              {col.display_name || col.name.replace(/^art_/, "ART ").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="font-mono text-[10px]">
+                                {col.data_type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {isSystem ? (
+                                <Badge className="bg-purple-500/15 text-purple-400 border border-purple-500/20 text-[10px]">
+                                  SYSTEM
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-[10px]">
+                                  RAW
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                   </TableBody>
                 </Table>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Database className="mb-3 h-10 w-10 text-[var(--foreground-subtle)]" />
                   <p className="text-sm font-medium text-[var(--foreground)]">
-                    No schema available
+                    No columns available
                   </p>
                   <p className="mt-1 text-xs text-[var(--foreground-muted)]">
-                    Upload a file to generate the schema
+                    Upload a file to generate column schema
                   </p>
                 </div>
               )}
@@ -563,9 +593,23 @@ export default function DataSourceDetailPage({
                       <TableHeader>
                         <TableRow>
                           <TableHead className="w-12 text-center">#</TableHead>
-                          {preview.columns.map((col) => (
-                            <TableHead key={col.name}>{col.name}</TableHead>
-                          ))}
+                          {preview.columns
+                            .sort((a, b) => {
+                              const aS = a.name.startsWith("art_") ? 0 : 1;
+                              const bS = b.name.startsWith("art_") ? 0 : 1;
+                              return aS - bS;
+                            })
+                            .map((col) => {
+                              const isSystem = col.name.startsWith("art_");
+                              return (
+                                <TableHead
+                                  key={col.name}
+                                  className={isSystem ? "bg-purple-500/[0.06] text-purple-300 text-[11px] uppercase tracking-wider" : ""}
+                                >
+                                  {col.display_name || col.name}
+                                </TableHead>
+                              );
+                            })}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -574,16 +618,25 @@ export default function DataSourceDetailPage({
                             <TableCell className="text-center text-xs text-[var(--foreground-muted)]">
                               {(previewPage - 1) * (preview.page_size || 100) + idx + 1}
                             </TableCell>
-                            {preview.columns.map((col) => (
-                              <TableCell
-                                key={col.name}
-                                className="whitespace-nowrap"
-                              >
-                                {row[col.name] != null
-                                  ? String(row[col.name])
-                                  : "—"}
-                              </TableCell>
-                            ))}
+                            {preview.columns
+                              .sort((a, b) => {
+                                const aS = a.name.startsWith("art_") ? 0 : 1;
+                                const bS = b.name.startsWith("art_") ? 0 : 1;
+                                return aS - bS;
+                              })
+                              .map((col) => {
+                                const isSystem = col.name.startsWith("art_");
+                                return (
+                                  <TableCell
+                                    key={col.name}
+                                    className={`whitespace-nowrap ${isSystem ? "bg-purple-500/[0.03] font-mono text-xs text-purple-300/70" : ""}`}
+                                  >
+                                    {row[col.name] != null
+                                      ? String(row[col.name])
+                                      : "—"}
+                                  </TableCell>
+                                );
+                              })}
                           </TableRow>
                         ))}
                       </TableBody>
