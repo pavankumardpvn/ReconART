@@ -21,8 +21,9 @@ def inject_art_metadata(
     file_name: str | None = None,
 ) -> dict:
     now = datetime.now(timezone.utc)
+    ms = now.strftime("%f")[:3]
     return {
-        "art_id": f"ART_{uuid.uuid4().hex[:8].upper()}",
+        "art_id": f"ART_{now.strftime('%Y%m%d-%H%M%S')}{ms}-{uuid.uuid4().hex[:8].upper()}",
         "art_created_at": now.isoformat(),
         "art_created_date": now.strftime("%Y-%m-%d"),
         "art_file_id": file_id,
