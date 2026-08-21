@@ -14,11 +14,25 @@ from app.exceptions import BadRequestError, NotFoundError
 from app.models.data_source import DataSource, DataSourceRow
 from app.models.tenant import Tenant
 from app.models.transform import CalculatedColumn
-from app.services.expression_engine import ExpressionError, evaluate_expression, validate_expression
+from app.services.expression_engine import FORMULA_REFERENCE, ExpressionError, evaluate_expression, validate_expression
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# GET /formulas — formula reference for the UI
+# ---------------------------------------------------------------------------
+@router.get("/formulas")
+async def list_formulas():
+    categories = {}
+    for f in FORMULA_REFERENCE:
+        cat = f["category"]
+        if cat not in categories:
+            categories[cat] = []
+        categories[cat].append(f)
+    return {"categories": categories, "total": len(FORMULA_REFERENCE)}
 
 
 # ---------------------------------------------------------------------------
