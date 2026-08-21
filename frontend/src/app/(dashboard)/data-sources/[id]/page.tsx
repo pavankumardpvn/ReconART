@@ -694,13 +694,13 @@ export default function DataSourceDetailPage({
                               const aS = a.name.startsWith("art_") ? 0 : 1;
                               const bS = b.name.startsWith("art_") ? 0 : 1;
                               if (aS !== bS) return aS - bS;
-                              const aG = (a as Record<string, unknown>).column_type === "generated" ? 1 : 0;
-                              const bG = (b as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                              const aG = (a as unknown as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                              const bG = (b as unknown as Record<string, unknown>).column_type === "generated" ? 1 : 0;
                               return aG - bG;
                             })
                             .map((col) => {
                               const isSystem = col.name.startsWith("art_");
-                              const isGenerated = (col as Record<string, unknown>).column_type === "generated";
+                              const isGenerated = (col as unknown as Record<string, unknown>).column_type === "generated";
                               return (
                                 <TableHead
                                   key={col.name}
@@ -728,13 +728,13 @@ export default function DataSourceDetailPage({
                                 const aS = a.name.startsWith("art_") ? 0 : 1;
                                 const bS = b.name.startsWith("art_") ? 0 : 1;
                                 if (aS !== bS) return aS - bS;
-                                const aG = (a as Record<string, unknown>).column_type === "generated" ? 1 : 0;
-                                const bG = (b as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                                const aG = (a as unknown as Record<string, unknown>).column_type === "generated" ? 1 : 0;
+                                const bG = (b as unknown as Record<string, unknown>).column_type === "generated" ? 1 : 0;
                                 return aG - bG;
                               })
                               .map((col) => {
                                 const isSystem = col.name.startsWith("art_");
-                                const isGenerated = (col as Record<string, unknown>).column_type === "generated";
+                                const isGenerated = (col as unknown as Record<string, unknown>).column_type === "generated";
                                 return (
                                   <TableCell
                                     key={col.name}
