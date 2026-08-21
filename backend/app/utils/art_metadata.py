@@ -14,7 +14,7 @@ ART_SYSTEM_COLUMNS = [
 
 
 def _uuid_to_numeric(uid: str) -> int:
-    return int(uid.replace("-", "")[:12], 16)
+    return int(uid.replace("-", "")[:8], 16) % 100_000_000
 
 
 def inject_art_metadata(
