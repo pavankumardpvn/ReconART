@@ -14,7 +14,6 @@ import {
 
 export const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "AI Agent", href: "/agent", icon: Sparkles },
   { label: "Resources", href: "/data-sources", icon: Database },
   { label: "Pipeline", href: "/pipeline", icon: Workflow },
   { label: "Reconciliations", href: "/reconciliations", icon: GitCompareArrows },
