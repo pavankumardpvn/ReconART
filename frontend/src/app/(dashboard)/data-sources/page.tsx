@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Database, Plus, ChevronLeft, ChevronRight, Sigma, GitCompareArrows } from "lucide-react";
+import { Database, Plus, ChevronLeft, ChevronRight, Sigma, GitCompareArrows, Layers } from "lucide-react";
 import { UnionIcon } from "@/components/icons/UnionIcon";
 import { useResources, useCreateSource } from "@/hooks/useDataSources";
 import PageContainer from "@/components/layout/PageContainer";

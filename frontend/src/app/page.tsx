@@ -20,7 +20,6 @@ import {
   Shield,
   Lock,
   Globe,
-  Zap,
   Mail,
   ExternalLink,
   Sparkles,
@@ -47,7 +46,6 @@ import {
   HandCoins,
   Gamepad2,
   Building2,
-  Banknote,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -186,7 +184,6 @@ const advantages = [
 
 const services = [
   {
-    num: "01",
     icon: Database,
     title: "Data Sources",
     description:
@@ -194,7 +191,6 @@ const services = [
     cta: "Connect Data",
   },
   {
-    num: "02",
     icon: Brain,
     title: "Matching Engine",
     description:
@@ -202,7 +198,6 @@ const services = [
     cta: "Configure Matching",
   },
   {
-    num: "03",
     icon: AlertTriangle,
     title: "Exception Management",
     description:
@@ -210,7 +205,6 @@ const services = [
     cta: "Manage Exceptions",
   },
   {
-    num: "04",
     icon: LineChart,
     title: "Analytics & Reporting",
     description:
@@ -218,7 +212,6 @@ const services = [
     cta: "View Analytics",
   },
   {
-    num: "05",
     icon: Clock,
     title: "Automation",
     description:
@@ -226,7 +219,6 @@ const services = [
     cta: "Automate Now",
   },
   {
-    num: "06",
     icon: ArrowLeftRight,
     title: "Cross-Border Currency",
     description:
@@ -234,7 +226,6 @@ const services = [
     cta: "Go Global",
   },
   {
-    num: "07",
     icon: Shield,
     title: "Compliance & Audit",
     description:
@@ -248,6 +239,8 @@ const caseStudies = [
     title: "Global Payment Processor",
     stat: "85%",
     statLabel: "Faster Exception Handling",
+    industry: "Payments",
+    region: "EMEA",
     description:
       "Automated matching of 2M+ daily transactions across 15 payment channels, reducing exception handling time by 85%.",
   },
@@ -255,6 +248,8 @@ const caseStudies = [
     title: "Investment Management Firm",
     stat: "99.9%",
     statLabel: "Match Accuracy",
+    industry: "Asset Management",
+    region: "North America",
     description:
       "End-to-end trade reconciliation transformation across all asset classes, achieving 99.9% match accuracy within 30 days.",
   },
@@ -262,6 +257,8 @@ const caseStudies = [
     title: "Digital Banking Platform",
     stat: "500K+",
     statLabel: "Daily Transactions",
+    industry: "Neobanking",
+    region: "LATAM",
     description:
       "Real-time transaction reconciliation for a neo-bank processing 500K+ daily transactions with zero manual intervention.",
   },
@@ -269,6 +266,8 @@ const caseStudies = [
     title: "Insurance Group",
     stat: "8",
     statLabel: "Business Units",
+    industry: "Insurance",
+    region: "APAC",
     description:
       "Multi-entity premium reconciliation across 8 business units, eliminating month-end bottlenecks and ensuring regulatory compliance.",
   },
@@ -322,20 +321,44 @@ const pricingPlans = [
       "On-premise option",
     ],
     cta: "Contact Sales",
-    href: "#",
+    href: "mailto:reconartai@gmail.com",
     highlighted: false,
   },
 ];
 
-const domains = [
-  { icon: ArrowDownToLine, title: "Cash In", description: "Incoming payments, collections, and deposit reconciliation" },
-  { icon: ArrowUpFromLine, title: "Cash Out", description: "Disbursements, payouts, and withdrawal tracking" },
-  { icon: ShieldAlert, title: "Claims & Chargebacks", description: "Dispute management and chargeback reconciliation" },
-  { icon: Receipt, title: "Fees & Billing", description: "Fee reconciliation and billing validation" },
-  { icon: Calculator, title: "Accounting Automation", description: "Automated journal entries and ledger synchronization" },
-  { icon: BookOpen, title: "Accounting Operations", description: "Period close and general ledger reconciliation" },
-  { icon: FileCheck, title: "Reporting & Regulations", description: "Regulatory compliance and audit-ready reports" },
-  { icon: Bell, title: "Unified Oversight & Alerts", description: "Real-time monitoring and threshold-based alerts" },
+const domainGroups = [
+  {
+    category: "Money Movement",
+    color: "#14B8A6",
+    domains: [
+      { icon: ArrowDownToLine, title: "Cash In", description: "Incoming payments, collections, and deposit reconciliation" },
+      { icon: ArrowUpFromLine, title: "Cash Out", description: "Disbursements, payouts, and withdrawal tracking" },
+    ],
+  },
+  {
+    category: "Risk Management",
+    color: "#F59E0B",
+    domains: [
+      { icon: ShieldAlert, title: "Claims & Chargebacks", description: "Dispute management and chargeback reconciliation" },
+      { icon: Receipt, title: "Fees & Billing", description: "Fee reconciliation and billing validation" },
+    ],
+  },
+  {
+    category: "Accounting",
+    color: "#9D5CF5",
+    domains: [
+      { icon: Calculator, title: "Accounting Automation", description: "Automated journal entries and ledger synchronization" },
+      { icon: BookOpen, title: "Accounting Operations", description: "Period close and general ledger reconciliation" },
+    ],
+  },
+  {
+    category: "Governance",
+    color: "#3B82F6",
+    domains: [
+      { icon: FileCheck, title: "Reporting & Regulations", description: "Regulatory compliance and audit-ready reports" },
+      { icon: Bell, title: "Unified Oversight & Alerts", description: "Real-time monitoring and threshold-based alerts" },
+    ],
+  },
 ];
 
 const templates = [
@@ -372,6 +395,26 @@ const workflowSteps = [
   { icon: LineChart, title: "Report & Comply", description: "Audit-ready insights" },
 ];
 
+const comparisonRows = [
+  { feature: "Setup Time", reconart: "Days", legacy: "3-6 Months", manual: "Ongoing" },
+  { feature: "Match Accuracy", reconart: "99.9%", legacy: "~95%", manual: "~80%" },
+  { feature: "AI-Powered Matching", reconart: true, legacy: false, manual: false },
+  { feature: "Cross-Border Currency", reconart: true, legacy: false, manual: false },
+  { feature: "Real-Time Processing", reconart: true, legacy: false, manual: false },
+  { feature: "Automated Audit Trail", reconart: true, legacy: false, manual: false },
+  { feature: "Scalability", reconart: "Unlimited", legacy: "Limited", manual: "None" },
+  { feature: "Total Cost of Ownership", reconart: "Low", legacy: "High", manual: "Very High" },
+];
+
+const faqs = [
+  { q: "How long does integration take?", a: "Most teams go live within 2-4 weeks using our pre-built templates and API connectors. Complex enterprise deployments typically take 4-6 weeks." },
+  { q: "Do I need engineering resources?", a: "No. ReconArt is designed for operations teams. Our no-code rule builder and drag-and-drop interface mean zero engineering dependency for day-to-day configuration." },
+  { q: "What data formats do you support?", a: "CSV, XLSX, JSON, XML, fixed-width, and direct API/database connections. Our automated schema detection handles format mapping automatically." },
+  { q: "Is my data secure?", a: "Yes. We use AES-256 encryption at rest and TLS 1.3 in transit. ReconArt is SOC 2 Type II compliant with optional on-premise deployment for enterprise clients." },
+  { q: "Can I reconcile across currencies?", a: "Absolutely. ReconArt supports 150+ currencies with real-time FX rates and tolerance-based matching for cross-border operations." },
+  { q: "What happens when the AI can't match a transaction?", a: "Unmatched transactions are routed to exception queues with AI-suggested resolutions, severity scoring, and configurable escalation workflows." },
+];
+
 const footerSections = [
   {
     title: "Quick Links",
@@ -386,19 +429,19 @@ const footerSections = [
   {
     title: "Industries",
     links: [
-      { label: "Investment Banking", href: "#" },
-      { label: "Asset Management", href: "#" },
-      { label: "Payment Processing", href: "#" },
-      { label: "Insurance", href: "#" },
-      { label: "FinTech", href: "#" },
+      { label: "Investment Banking", href: "#industries" },
+      { label: "Asset Management", href: "#industries" },
+      { label: "Payment Processing", href: "#industries" },
+      { label: "Insurance", href: "#industries" },
+      { label: "FinTech", href: "#industries" },
     ],
   },
   {
     title: "Contact",
     links: [
-      { label: "info@reconart.io", href: "mailto:info@reconart.io" },
-      { label: "Documentation", href: "#" },
-      { label: "Privacy Policy", href: "#" },
+      { label: "reconartai@gmail.com", href: "mailto:reconartai@gmail.com" },
+      { label: "Documentation", href: "#services" },
+      { label: "Privacy Policy", href: "/privacy" },
     ],
   },
 ];
@@ -422,6 +465,7 @@ export default function Home() {
   const workflowReveal = useScrollReveal(0.2);
   const advantagesReveal = useScrollReveal(0.05);
   const advantagesGlow = useMouseGlow();
+  const comparisonReveal = useScrollReveal(0.05);
   const domainsReveal = useScrollReveal(0.05);
   const servicesReveal = useScrollReveal(0.05);
   const servicesGlow = useMouseGlow();
@@ -429,6 +473,8 @@ export default function Home() {
   const resultsReveal = useScrollReveal(0.05);
   const industriesReveal = useScrollReveal(0.05);
   const pricingReveal = useScrollReveal(0.05);
+  const faqReveal = useScrollReveal(0.05);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const ctaReveal = useScrollReveal(0.05);
 
   useEffect(() => {
@@ -591,15 +637,16 @@ export default function Home() {
 
             {/* Trust strip */}
             <div
-              className="animate-fade-in-up flex items-center gap-6 pt-4"
+              className="animate-fade-in-up flex flex-wrap items-center gap-4 pt-4"
               style={{ animationDelay: "0.9s" }}
             >
-              <div className="flex -space-x-2">
-                {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="bubble-hover flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#0F1729] bg-gradient-to-br from-[#7C3AED]/40 to-[#14B8A6]/40 text-[10px] font-bold text-white/80">
-                    {["JP", "GS", "DB", "UB"][i]}
-                  </div>
-                ))}
+              <div className="flex items-center gap-2 rounded-full border border-[#14B8A6]/20 bg-[#14B8A6]/[0.06] px-4 py-2">
+                <Shield className="h-3.5 w-3.5 text-[#14B8A6]" />
+                <span className="text-xs font-medium text-[#14B8A6]">SOC 2 Compliant</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-[#9D5CF5]/20 bg-[#9D5CF5]/[0.06] px-4 py-2">
+                <Lock className="h-3.5 w-3.5 text-[#9D5CF5]" />
+                <span className="text-xs font-medium text-[#9D5CF5]">Bank-Grade Encryption</span>
               </div>
               <div className="flex items-center gap-1">
                 {[0, 1, 2, 3, 4].map((i) => (
@@ -726,12 +773,11 @@ export default function Home() {
             {[...logoPartners, ...logoPartners].map((name, i) => (
               <div
                 key={`${name}-${i}`}
-                className="bubble-hover mx-6 flex shrink-0 items-center gap-2 rounded-lg border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-2.5"
+                className="mx-8 flex shrink-0 items-center"
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 text-[8px] font-bold text-[#9D5CF5]">
-                  {name.substring(0, 2).toUpperCase()}
-                </div>
-                <span className="text-sm font-medium text-white/40">{name}</span>
+                <span className="text-base font-bold tracking-tight text-white/25 transition-colors hover:text-white/50" style={{ fontVariant: "small-caps" }}>
+                  {name}
+                </span>
               </div>
             ))}
           </div>
@@ -861,6 +907,70 @@ export default function Home() {
       <div className="section-divider" />
 
       {/* ================================================================
+          COMPARISON TABLE
+          ================================================================ */}
+      <section className="relative bg-[#0F1729] px-6 py-28">
+        <div className="landing-glow-orb left-[20%] top-[30%] h-[400px] w-[400px] bg-[#14B8A6]/[0.03]" />
+        <div
+          ref={comparisonReveal.ref}
+          className={`relative mx-auto max-w-4xl transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${comparisonReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Compare</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Why Teams <span className="landing-gradient-text">Switch</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
+            See how ReconArt compares to legacy tools and manual spreadsheets.
+          </p>
+
+          <div className="landing-card rounded-2xl overflow-hidden">
+            <div className="grid grid-cols-4 gap-0 border-b border-[#7C3AED]/10 bg-[#7C3AED]/[0.04]">
+              <div className="px-6 py-4 text-sm font-semibold text-white/50">Feature</div>
+              <div className="px-6 py-4 text-center text-sm font-bold landing-gradient-text">ReconArt</div>
+              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">Legacy Tools</div>
+              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">Spreadsheets</div>
+            </div>
+            {comparisonRows.map((row, i) => (
+              <div
+                key={row.feature}
+                className={`grid grid-cols-4 gap-0 border-b border-[#2f3c5b]/20 transition-colors hover:bg-[#1a243a]/60 ${i === comparisonRows.length - 1 ? "border-b-0" : ""}`}
+                style={itemReveal(comparisonReveal.isVisible, i, 100)}
+              >
+                <div className="px-6 py-4 text-sm text-white/60">{row.feature}</div>
+                <div className="flex items-center justify-center px-6 py-4 text-sm font-medium text-[#14B8A6]">
+                  {typeof row.reconart === "boolean" ? (
+                    <Check className="h-5 w-5 text-[#14B8A6]" />
+                  ) : (
+                    row.reconart
+                  )}
+                </div>
+                <div className="flex items-center justify-center px-6 py-4 text-sm text-white/30">
+                  {typeof row.legacy === "boolean" ? (
+                    row.legacy ? <Check className="h-4 w-4 text-white/30" /> : <X className="h-4 w-4 text-white/15" />
+                  ) : (
+                    row.legacy
+                  )}
+                </div>
+                <div className="flex items-center justify-center px-6 py-4 text-sm text-white/30">
+                  {typeof row.manual === "boolean" ? (
+                    row.manual ? <Check className="h-4 w-4 text-white/30" /> : <X className="h-4 w-4 text-white/15" />
+                  ) : (
+                    row.manual
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
           DOMAIN COVERAGE
           ================================================================ */}
       <section id="domains" className="relative bg-[#0c1220] px-6 py-28">
@@ -881,18 +991,31 @@ export default function Home() {
             One platform covering 8 domains — no separate modules, no patched integrations.
           </p>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {domains.map((domain, i) => (
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {domainGroups.map((group, gi) => (
               <div
-                key={domain.title}
-                className="landing-card landing-card-glow group rounded-2xl p-6 text-center"
-                style={itemReveal(domainsReveal.isVisible, i, 150)}
+                key={group.category}
+                className="flex flex-col gap-4"
+                style={itemReveal(domainsReveal.isVisible, gi, 200)}
               >
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
-                  <domain.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: group.color }} />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: group.color }}>
+                    {group.category}
+                  </span>
                 </div>
-                <h3 className="mb-1.5 text-sm font-semibold text-white">{domain.title}</h3>
-                <p className="text-xs leading-relaxed text-white/40">{domain.description}</p>
+                {group.domains.map((domain) => (
+                  <div
+                    key={domain.title}
+                    className="landing-card landing-card-glow group rounded-2xl p-6"
+                  >
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl transition-all group-hover:shadow-lg" style={{ background: `${group.color}15` }}>
+                      <domain.icon className="h-5 w-5 transition-colors" style={{ color: group.color }} />
+                    </div>
+                    <h3 className="mb-1.5 text-sm font-semibold text-white">{domain.title}</h3>
+                    <p className="text-xs leading-relaxed text-white/40">{domain.description}</p>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
@@ -926,32 +1049,57 @@ export default function Home() {
             ref={servicesGlow.ref}
             onMouseMove={servicesGlow.onMove}
             onMouseLeave={servicesGlow.onLeave}
-            className="relative grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            className="relative"
           >
             <div style={servicesGlow.glowStyle} />
-            {services.map((service, i) => (
-              <div
-                key={service.num}
-                className="landing-card landing-card-glow group rounded-2xl p-7"
-                style={itemReveal(servicesReveal.isVisible, i)}
-              >
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-3xl font-bold text-[#7C3AED]/20">{service.num}</span>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#7C3AED]/[0.08] transition-colors group-hover:bg-[#7C3AED]/15">
-                    <service.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
-                  </div>
-                </div>
-                <h3 className="mb-3 text-xl font-semibold text-white">{service.title}</h3>
-                <p className="mb-6 text-sm leading-relaxed text-white/40">{service.description}</p>
-                <Link
-                  href="/sign-up"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+            {/* Row 1 — 4 cards */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {services.slice(0, 4).map((service, i) => (
+                <div
+                  key={service.title}
+                  className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
+                  style={itemReveal(servicesReveal.isVisible, i)}
                 >
-                  {service.cta}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            ))}
+                  <div className="absolute left-0 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-[#7C3AED] to-[#14B8A6] opacity-40 transition-opacity group-hover:opacity-100" />
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
+                    <service.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{service.title}</h3>
+                  <p className="mb-5 text-sm leading-relaxed text-white/50">{service.description}</p>
+                  <Link
+                    href="/sign-up"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+                  >
+                    {service.cta}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ))}
+            </div>
+            {/* Row 2 — 3 cards, blank on right */}
+            <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {services.slice(4).map((service, i) => (
+                <div
+                  key={service.title}
+                  className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
+                  style={itemReveal(servicesReveal.isVisible, i + 4)}
+                >
+                  <div className="absolute left-0 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-[#7C3AED] to-[#14B8A6] opacity-40 transition-opacity group-hover:opacity-100" />
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
+                    <service.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{service.title}</h3>
+                  <p className="mb-5 text-sm leading-relaxed text-white/50">{service.description}</p>
+                  <Link
+                    href="/sign-up"
+                    className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
+                  >
+                    {service.cta}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -1046,7 +1194,11 @@ export default function Home() {
                   <TrendingUp className="ml-auto h-5 w-5 text-[#14B8A6]/30 transition-colors group-hover:text-[#14B8A6]" />
                 </div>
                 <div className="px-8 py-6">
-                  <p className="text-sm leading-relaxed text-white/50">{study.description}</p>
+                  <p className="mb-4 text-sm leading-relaxed text-white/50">{study.description}</p>
+                  <div className="flex gap-2">
+                    <span className="rounded-full bg-[#7C3AED]/10 px-3 py-1 text-[10px] font-semibold text-[#9D5CF5]">{study.industry}</span>
+                    <span className="rounded-full bg-[#14B8A6]/10 px-3 py-1 text-[10px] font-semibold text-[#14B8A6]">{study.region}</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -1102,6 +1254,24 @@ export default function Home() {
           ================================================================ */}
       <section id="pricing" className="relative bg-[#0c1220] px-6 py-28">
         <div className="landing-glow-orb left-1/2 top-0 h-[400px] w-[400px] -translate-x-1/2 bg-[#7C3AED]/[0.04]" />
+
+        {/* Security badges */}
+        <div className="relative mx-auto mb-20 flex flex-wrap items-center justify-center gap-6 max-w-3xl">
+          {[
+            { icon: Shield, label: "SOC 2 Type II", sub: "Certified" },
+            { icon: Lock, label: "AES-256", sub: "Encryption" },
+            { icon: Globe, label: "GDPR", sub: "Compliant" },
+            { icon: Eye, label: "99.9% Uptime", sub: "SLA Guaranteed" },
+          ].map((badge) => (
+            <div key={badge.label} className="flex items-center gap-3 rounded-xl border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-3">
+              <badge.icon className="h-5 w-5 text-[#14B8A6]" />
+              <div>
+                <p className="text-sm font-semibold text-white/70">{badge.label}</p>
+                <p className="text-[10px] text-white/30">{badge.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
         <div
           ref={pricingReveal.ref}
           className={`relative mx-auto max-w-[90%] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${pricingReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
@@ -1173,27 +1343,95 @@ export default function Home() {
       <div className="section-divider" />
 
       {/* ================================================================
-          QUOTE
+          PHILOSOPHY
           ================================================================ */}
-      <section className="relative bg-[#0F1729] px-6 py-24">
-        <div className="landing-glow-orb left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.03]" />
-        <div className="relative mx-auto max-w-3xl">
-          <div className="landing-card landing-card-glow rounded-3xl px-10 py-14 text-center">
-            <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10">
-              <span className="text-2xl font-bold text-[#7C3AED]">&ldquo;</span>
-            </div>
-            <blockquote className="mb-8 text-xl font-medium leading-relaxed text-white/80 md:text-2xl">
-              Most teams spend more time managing their reconciliation tools than
-              actually reconciling. The right platform should eliminate complexity,
-              not add to it.
-            </blockquote>
-            <div className="flex items-center justify-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#7C3AED] to-[#14B8A6] text-xs font-bold text-white">RA</div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-white">ReconArt Team</p>
-                <p className="text-xs text-white/40">Product Philosophy</p>
+      <section className="relative bg-[#0F1729] px-6 py-28 overflow-hidden">
+        <div className="landing-glow-orb left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 bg-[#7C3AED]/[0.04]" />
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: "radial-gradient(circle, rgba(124,58,237,0.6) 1px, transparent 1px)",
+          backgroundSize: "50px 50px",
+        }} />
+        <div className="relative mx-auto max-w-4xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/[0.06] px-4 py-2">
+            <Sparkles className="h-3.5 w-3.5 text-[#9D5CF5]" />
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9D5CF5]">Our Philosophy</span>
+          </div>
+          <h2 className="mb-8 text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
+            Your team should be{" "}
+            <span className="landing-gradient-text">reconciling</span>,
+            <br className="hidden sm:block" />
+            not wrestling with tools.
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/40">
+            We built ReconArt because financial operations teams deserve a platform
+            that eliminates complexity instead of adding to it. Every feature exists
+            to give you answers faster — nothing more, nothing less.
+          </p>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-center">
+            {[
+              { value: "Zero", label: "vendor lock-in" },
+              { value: "100%", label: "audit-ready from day one" },
+              { value: "One", label: "platform, every workflow" },
+            ].map((item) => (
+              <div key={item.label} className="flex flex-col items-center gap-1">
+                <span className="text-2xl font-bold landing-gradient-text">{item.value}</span>
+                <span className="text-xs text-white/40">{item.label}</span>
               </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="section-divider" />
+
+      {/* ================================================================
+          FAQ
+          ================================================================ */}
+      <section id="faq" className="relative bg-[#0c1220] px-6 py-28">
+        <div className="landing-glow-orb right-[10%] bottom-[20%] h-[350px] w-[350px] bg-[#7C3AED]/[0.03]" />
+        <div
+          ref={faqReveal.ref}
+          className={`relative mx-auto max-w-3xl transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${faqReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+        >
+          <div className="mb-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">FAQ</span>
+            <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
+          </div>
+          <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
+            Common <span className="landing-gradient-text">Questions</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
+            Everything you need to know before getting started.
+          </p>
+
+          <div className="space-y-3">
+            {faqs.map((faq, i) => (
+              <div
+                key={i}
+                className="landing-card rounded-2xl overflow-hidden"
+                style={itemReveal(faqReveal.isVisible, i, 100)}
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="flex w-full items-center justify-between px-7 py-5 text-left"
+                >
+                  <span className="text-sm font-semibold text-white pr-4">{faq.q}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-[#9D5CF5] transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <div
+                  className="overflow-hidden transition-all duration-300"
+                  style={{
+                    maxHeight: openFaq === i ? "200px" : "0px",
+                    opacity: openFaq === i ? 1 : 0,
+                  }}
+                >
+                  <p className="px-7 pb-6 text-sm leading-relaxed text-white/45">{faq.a}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1269,13 +1507,17 @@ export default function Home() {
                 intelligence for financial institutions.
               </p>
               <div className="flex gap-3">
-                {[ExternalLink, Globe, Mail].map((Icon, i) => (
+                {[
+                  { icon: Globe, href: "https://recon-art.vercel.app" },
+                  { icon: ExternalLink, href: "#services" },
+                  { icon: Mail, href: "mailto:reconartai@gmail.com" },
+                ].map((item, i) => (
                   <a
                     key={i}
-                    href="#"
+                    href={item.href}
                     className="bubble-hover flex h-9 w-9 items-center justify-center rounded-lg border border-[#2f3c5b]/50 text-white/30 hover:border-[#7C3AED]/40 hover:text-[#9D5CF5]"
                   >
-                    <Icon className="h-4 w-4" />
+                    <item.icon className="h-4 w-4" />
                   </a>
                 ))}
               </div>
@@ -1300,8 +1542,8 @@ export default function Home() {
               &copy; {new Date().getFullYear()} ReconArt. All rights reserved.
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Privacy Policy</a>
-              <a href="#" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Terms of Service</a>
+              <a href="/privacy" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Privacy Policy</a>
+              <a href="/terms" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Terms of Service</a>
             </div>
           </div>
         </div>
