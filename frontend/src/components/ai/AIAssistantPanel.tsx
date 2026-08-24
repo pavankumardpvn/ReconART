@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import {
   X, Send, Sparkles, Bot, User, Check, XCircle, Paperclip,
   Loader2, Trash2, MessageSquare, Plus, ChevronLeft, History,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api, createSource, uploadFileToSource, getDataSourceColumns } from "@/lib/api";
@@ -31,6 +32,8 @@ interface Session {
   updatedAt: string | null;
 }
 
+const MAX_SESSIONS = 3;
+
 async function callAI(q: string, name: string): Promise<{ response: string; action: Action | null }> {
   const doCall = () => api.post("/api/v1/ai/chat", { message: q, user_name: name });
   try {
@@ -52,19 +55,6 @@ async function callAI(q: string, name: string): Promise<{ response: string; acti
     if (msg.includes("Network") || msg.includes("ERR_"))
       return { response: `Can't reach the server, ${name}. Try again in 10 seconds.`, action: null };
     return { response: `Something went wrong (${axiosErr.response?.status || msg}), ${name}. Try again.`, action: null };
-  }
-}
-
-async function executeAction(action: Action, name: string): Promise<string> {
-  try {
-    const { data } = await api.post("/api/v1/ai/chat", {
-      message: `Execute action: ${action.type} with params ${JSON.stringify(action.params)}`,
-      user_name: name,
-    });
-    return data.response || "Done!";
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return `Failed: ${msg}`;
   }
 }
 
@@ -120,14 +110,20 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [welcomed, setWelcomed] = useState(false);
+  const [sessionFull, setSessionFull] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadSessions = useCallback(async () => {
     try {
       const { data } = await api.get("/api/v1/agent/sessions");
-      setSessions(data.sessions || []);
-    } catch { /* ignore */ }
+      const list = data.sessions || [];
+      setSessions(list);
+      setSessionFull(list.length >= MAX_SESSIONS);
+      return list as Session[];
+    } catch {
+      return [] as Session[];
+    }
   }, []);
 
   const loadMessages = useCallback(async (sessionId: string) => {
@@ -163,6 +159,17 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  async function ensureSession(): Promise<string | null> {
+    if (activeSession) return activeSession;
+    try {
+      const { data } = await api.post("/api/v1/agent/sessions");
+      setActiveSession(data.sessionId);
+      return data.sessionId;
+    } catch {
+      return null;
+    }
+  }
+
   async function selectSession(id: string) {
     setActiveSession(id);
     await loadMessages(id);
@@ -179,15 +186,19 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   }
 
   function goBack() {
-    if (activeSession) {
-      setActiveSession(null);
-      setView("history");
-      loadSessions();
-    } else {
-      setView("new");
-    }
+    setActiveSession(null);
     setMessages([]);
     setWelcomed(false);
+    setView(view === "chat" && sessions.length > 0 ? "history" : "new");
+    loadSessions();
+  }
+
+  function switchToNewChat() {
+    if (sessionFull) return;
+    setActiveSession(null);
+    setMessages([]);
+    setWelcomed(false);
+    setView("new");
   }
 
   async function handleSend(text?: string) {
@@ -235,13 +246,15 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
 
         const aiMsg = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
 
-        if (activeSession) {
-          const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: aiMsg, user_name: firstName });
+        const sid = await ensureSession();
+        if (sid) {
+          const { data } = await api.post(`/api/v1/agent/sessions/${sid}/messages`, { message: aiMsg, user_name: firstName });
           setMessages((prev) => [...prev, {
             id: data.messageId || (Date.now() + 2).toString(),
             role: "assistant", text: data.response, timestamp: new Date(),
             action: data.action || null, actionStatus: data.action ? "pending" : undefined,
           }]);
+          await loadSessions();
         } else {
           const { response, action } = await callAI(aiMsg, firstName);
           setMessages((prev) => [...prev, {
@@ -259,14 +272,16 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
       }
 
       setIsTyping(false);
+      if (view === "new") setView("chat");
       return;
     }
 
     setIsTyping(true);
 
-    if (activeSession) {
+    const sid = await ensureSession();
+    if (sid) {
       try {
-        const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, { message: question, user_name: firstName });
+        const { data } = await api.post(`/api/v1/agent/sessions/${sid}/messages`, { message: question, user_name: firstName });
         setMessages((prev) => [...prev, {
           id: data.messageId || (Date.now() + 1).toString(),
           role: "assistant", text: data.response, timestamp: new Date(),
@@ -274,7 +289,12 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
         }]);
         await loadSessions();
       } catch {
-        setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", text: "Something went wrong. Try again.", timestamp: new Date() }]);
+        const { response, action } = await callAI(question, firstName);
+        setMessages((prev) => [...prev, {
+          id: (Date.now() + 1).toString(),
+          role: "assistant", text: response, timestamp: new Date(),
+          action, actionStatus: action ? "pending" : undefined,
+        }]);
       }
     } else {
       const { response, action } = await callAI(question, firstName);
@@ -296,7 +316,28 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, actionStatus: "confirmed" as const } : m));
     setIsTyping(true);
 
-    const result = await executeAction(msg.action, firstName);
+    let result = "Done!";
+    if (activeSession) {
+      try {
+        const { data } = await api.post(`/api/v1/agent/sessions/${activeSession}/messages`, {
+          message: `Execute action: ${msg.action.type} with params ${JSON.stringify(msg.action.params)}`,
+          user_name: firstName,
+        });
+        result = data.response || "Done!";
+      } catch (err: unknown) {
+        result = `Failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    } else {
+      try {
+        const { data } = await api.post("/api/v1/ai/chat", {
+          message: `Execute action: ${msg.action.type} with params ${JSON.stringify(msg.action.params)}`,
+          user_name: firstName,
+        });
+        result = data.response || "Done!";
+      } catch (err: unknown) {
+        result = `Failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
 
     setMessages((prev) => [
       ...prev.map((m) => m.id === msgId ? { ...m, actionStatus: "done" as const } : m),
@@ -343,6 +384,111 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
 
   const inChat = view === "chat";
 
+  /* ---- Shared chat UI (messages + input) ---- */
+  const renderMessages = () => (
+    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {messages.map((msg) => (
+        <div key={msg.id}>
+          <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+            {msg.role !== "user" && (
+              <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                msg.role === "system" ? "bg-emerald-500/20" : "bg-gradient-to-br from-purple-500/20 to-cyan-500/20")}>
+                {msg.role === "system" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Bot className="h-3.5 w-3.5 text-cyan-400" />}
+              </div>
+            )}
+            <div className={cn(
+              "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+              msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
+                : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
+                : "bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)]"
+            )}>
+              {msg.text.split("\n").map((line, i) => (
+                <p key={i} className={i > 0 ? "mt-1" : ""}>
+                  {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
+                </p>
+              ))}
+            </div>
+            {msg.role === "user" && (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--background-tertiary)]">
+                <User className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
+              </div>
+            )}
+          </div>
+
+          {msg.action && msg.actionStatus === "pending" && (
+            <div className="ml-10 mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3">
+              <p className="mb-2 text-xs font-medium text-purple-300">{getActionLabel(msg.action)}</p>
+              <div className="flex gap-2">
+                <button onClick={() => handleActionConfirm(msg.id)} className="flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600">
+                  <Check className="h-3 w-3" /> Confirm
+                </button>
+                <button onClick={() => handleActionCancel(msg.id)} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--foreground-muted)] hover:bg-[var(--background-tertiary)]">
+                  <XCircle className="h-3 w-3" /> Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          {msg.action && msg.actionStatus === "confirmed" && (
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Loader2 className="h-3 w-3 animate-spin" /> Executing...</div>
+          )}
+          {msg.action && msg.actionStatus === "done" && (
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Check className="h-3 w-3" /> Done</div>
+          )}
+          {msg.action && msg.actionStatus === "cancelled" && (
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]"><XCircle className="h-3 w-3" /> Cancelled</div>
+          )}
+        </div>
+      ))}
+      {isTyping && (
+        <div className="flex gap-3">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20">
+            <Bot className="h-3.5 w-3.5 text-cyan-400" />
+          </div>
+          <div className="rounded-2xl bg-[var(--background-secondary)] border border-[var(--card-border)] px-4 py-3">
+            <div className="flex gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        </div>
+      )}
+      <div ref={messagesEndRef} />
+    </div>
+  );
+
+  const renderInput = () => (
+    <div className="border-t border-[var(--border)] p-4">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 focus-within:border-cyan-500/30">
+        <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.xlsx,.xls,.json,.txt" className="hidden" />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isTyping || isUploading}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-tertiary)] hover:text-[var(--foreground)] disabled:opacity-30"
+          title="Upload a file"
+        >
+          {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+        </button>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+          placeholder={pendingFile ? "Type your preferred source name..." : "Ask me or upload a file..."}
+          className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
+          disabled={isTyping || isUploading}
+        />
+        <button
+          onClick={() => handleSend()}
+          disabled={!input.trim() || isTyping || isUploading}
+          className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white transition-opacity disabled:opacity-30"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed right-0 top-0 z-50 flex h-screen w-[420px] flex-col border-l border-[var(--card-border)] bg-[var(--background)] shadow-2xl animate-slide-in-right">
       {/* Header */}
@@ -379,12 +525,13 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           {/* Tab bar */}
           <div className="flex border-b border-[var(--card-border)]">
             <button
-              onClick={() => setView("new")}
+              onClick={switchToNewChat}
               className={cn(
                 "flex flex-1 items-center justify-center gap-2 py-3 text-xs font-semibold transition-all",
                 view === "new"
                   ? "text-cyan-400 border-b-2 border-cyan-400 bg-cyan-500/5"
-                  : "text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-tertiary)]"
+                  : "text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--background-tertiary)]",
+                sessionFull && view !== "new" && "opacity-50"
               )}
             >
               <Plus className="h-3.5 w-3.5" />
@@ -401,110 +548,65 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
             >
               <History className="h-3.5 w-3.5" />
               History
+              {sessions.length > 0 && (
+                <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-purple-500/20 px-1 text-[10px] font-bold text-purple-400">
+                  {sessions.length}
+                </span>
+              )}
             </button>
           </div>
 
           {view === "new" ? (
             /* ---- NEW CHAT TAB ---- */
-            <div className="flex flex-1 flex-col">
-              {/* Messages area (welcome + any quick-chat messages) */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map((msg) => (
-                  <div key={msg.id}>
-                    <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-                      {msg.role !== "user" && (
-                        <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-                          msg.role === "system" ? "bg-emerald-500/20" : "bg-gradient-to-br from-purple-500/20 to-cyan-500/20")}>
-                          {msg.role === "system" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Bot className="h-3.5 w-3.5 text-cyan-400" />}
-                        </div>
-                      )}
-                      <div className={cn(
-                        "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
-                        msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
-                          : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
-                          : "bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)]"
-                      )}>
-                        {msg.text.split("\n").map((line, i) => (
-                          <p key={i} className={i > 0 ? "mt-1" : ""}>
-                            {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
-                          </p>
-                        ))}
-                      </div>
-                      {msg.role === "user" && (
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--background-tertiary)]">
-                          <User className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {isTyping && (
-                  <div className="flex gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20">
-                      <Bot className="h-3.5 w-3.5 text-cyan-400" />
-                    </div>
-                    <div className="rounded-2xl bg-[var(--background-secondary)] border border-[var(--card-border)] px-4 py-3">
-                      <div className="flex gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                      </div>
+            sessionFull ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10">
+                  <AlertCircle className="h-7 w-7 text-amber-400" />
+                </div>
+                <div className="text-center">
+                  <h3 className="mb-2 text-base font-semibold text-[var(--foreground)]">History Full</h3>
+                  <p className="text-xs leading-relaxed text-[var(--foreground-muted)]">
+                    You have {MAX_SESSIONS} saved conversations. Delete one from the <strong>History</strong> tab to start a new chat.
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setView("history"); loadSessions(); }}
+                  className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/10"
+                >
+                  <History className="h-3.5 w-3.5" /> Go to History
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col">
+                {renderMessages()}
+
+                {/* Quick Actions */}
+                {messages.length <= 2 && (
+                  <div className="border-t border-[var(--border)] px-4 py-3">
+                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">Quick Start</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {QUICK_ACTIONS.map((action) => (
+                        <button key={action} onClick={() => handleSend(action)} className="rounded-full border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1 text-xs text-[var(--foreground-muted)] transition-colors hover:border-cyan-500/30 hover:text-cyan-400">
+                          {action}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
-              </div>
 
-              {/* Quick Actions */}
-              {messages.length <= 2 && (
-                <div className="border-t border-[var(--border)] px-4 py-3">
-                  <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">Quick Start</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {QUICK_ACTIONS.map((action) => (
-                      <button key={action} onClick={() => handleSend(action)} className="rounded-full border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1 text-xs text-[var(--foreground-muted)] transition-colors hover:border-cyan-500/30 hover:text-cyan-400">
-                        {action}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Input */}
-              <div className="border-t border-[var(--border)] p-4">
-                <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 focus-within:border-cyan-500/30">
-                  <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.xlsx,.xls,.json,.txt" className="hidden" />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isTyping || isUploading}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-tertiary)] hover:text-[var(--foreground)] disabled:opacity-30"
-                    title="Upload a file"
-                  >
-                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-                  </button>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                    placeholder={pendingFile ? "Type your preferred source name..." : "Ask me or upload a file..."}
-                    className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
-                    disabled={isTyping || isUploading}
-                  />
-                  <button
-                    onClick={() => handleSend()}
-                    disabled={!input.trim() || isTyping || isUploading}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white transition-opacity disabled:opacity-30"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                {renderInput()}
               </div>
-            </div>
+            )
           ) : (
             /* ---- HISTORY TAB ---- */
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
+              <div className="px-2 py-2">
+                <p className="text-[10px] font-medium text-[var(--foreground-subtle)]">
+                  {sessions.length}/{MAX_SESSIONS} conversations saved
+                </p>
+              </div>
               {sessions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 pt-16">
+                <div className="flex flex-col items-center justify-center gap-3 pt-12">
                   <History className="h-10 w-10 text-[var(--foreground-subtle)]/30" />
                   <p className="text-sm font-medium text-[var(--foreground-muted)]">No previous chats</p>
                   <p className="text-xs text-[var(--foreground-subtle)]">
@@ -545,115 +647,11 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
         </div>
       ) : (
         /* ============================================================
-           CHAT VIEW (both quick chat and session chat)
+           CHAT VIEW
            ============================================================ */
         <>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-3 pt-16">
-                <Bot className="h-10 w-10 text-cyan-400/40" />
-                <p className="text-sm text-[var(--foreground-subtle)]">Send a message or upload a file to get started.</p>
-              </div>
-            )}
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-                  {msg.role !== "user" && (
-                    <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
-                      msg.role === "system" ? "bg-emerald-500/20" : "bg-gradient-to-br from-purple-500/20 to-cyan-500/20")}>
-                      {msg.role === "system" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Bot className="h-3.5 w-3.5 text-cyan-400" />}
-                    </div>
-                  )}
-                  <div className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
-                    msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
-                      : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
-                      : "bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)]"
-                  )}>
-                    {msg.text.split("\n").map((line, i) => (
-                      <p key={i} className={i > 0 ? "mt-1" : ""}>
-                        {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
-                      </p>
-                    ))}
-                  </div>
-                  {msg.role === "user" && (
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--background-tertiary)]">
-                      <User className="h-3.5 w-3.5 text-[var(--foreground-muted)]" />
-                    </div>
-                  )}
-                </div>
-
-                {msg.action && msg.actionStatus === "pending" && (
-                  <div className="ml-10 mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3">
-                    <p className="mb-2 text-xs font-medium text-purple-300">{getActionLabel(msg.action)}</p>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleActionConfirm(msg.id)} className="flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600">
-                        <Check className="h-3 w-3" /> Confirm
-                      </button>
-                      <button onClick={() => handleActionCancel(msg.id)} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--foreground-muted)] hover:bg-[var(--background-tertiary)]">
-                        <XCircle className="h-3 w-3" /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {msg.action && msg.actionStatus === "confirmed" && (
-                  <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Loader2 className="h-3 w-3 animate-spin" /> Executing...</div>
-                )}
-                {msg.action && msg.actionStatus === "done" && (
-                  <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Check className="h-3 w-3" /> Done</div>
-                )}
-                {msg.action && msg.actionStatus === "cancelled" && (
-                  <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]"><XCircle className="h-3 w-3" /> Cancelled</div>
-                )}
-              </div>
-            ))}
-            {isTyping && (
-              <div className="flex gap-3">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20">
-                  <Bot className="h-3.5 w-3.5 text-cyan-400" />
-                </div>
-                <div className="rounded-2xl bg-[var(--background-secondary)] border border-[var(--card-border)] px-4 py-3">
-                  <div className="flex gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                    <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className="border-t border-[var(--border)] p-4">
-            <div className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-2 focus-within:border-cyan-500/30">
-              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv,.xlsx,.xls,.json,.txt" className="hidden" />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isTyping || isUploading}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--foreground-muted)] transition-colors hover:bg-[var(--background-tertiary)] hover:text-[var(--foreground)] disabled:opacity-30"
-                title="Upload a file"
-              >
-                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-              </button>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                placeholder={pendingFile ? "Type your preferred source name..." : "Ask me or upload a file..."}
-                className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
-                disabled={isTyping || isUploading}
-              />
-              <button
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isTyping || isUploading}
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white transition-opacity disabled:opacity-30"
-              >
-                <Send className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
+          {renderMessages()}
+          {renderInput()}
         </>
       )}
     </div>
