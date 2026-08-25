@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import {
   X, Send, Sparkles, Bot, User, Check, XCircle, Paperclip,
   Loader2, Trash2, MessageSquare, Plus, ChevronLeft, History,
-  AlertCircle,
+  AlertCircle, Copy, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api, createSource, uploadFileToSource, getDataSourceColumns } from "@/lib/api";
@@ -22,6 +22,8 @@ interface Message {
   text: string;
   action?: Action | null;
   actionStatus?: "pending" | "confirmed" | "cancelled" | "done";
+  failed?: boolean;
+  failedQuery?: string;
 }
 
 interface StoredChat {
@@ -107,6 +109,29 @@ const QUICK_ACTIONS = [
   "Help me improve match rates",
 ];
 
+const THINKING_PHRASES = [
+  "Analyzing your request...",
+  "Looking up your data...",
+  "Processing...",
+  "Thinking...",
+  "Preparing response...",
+];
+
+function getFollowUps(text: string): string[] {
+  const lower = text.toLowerCase();
+  if (lower.includes("source") && (lower.includes("created") || lower.includes("list")))
+    return ["Create a reconciliation", "Upload another file", "Show source details"];
+  if (lower.includes("reconciliation") && (lower.includes("created") || lower.includes("list")))
+    return ["Run reconciliation", "View match results", "List data sources"];
+  if (lower.includes("match") || lower.includes("accuracy"))
+    return ["Suggest matching rules", "View exceptions", "Run reconciliation"];
+  if (lower.includes("exception") || lower.includes("unmatched"))
+    return ["Resolve exceptions", "Adjust matching rules", "Export results"];
+  if (lower.includes("upload") || lower.includes("file"))
+    return ["Upload a file", "List my data sources", "Create a reconciliation"];
+  return [];
+}
+
 type PanelView = "new" | "history" | "chat";
 
 interface AIAssistantPanelProps {
@@ -125,6 +150,8 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [thinkingStatus, setThinkingStatus] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [welcomed, setWelcomed] = useState(false);
@@ -154,6 +181,37 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   }, [open, welcomed, firstName, refreshChats]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!isTyping) { setThinkingStatus(""); return; }
+    let i = 0;
+    setThinkingStatus(THINKING_PHRASES[0]);
+    const timer = setInterval(() => {
+      i = (i + 1) % THINKING_PHRASES.length;
+      setThinkingStatus(THINKING_PHRASES[i]);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [isTyping]);
+
+  function handleCopy(text: string, msgId: string) {
+    navigator.clipboard.writeText(text);
+    setCopiedId(msgId);
+    setTimeout(() => setCopiedId(null), 2000);
+  }
+
+  function handleRetry(msg: Message) {
+    if (!msg.failedQuery) return;
+    const updated = messages.filter((m) => m.id !== msg.id);
+    setMessages(updated);
+    handleSend(msg.failedQuery);
+  }
 
   function saveCurrentChat(msgs: Message[], chatId?: string | null) {
     const id = chatId || activeChatId || `chat-${Date.now()}`;
@@ -282,10 +340,13 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     setIsTyping(true);
     const { response, action } = await callAI(question, firstName);
 
+    const isFailed = response.includes("Something went wrong") || response.includes("Can't reach the server");
     const aiMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: "assistant", text: response,
       action, actionStatus: action ? "pending" : undefined,
+      failed: isFailed || undefined,
+      failedQuery: isFailed ? question : undefined,
     };
 
     const updated = [...newMessages, aiMsg];
@@ -373,9 +434,12 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
   const inChat = view === "chat";
   const isFull = storedChats.length >= MAX_CHATS;
 
+  const lastAssistantMsg = [...messages].reverse().find((m) => m.role === "assistant" && !m.failed);
+  const followUps = lastAssistantMsg && !isTyping ? getFollowUps(lastAssistantMsg.text) : [];
+
   const renderMessages = () => (
     <div className="flex-1 overflow-y-auto p-4 space-y-4">
-      {messages.map((msg) => (
+      {messages.map((msg, idx) => (
         <div key={msg.id}>
           <div className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
             {msg.role !== "user" && (
@@ -384,17 +448,29 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
                 {msg.role === "system" ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Bot className="h-3.5 w-3.5 text-cyan-400" />}
               </div>
             )}
-            <div className={cn(
-              "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
-              msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
-                : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
-                : "bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)]"
-            )}>
-              {msg.text.split("\n").map((line, i) => (
-                <p key={i} className={i > 0 ? "mt-1" : ""}>
-                  {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
-                </p>
-              ))}
+            <div className="group/msg relative max-w-[85%]">
+              <div className={cn(
+                "rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                msg.role === "user" ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white"
+                  : msg.role === "system" ? "bg-emerald-500/10 text-[var(--foreground)] border border-emerald-500/20"
+                  : msg.failed ? "bg-red-500/5 text-[var(--foreground)] border border-red-500/20"
+                  : "bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)]"
+              )}>
+                {msg.text.split("\n").map((line, i) => (
+                  <p key={i} className={i > 0 ? "mt-1" : ""}>
+                    {line.split("**").map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)}
+                  </p>
+                ))}
+              </div>
+              {/* Copy button — shown on hover for assistant/system messages */}
+              {msg.role !== "user" && msg.id !== "welcome" && (
+                <button
+                  onClick={() => handleCopy(msg.text, msg.id)}
+                  className="absolute -bottom-1 right-1 hidden items-center gap-1 rounded-md bg-[var(--background-tertiary)] px-1.5 py-0.5 text-[10px] text-[var(--foreground-subtle)] hover:text-[var(--foreground)] group-hover/msg:flex"
+                >
+                  {copiedId === msg.id ? <><Check className="h-2.5 w-2.5 text-emerald-400" /> Copied</> : <><Copy className="h-2.5 w-2.5" /> Copy</>}
+                </button>
+              )}
             </div>
             {msg.role === "user" && (
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--background-tertiary)]">
@@ -402,6 +478,18 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
               </div>
             )}
           </div>
+
+          {/* Retry button for failed messages */}
+          {msg.failed && msg.failedQuery && (
+            <div className="ml-10 mt-2">
+              <button
+                onClick={() => handleRetry(msg)}
+                className="flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10"
+              >
+                <RefreshCw className="h-3 w-3" /> Retry
+              </button>
+            </div>
+          )}
 
           {msg.action && msg.actionStatus === "pending" && (
             <div className="ml-10 mt-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3">
@@ -425,6 +513,21 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           {msg.action && msg.actionStatus === "cancelled" && (
             <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]"><XCircle className="h-3 w-3" /> Cancelled</div>
           )}
+
+          {/* Follow-up suggestions after the last assistant message */}
+          {followUps.length > 0 && msg.id === lastAssistantMsg?.id && idx === messages.length - 1 && (
+            <div className="ml-10 mt-3 flex flex-wrap gap-1.5">
+              {followUps.map((fu) => (
+                <button
+                  key={fu}
+                  onClick={() => handleSend(fu)}
+                  className="rounded-full border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1 text-[11px] text-[var(--foreground-muted)] transition-colors hover:border-cyan-500/30 hover:text-cyan-400"
+                >
+                  {fu}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ))}
       {isTyping && (
@@ -433,10 +536,13 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
             <Bot className="h-3.5 w-3.5 text-cyan-400" />
           </div>
           <div className="rounded-2xl bg-[var(--background-secondary)] border border-[var(--card-border)] px-4 py-3">
-            <div className="flex gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+              <span className="text-[11px] text-[var(--foreground-subtle)]">{thinkingStatus}</span>
             </div>
           </div>
         </div>
