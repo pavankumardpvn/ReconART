@@ -1,9 +1,10 @@
 "use client";
 
-import { use, useState, useCallback, useEffect } from "react";
+import { use, useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useDropzone } from "react-dropzone";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
   useDataSource,
@@ -62,7 +63,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -89,6 +90,7 @@ export default function DataSourceDetailPage({
   const { user } = useUser();
   const { toast } = useToast();
 
+  const queryClient = useQueryClient();
   const { data: dataSource, isLoading } = useDataSource(id);
   const [previewPage, setPreviewPage] = useState(1);
   const { data: preview } = useDataSourcePreview(id, previewPage);
@@ -123,9 +125,52 @@ export default function DataSourceDetailPage({
   const [calcName, setCalcName] = useState("");
   const [calcExpression, setCalcExpression] = useState("");
   const [calcCreating, setCalcCreating] = useState(false);
+  const [calcError, setCalcError] = useState("");
   const [showFormulaRef, setShowFormulaRef] = useState(false);
   const [formulaRef, setFormulaRef] = useState<Record<string, Array<{ name: string; syntax: string; description: string; example: string }>>>({});
   const [formulaFilter, setFormulaFilter] = useState("");
+  const expressionRef = useRef<HTMLInputElement>(null);
+
+  function insertIntoExpression(text: string) {
+    const input = expressionRef.current;
+    if (input) {
+      const start = input.selectionStart ?? calcExpression.length;
+      const end = input.selectionEnd ?? calcExpression.length;
+      const before = calcExpression.slice(0, start);
+      const after = calcExpression.slice(end);
+      const spaceBefore = before.length > 0 && !before.endsWith(" ") && !before.endsWith("(") ? " " : "";
+      const newExpr = before + spaceBefore + text + after;
+      setCalcExpression(newExpr);
+      setCalcError("");
+      setTimeout(() => {
+        const pos = (before + spaceBefore + text).length;
+        input.setSelectionRange(pos, pos);
+        input.focus();
+      }, 0);
+    } else {
+      setCalcExpression((prev) => prev ? prev + " " + text : text);
+      setCalcError("");
+    }
+  }
+
+  function validateFormula(name: string, expr: string): string {
+    if (!name.trim()) return "Column name is required";
+    if (!expr.trim()) return "Formula is required";
+    if (/[^a-zA-Z0-9_ ]/.test(name.trim())) return "Column name can only contain letters, numbers, and underscores";
+
+    const openParens = (expr.match(/\(/g) || []).length;
+    const closeParens = (expr.match(/\)/g) || []).length;
+    if (openParens !== closeParens) return `Mismatched parentheses: ${openParens} open, ${closeParens} close`;
+
+    if (/[+\-*/%]$/.test(expr.trim())) return "Formula cannot end with an operator";
+    if (/^[+*/%]/.test(expr.trim())) return "Formula cannot start with an operator (except -)";
+    if (/[+\-*/%]{2,}/.test(expr.replace(/\s/g, ""))) return "Consecutive operators are not allowed";
+
+    return "";
+  }
+
+  const formulaValidationError = validateFormula(calcName, calcExpression);
+  const isFormulaValid = !formulaValidationError && calcName.trim() && calcExpression.trim();
 
   useEffect(() => {
     if (calcDialogOpen && Object.keys(formulaRef).length === 0) {
@@ -136,8 +181,12 @@ export default function DataSourceDetailPage({
   }, [calcDialogOpen, formulaRef]);
 
   async function handleCreateCalcColumn() {
-    if (!calcName.trim() || !calcExpression.trim()) return;
+    if (!isFormulaValid) return;
+    const error = validateFormula(calcName, calcExpression);
+    if (error) { setCalcError(error); return; }
+
     setCalcCreating(true);
+    setCalcError("");
     try {
       await api.post("/api/v1/calculated-columns/", {
         data_source_id: id,
@@ -149,8 +198,11 @@ export default function DataSourceDetailPage({
       setCalcName("");
       setCalcExpression("");
       loadCalcColumns();
+      queryClient.invalidateQueries({ queryKey: ["data-sources", id, "preview"] });
+      queryClient.invalidateQueries({ queryKey: ["data-sources", id, "columns"] });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Failed to create column";
+      setCalcError(msg);
       toast({ title: "Error", description: msg, type: "error" });
     }
     setCalcCreating(false);
@@ -560,21 +612,39 @@ export default function DataSourceDetailPage({
                       <FlaskConical className="h-4 w-4 text-amber-400" />
                       New Transformation Column
                     </h4>
-                    <button onClick={() => setCalcDialogOpen(false)} className="rounded p-1 text-[var(--foreground-subtle)] hover:text-[var(--foreground)]">
-                      <X className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 rounded-md bg-[var(--background-tertiary)] px-2.5 py-1">
+                        <Database className="h-3 w-3 text-cyan-400" />
+                        <span className="text-[11px] font-medium text-cyan-400">{dataSource.name}</span>
+                      </div>
+                      <button onClick={() => { setCalcDialogOpen(false); setCalcError(""); }} className="rounded p-1 text-[var(--foreground-subtle)] hover:text-[var(--foreground)]">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_1fr_auto]">
                     <div>
                       <label className="mb-1 block text-[11px] font-medium text-[var(--foreground-subtle)]">Column Name</label>
-                      <Input placeholder="e.g. total_with_tax" value={calcName} onChange={(e) => setCalcName(e.target.value)} className="h-9 text-sm" />
+                      <Input placeholder="e.g. total_with_tax" value={calcName} onChange={(e) => { setCalcName(e.target.value); setCalcError(""); }} className="h-9 text-sm" />
                     </div>
                     <div>
-                      <label className="mb-1 block text-[11px] font-medium text-[var(--foreground-subtle)]">Formula</label>
-                      <Input placeholder='e.g. amount * 1.18' value={calcExpression} onChange={(e) => setCalcExpression(e.target.value)} className="h-9 font-mono text-sm" />
+                      <label className="mb-1 block text-[11px] font-medium text-[var(--foreground-subtle)]">Formula <span className="text-[var(--foreground-subtle)]">— click column headers below to insert</span></label>
+                      <Input
+                        ref={expressionRef}
+                        placeholder='e.g. amount * 1.18'
+                        value={calcExpression}
+                        onChange={(e) => { setCalcExpression(e.target.value); setCalcError(""); }}
+                        className={cn("h-9 font-mono text-sm", calcError && "border-red-500/50")}
+                      />
                     </div>
                     <div className="flex items-end gap-2">
-                      <Button size="sm" onClick={handleCreateCalcColumn} disabled={!calcName.trim() || !calcExpression.trim() || calcCreating} className="h-9 gap-1.5">
+                      <Button
+                        size="sm"
+                        onClick={handleCreateCalcColumn}
+                        disabled={!isFormulaValid || calcCreating}
+                        className={cn("h-9 gap-1.5", !isFormulaValid && !calcCreating && "opacity-40 cursor-not-allowed")}
+                        title={formulaValidationError || "Create column"}
+                      >
                         {calcCreating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                         {calcCreating ? "Creating..." : "Create"}
                       </Button>
@@ -585,16 +655,24 @@ export default function DataSourceDetailPage({
                     </div>
                   </div>
 
+                  {/* Validation error */}
+                  {calcError && (
+                    <p className="mt-2 text-xs text-red-400">{calcError}</p>
+                  )}
+                  {!calcError && formulaValidationError && calcExpression.trim() && (
+                    <p className="mt-2 text-xs text-amber-400">{formulaValidationError}</p>
+                  )}
+
                   {/* Clickable column chips — pick from the data you see below */}
                   {preview && preview.columns.length > 0 && (
                     <div className="mt-3 flex flex-wrap items-center gap-1">
-                      <span className="mr-1 text-[10px] font-medium text-[var(--foreground-subtle)]">Click to insert:</span>
+                      <span className="mr-1 text-[10px] font-medium text-[var(--foreground-subtle)]">Columns:</span>
                       {preview.columns
                         .filter((c) => !c.name.startsWith("art_") && (c as unknown as Record<string, unknown>).column_type !== "generated")
                         .map((col) => (
                           <button
                             key={col.name}
-                            onClick={() => setCalcExpression((prev) => prev ? prev + " " + col.name : col.name)}
+                            onClick={() => insertIntoExpression(col.name)}
                             className="rounded border border-[var(--border)] bg-[var(--background-tertiary)] px-2 py-0.5 font-mono text-[11px] text-cyan-400 transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/10"
                           >
                             {col.name}
@@ -649,14 +727,21 @@ export default function DataSourceDetailPage({
                               return (
                                 <TableHead
                                   key={col.name}
-                                  className={
+                                  className={cn(
                                     isSystem ? "bg-purple-500/[0.06] text-purple-300 text-[11px] uppercase tracking-wider"
                                     : isGenerated ? "bg-amber-500/[0.06] text-amber-300 text-[11px] uppercase tracking-wider"
-                                    : ""
-                                  }
+                                    : "",
+                                    calcDialogOpen && !isSystem && !isGenerated && "cursor-pointer hover:bg-cyan-500/10 hover:text-cyan-400 transition-colors"
+                                  )}
+                                  onClick={() => {
+                                    if (calcDialogOpen && !isSystem && !isGenerated) {
+                                      insertIntoExpression(col.name);
+                                    }
+                                  }}
                                 >
                                   {col.display_name || col.name}
                                   {isGenerated && <span className="ml-1 text-[9px] text-amber-500/60">fx</span>}
+                                  {calcDialogOpen && !isSystem && !isGenerated && <span className="ml-1 text-[9px] text-cyan-500/40">+</span>}
                                 </TableHead>
                               );
                             })}
