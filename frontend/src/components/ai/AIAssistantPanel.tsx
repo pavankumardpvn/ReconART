@@ -461,10 +461,10 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-          placeholder={pendingFile ? "Type your preferred source name..." : "Ask me or upload a file..."}
+          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && !isTyping && handleSend()}
+          placeholder={pendingFile ? "Type your preferred source name..." : isTyping ? "Type your next message..." : "Ask me or upload a file..."}
           className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
-          disabled={isTyping || isUploading}
+          disabled={isUploading}
         />
         <button
           onClick={() => handleSend()}
