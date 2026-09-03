@@ -46,7 +46,7 @@ interface RegionSelectorProps {
 }
 
 export default function RegionSelector({ variant = "landing" }: RegionSelectorProps) {
-  const { region, setRegion } = useI18n();
+  const { region, setRegion, t } = useI18n();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -107,13 +107,13 @@ export default function RegionSelector({ variant = "landing" }: RegionSelectorPr
               "text-xs font-semibold",
               isDashboard ? "text-[var(--foreground)]" : "text-white"
             )}>
-              Select Region
+              {t("region.selectRegion")}
             </p>
             <p className={cn(
               "text-[10px]",
               isDashboard ? "text-[var(--foreground-muted)]" : "text-white/40"
             )}>
-              Content language will update automatically
+              {t("region.langNote")}
             </p>
           </div>
 

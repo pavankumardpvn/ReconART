@@ -13,16 +13,16 @@ import {
 } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Resources", href: "/data-sources", icon: Database },
-  { label: "Pipeline", href: "/pipeline", icon: Workflow },
-  { label: "Reconciliations", href: "/reconciliations", icon: GitCompareArrows },
-  { label: "Segments", href: "/segments", icon: Filter },
-  { label: "Exports", href: "/exports", icon: Download },
-  { label: "Schedules", href: "/schedules", icon: Clock },
-  { label: "Notebook", href: "/notebook", icon: Terminal },
-  { label: "Lineage", href: "/lineage", icon: GitBranch },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, tKey: "dash.dashboard" },
+  { label: "Resources", href: "/data-sources", icon: Database, tKey: "dash.resources" },
+  { label: "Pipeline", href: "/pipeline", icon: Workflow, tKey: "dash.pipeline" },
+  { label: "Reconciliations", href: "/reconciliations", icon: GitCompareArrows, tKey: "dash.reconciliations" },
+  { label: "Segments", href: "/segments", icon: Filter, tKey: "dash.segments" },
+  { label: "Exports", href: "/exports", icon: Download, tKey: "dash.exports" },
+  { label: "Schedules", href: "/schedules", icon: Clock, tKey: "dash.schedules" },
+  { label: "Notebook", href: "/notebook", icon: Terminal, tKey: "dash.notebook" },
+  { label: "Lineage", href: "/lineage", icon: GitBranch, tKey: "dash.lineage" },
+  { label: "Settings", href: "/settings", icon: Settings, tKey: "dash.settings" },
 ];
 
 export const RECON_TYPES = [

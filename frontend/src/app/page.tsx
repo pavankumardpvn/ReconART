@@ -146,183 +146,80 @@ const navLinks = [
 ];
 
 const advantages = [
-  {
-    icon: Sparkles,
-    title: "AI-Powered Matching",
-    description:
-      "Our proprietary AI engine identifies matching patterns and anomalies that traditional rule-based systems miss entirely.",
-  },
-  {
-    icon: Layers,
-    title: "Vendor-Agnostic Platform",
-    description:
-      "Connect any data source — ERP, banking core, payment gateway — with zero vendor lock-in. Your data, your rules.",
-  },
-  {
-    icon: Currency,
-    title: "Cross-Border Currency Support",
-    description:
-      "Reconcile across 150+ currencies with real-time FX rates, multi-currency matching, and automated conversion for global operations.",
-  },
-  {
-    icon: Search,
-    title: "Deep Data Intelligence",
-    description:
-      "60+ integrations and automated schema detection mean your data flows seamlessly from any source into actionable insights.",
-  },
-  {
-    icon: Clock,
-    title: "Reconciliation in Minutes",
-    description:
-      "Our pre-built matching templates and AI-driven rule suggestions collapse weeks of setup into minutes.",
-  },
-  {
-    icon: Target,
-    title: "Hard ROI, No Soft Promises",
-    description:
-      "Every deployment delivers measurable outcomes — from reduced manual effort to optimized match rates. Your bottom line is our focus.",
-  },
+  { icon: Sparkles, tKey: "adv.ai" },
+  { icon: Layers, tKey: "adv.vendor" },
+  { icon: Currency, tKey: "adv.currency" },
+  { icon: Search, tKey: "adv.data" },
+  { icon: Clock, tKey: "adv.speed" },
+  { icon: Target, tKey: "adv.roi" },
 ];
 
 const services = [
-  {
-    icon: Database,
-    title: "Data Sources",
-    description:
-      "Connect, normalize, and manage data from any financial system with automated schema detection and real-time sync.",
-    cta: "Connect Data",
-  },
-  {
-    icon: Brain,
-    title: "Matching Engine",
-    description:
-      "AI-powered transaction matching with configurable rules, fuzzy logic, and ML-driven confidence scoring.",
-    cta: "Configure Matching",
-  },
-  {
-    icon: AlertTriangle,
-    title: "Exception Management",
-    description:
-      "Automated detection, severity classification, and resolution workflows for every discrepancy.",
-    cta: "Manage Exceptions",
-  },
-  {
-    icon: LineChart,
-    title: "Analytics & Reporting",
-    description:
-      "Real-time dashboards, trend analysis, and operational KPIs to drive continuous improvement.",
-    cta: "View Analytics",
-  },
-  {
-    icon: Clock,
-    title: "Automation",
-    description:
-      "Scheduled reconciliations, automated alerts, and workflow triggers that eliminate manual intervention.",
-    cta: "Automate Now",
-  },
-  {
-    icon: ArrowLeftRight,
-    title: "Cross-Border Currency",
-    description:
-      "Multi-currency reconciliation with real-time FX rates, automated conversion, and tolerance-based matching across 150+ currencies.",
-    cta: "Go Global",
-  },
-  {
-    icon: Shield,
-    title: "Compliance & Audit",
-    description:
-      "Complete audit trails, regulatory reporting, and governance frameworks built into every workflow.",
-    cta: "Ensure Compliance",
-  },
+  { icon: Database, tIndex: 1 },
+  { icon: Brain, tIndex: 2 },
+  { icon: AlertTriangle, tIndex: 3 },
+  { icon: LineChart, tIndex: 4 },
+  { icon: Clock, tIndex: 5 },
+  { icon: ArrowLeftRight, tIndex: 6 },
+  { icon: Shield, tIndex: 7 },
 ];
 
 const caseStudies = [
-  {
-    title: "Global Payment Processor",
-    stat: "85%",
-    statLabel: "Faster Exception Handling",
-    industry: "Payments",
-    region: "EMEA",
-    description:
-      "Automated matching of 2M+ daily transactions across 15 payment channels, reducing exception handling time by 85%.",
-  },
-  {
-    title: "Investment Management Firm",
-    stat: "99.9%",
-    statLabel: "Match Accuracy",
-    industry: "Asset Management",
-    region: "North America",
-    description:
-      "End-to-end trade reconciliation transformation across all asset classes, achieving 99.9% match accuracy within 30 days.",
-  },
-  {
-    title: "Digital Banking Platform",
-    stat: "500K+",
-    statLabel: "Daily Transactions",
-    industry: "Neobanking",
-    region: "LATAM",
-    description:
-      "Real-time transaction reconciliation for a neo-bank processing 500K+ daily transactions with zero manual intervention.",
-  },
-  {
-    title: "Insurance Group",
-    stat: "8",
-    statLabel: "Business Units",
-    industry: "Insurance",
-    region: "APAC",
-    description:
-      "Multi-entity premium reconciliation across 8 business units, eliminating month-end bottlenecks and ensuring regulatory compliance.",
-  },
+  { stat: "85%", tIndex: 1 },
+  { stat: "99.9%", tIndex: 2 },
+  { stat: "500K+", tIndex: 3 },
+  { stat: "8", tIndex: 4 },
 ];
 
 const pricingPlans = [
   {
-    name: "Starter",
-    price: "Free",
+    nameKey: "pricing.starter",
+    priceKey: "pricing.free",
     period: "",
-    description: "For teams getting started with reconciliation automation",
-    features: [
-      "Up to 3 data sources",
-      "10,000 transactions/month",
-      "Basic matching rules",
-      "Community support",
-      "Standard analytics",
+    descKey: "pricing.starterDesc",
+    featureKeys: [
+      "pricing.feat.sources3",
+      "pricing.feat.tx10k",
+      "pricing.feat.basicRules",
+      "pricing.feat.commSupport",
+      "pricing.feat.stdAnalytics",
     ],
-    cta: "Get Started Free",
+    ctaKey: "pricing.getStarted",
     href: "/sign-up",
     highlighted: false,
   },
   {
-    name: "Professional",
-    price: "$299",
+    nameKey: "pricing.professional",
+    priceKey: "",
+    priceRaw: "$299",
     period: "/month",
-    description: "For growing operations that need advanced capabilities",
-    features: [
-      "Up to 15 data sources",
-      "500,000 transactions/month",
-      "AI-powered matching",
-      "Priority support",
-      "Advanced analytics & API",
-      "Custom matching rules",
+    descKey: "pricing.professionalDesc",
+    featureKeys: [
+      "pricing.feat.sources15",
+      "pricing.feat.tx500k",
+      "pricing.feat.aiMatching",
+      "pricing.feat.prioSupport",
+      "pricing.feat.advAnalytics",
+      "pricing.feat.customRules",
     ],
-    cta: "Start Free Trial",
+    ctaKey: "pricing.startTrial",
     href: "/sign-up",
     highlighted: true,
   },
   {
-    name: "Enterprise",
-    price: "Custom",
+    nameKey: "pricing.enterprise",
+    priceKey: "pricing.custom",
     period: "",
-    description: "For large-scale operations with complex requirements",
-    features: [
-      "Unlimited data sources",
-      "Unlimited transactions",
-      "Custom integrations",
-      "Dedicated account manager",
-      "SLA guarantee & SSO",
-      "On-premise option",
+    descKey: "pricing.enterpriseDesc",
+    featureKeys: [
+      "pricing.feat.unlimitedSources",
+      "pricing.feat.unlimitedTx",
+      "pricing.feat.customIntegrations",
+      "pricing.feat.dedicatedAM",
+      "pricing.feat.sla",
+      "pricing.feat.onPrem",
     ],
-    cta: "Contact Sales",
+    ctaKey: "pricing.contactSales",
     href: "mailto:reconartai@gmail.com",
     highlighted: false,
   },
@@ -330,59 +227,59 @@ const pricingPlans = [
 
 const domainGroups = [
   {
-    category: "Money Movement",
+    catKey: "domains.moneyMovement",
     color: "#14B8A6",
     domains: [
-      { icon: ArrowDownToLine, title: "Cash In", description: "Incoming payments, collections, and deposit reconciliation" },
-      { icon: ArrowUpFromLine, title: "Cash Out", description: "Disbursements, payouts, and withdrawal tracking" },
+      { icon: ArrowDownToLine, tKey: "dom.cashIn" },
+      { icon: ArrowUpFromLine, tKey: "dom.cashOut" },
     ],
   },
   {
-    category: "Risk Management",
+    catKey: "domains.riskManagement",
     color: "#F59E0B",
     domains: [
-      { icon: ShieldAlert, title: "Claims & Chargebacks", description: "Dispute management and chargeback reconciliation" },
-      { icon: Receipt, title: "Fees & Billing", description: "Fee reconciliation and billing validation" },
+      { icon: ShieldAlert, tKey: "dom.claims" },
+      { icon: Receipt, tKey: "dom.fees" },
     ],
   },
   {
-    category: "Accounting",
+    catKey: "domains.accounting",
     color: "#9D5CF5",
     domains: [
-      { icon: Calculator, title: "Accounting Automation", description: "Automated journal entries and ledger synchronization" },
-      { icon: BookOpen, title: "Accounting Operations", description: "Period close and general ledger reconciliation" },
+      { icon: Calculator, tKey: "dom.accAuto" },
+      { icon: BookOpen, tKey: "dom.accOps" },
     ],
   },
   {
-    category: "Governance",
+    catKey: "domains.governance",
     color: "#3B82F6",
     domains: [
-      { icon: FileCheck, title: "Reporting & Regulations", description: "Regulatory compliance and audit-ready reports" },
-      { icon: Bell, title: "Unified Oversight & Alerts", description: "Real-time monitoring and threshold-based alerts" },
+      { icon: FileCheck, tKey: "dom.reporting" },
+      { icon: Bell, tKey: "dom.oversight" },
     ],
   },
 ];
 
 const templates = [
-  { title: "Payment Networks", examples: "Visa, Mastercard, Amex", description: "Pre-built processing rules for major card networks" },
-  { title: "Banking & Clearing", examples: "SWIFT, ACH, SEPA", description: "Settlement matching for interbank clearing systems" },
-  { title: "Digital Payments", examples: "PayPal, Stripe, Adyen", description: "Connector templates for digital payment gateways" },
-  { title: "POS & Acquiring", examples: "Terminal, Batch, Merchant", description: "Point-of-sale settlement and merchant batch recon" },
-  { title: "Crypto & Digital Assets", examples: "Exchanges, Wallets, DeFi", description: "Exchange settlement and wallet reconciliation" },
-  { title: "ERP & Accounting", examples: "SAP, Oracle, NetSuite", description: "General ledger matching and ERP integration" },
+  { tIndex: 1 },
+  { tIndex: 2 },
+  { tIndex: 3 },
+  { tIndex: 4 },
+  { tIndex: 5 },
+  { tIndex: 6 },
 ];
 
 const industries = [
-  { icon: Landmark, title: "Banks & Financial Institutions", description: "Core banking and interbank settlement" },
-  { icon: CreditCard, title: "Payment Service Providers", description: "PSP aggregation and gateway recon" },
-  { icon: Smartphone, title: "Neobanks & Digital Banks", description: "Real-time digital banking operations" },
-  { icon: Store, title: "Marketplaces & Platforms", description: "Seller payouts and commission tracking" },
-  { icon: Shield, title: "Insurance", description: "Premium collection and claims settlement" },
-  { icon: Coins, title: "Crypto & Digital Assets", description: "Exchange settlement and wallet recon" },
-  { icon: ShoppingCart, title: "Retailers & E-commerce", description: "POS settlement and omnichannel recon" },
-  { icon: HandCoins, title: "Lending & BNPL", description: "Loan disbursement and repayment tracking" },
-  { icon: Gamepad2, title: "Betting & iGaming", description: "Payout reconciliation and compliance" },
-  { icon: Building2, title: "Acquirers & Issuers", description: "Card scheme settlement and interchange" },
+  { icon: Landmark, tIndex: 1 },
+  { icon: CreditCard, tIndex: 2 },
+  { icon: Smartphone, tIndex: 3 },
+  { icon: Store, tIndex: 4 },
+  { icon: Shield, tIndex: 5 },
+  { icon: Coins, tIndex: 6 },
+  { icon: ShoppingCart, tIndex: 7 },
+  { icon: HandCoins, tIndex: 8 },
+  { icon: Gamepad2, tIndex: 9 },
+  { icon: Building2, tIndex: 10 },
 ];
 
 const logoPartners = [
@@ -391,59 +288,59 @@ const logoPartners = [
 ];
 
 const workflowSteps = [
-  { icon: Database, title: "Connect Data", description: "Ingest from any source" },
-  { icon: Brain, title: "Smart Matching", description: "AI-powered reconciliation" },
-  { icon: AlertTriangle, title: "Resolve Exceptions", description: "Classify & action" },
-  { icon: LineChart, title: "Report & Comply", description: "Audit-ready insights" },
+  { icon: Database, tKey: "workflow.step1" },
+  { icon: Brain, tKey: "workflow.step2" },
+  { icon: AlertTriangle, tKey: "workflow.step3" },
+  { icon: LineChart, tKey: "workflow.step4" },
 ];
 
 const comparisonRows = [
-  { feature: "Setup Time", reconart: "Days", legacy: "3-6 Months", manual: "Ongoing" },
-  { feature: "Match Accuracy", reconart: "99.9%", legacy: "~95%", manual: "~80%" },
-  { feature: "AI-Powered Matching", reconart: true, legacy: false, manual: false },
-  { feature: "Cross-Border Currency", reconart: true, legacy: false, manual: false },
-  { feature: "Real-Time Processing", reconart: true, legacy: false, manual: false },
-  { feature: "Automated Audit Trail", reconart: true, legacy: false, manual: false },
-  { feature: "Scalability", reconart: "Unlimited", legacy: "Limited", manual: "None" },
-  { feature: "Total Cost of Ownership", reconart: "Low", legacy: "High", manual: "Very High" },
+  { tKey: "compare.setup", reconart: "compare.val.days", legacy: "compare.val.months36", manual: "compare.val.ongoing", isBool: false },
+  { tKey: "compare.matchAccuracy", reconart: "99.9%", legacy: "~95%", manual: "~80%", isBool: false, rawVals: true },
+  { tKey: "compare.aiMatching", reconart: true, legacy: false, manual: false, isBool: true },
+  { tKey: "compare.crossBorder", reconart: true, legacy: false, manual: false, isBool: true },
+  { tKey: "compare.realTime", reconart: true, legacy: false, manual: false, isBool: true },
+  { tKey: "compare.audit", reconart: true, legacy: false, manual: false, isBool: true },
+  { tKey: "compare.scalability", reconart: "compare.val.unlimited", legacy: "compare.val.limited", manual: "compare.val.none", isBool: false },
+  { tKey: "compare.tco", reconart: "compare.val.low", legacy: "compare.val.high", manual: "compare.val.veryHigh", isBool: false },
 ];
 
 const faqs = [
-  { q: "How long does integration take?", a: "Most teams go live within 2-4 weeks using our pre-built templates and API connectors. Complex enterprise deployments typically take 4-6 weeks." },
-  { q: "Do I need engineering resources?", a: "No. ReconArt is designed for operations teams. Our no-code rule builder and drag-and-drop interface mean zero engineering dependency for day-to-day configuration." },
-  { q: "What data formats do you support?", a: "CSV, XLSX, JSON, XML, fixed-width, and direct API/database connections. Our automated schema detection handles format mapping automatically." },
-  { q: "Is my data secure?", a: "Yes. We use AES-256 encryption at rest and TLS 1.3 in transit. ReconArt is SOC 2 Type II compliant with optional on-premise deployment for enterprise clients." },
-  { q: "Can I reconcile across currencies?", a: "Absolutely. ReconArt supports 150+ currencies with real-time FX rates and tolerance-based matching for cross-border operations." },
-  { q: "What happens when the AI can't match a transaction?", a: "Unmatched transactions are routed to exception queues with AI-suggested resolutions, severity scoring, and configurable escalation workflows." },
+  { tIndex: 1 },
+  { tIndex: 2 },
+  { tIndex: 3 },
+  { tIndex: 4 },
+  { tIndex: 5 },
+  { tIndex: 6 },
 ];
 
 const footerSections = [
   {
-    title: "Quick Links",
+    titleKey: "footer.quickLinks",
     links: [
-      { label: "Home", href: "#" },
-      { label: "Product", href: "#advantages" },
-      { label: "Services", href: "#services" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Resources", href: "#results" },
+      { labelKey: "nav.home", href: "#" },
+      { labelKey: "nav.product", href: "#advantages" },
+      { labelKey: "nav.services", href: "#services" },
+      { labelKey: "nav.pricing", href: "#pricing" },
+      { labelKey: "nav.resources", href: "#results" },
     ],
   },
   {
-    title: "Industries",
+    titleKey: "footer.industries",
     links: [
-      { label: "Investment Banking", href: "#industries" },
-      { label: "Asset Management", href: "#industries" },
-      { label: "Payment Processing", href: "#industries" },
-      { label: "Insurance", href: "#industries" },
-      { label: "FinTech", href: "#industries" },
+      { labelKey: "ind.1.title", href: "#industries" },
+      { labelKey: "ind.2.title", href: "#industries" },
+      { labelKey: "ind.5.title", href: "#industries" },
+      { labelKey: "ind.6.title", href: "#industries" },
+      { labelKey: "ind.3.title", href: "#industries" },
     ],
   },
   {
-    title: "Contact",
+    titleKey: "footer.contact",
     links: [
       { label: "reconartai@gmail.com", href: "mailto:reconartai@gmail.com" },
-      { label: "Documentation", href: "#services" },
-      { label: "Privacy Policy", href: "/privacy" },
+      { labelKey: "footer.documentation", href: "#services" },
+      { labelKey: "footer.privacy", href: "/privacy" },
     ],
   },
 ];
@@ -557,13 +454,13 @@ export default function Home() {
             <div className="flex flex-col gap-1 px-6 py-4">
               {navLinks.map((link) => (
                 <a key={link.label} href={link.href} onClick={closeMobile} className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-[#1a243a] hover:text-white">
-                  {link.label}
+                  {t(`nav.${link.label.toLowerCase()}`)}
                 </a>
               ))}
               <div className="mt-3 flex flex-col gap-2 border-t border-[#2f3c5b]/50 pt-4">
-                <Link href="/sign-in" onClick={closeMobile} className="rounded-lg px-3 py-2.5 text-center text-sm font-medium text-white/60">Sign In</Link>
+                <Link href="/sign-in" onClick={closeMobile} className="rounded-lg px-3 py-2.5 text-center text-sm font-medium text-white/60">{t("nav.signIn")}</Link>
                 <Link href="/sign-up" onClick={closeMobile}>
-                  <button className="landing-btn-primary w-full rounded-full px-5 py-2.5 text-sm font-semibold text-white">Start Free Trial</button>
+                  <button className="landing-btn-primary w-full rounded-full px-5 py-2.5 text-sm font-semibold text-white">{t("nav.startTrial")}</button>
                 </Link>
               </div>
             </div>
@@ -675,8 +572,8 @@ export default function Home() {
                       <GitCompareArrows className="h-5 w-5 text-[#9D5CF5]" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-semibold text-white">ReconArt Platform</h3>
-                      <p className="text-xs text-white/30">Reconciliation Intelligence</p>
+                      <h3 className="text-sm font-semibold text-white">{t("hero.platform")}</h3>
+                      <p className="text-xs text-white/30">{t("hero.recon")}</p>
                     </div>
                   </div>
                   <div className="flex h-2 w-2 rounded-full bg-[#10b981] shadow-lg shadow-[#10b981]/50">
@@ -685,28 +582,28 @@ export default function Home() {
                 </div>
 
                 <div className="mb-5 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#14B8A6]">Core Features</p>
-                  {["Multi-source transaction matching", "AI-powered exception detection", "Cross-border currency support"].map((item) => (
-                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#14B8A6]">{t("hero.coreLabel")}</p>
+                  {["hero.feature1", "hero.feature2", "hero.feature3"].map((key) => (
+                    <div key={key} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
                       <Check className="h-3.5 w-3.5 text-[#14B8A6]" />
-                      {item}
+                      {t(key)}
                     </div>
                   ))}
                 </div>
 
                 <div className="mb-6 space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9D5CF5]">Advanced</p>
-                  {["ML confidence scoring", "150+ currency FX rates", "Custom ROI reporting"].map((item) => (
-                    <div key={item} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9D5CF5]">{t("hero.advancedLabel")}</p>
+                  {["hero.feature4", "hero.feature5", "hero.feature6"].map((key) => (
+                    <div key={key} className="flex items-center gap-2.5 rounded-lg py-2 text-sm text-white/60 transition-colors hover:text-white/80">
                       <Check className="h-3.5 w-3.5 text-[#9D5CF5]" />
-                      {item}
+                      {t(key)}
                     </div>
                   ))}
                 </div>
 
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F1729] to-[#1a243a] p-4 text-center">
                   <div className="absolute inset-0 bg-gradient-to-r from-[#7C3AED]/5 to-[#14B8A6]/5" />
-                  <span className="relative text-xs font-medium text-white/40">Match Rate</span>
+                  <span className="relative text-xs font-medium text-white/40">{t("hero.matchRate")}</span>
                   <div className="relative text-3xl font-bold tracking-tight">
                     <span className="landing-gradient-text">99.9%</span>
                   </div>
@@ -734,18 +631,18 @@ export default function Home() {
           className={`relative mx-auto max-w-[90%] transition-all duration-[1200ms] ease-[cubic-bezier(.37,0,.63,1)] ${statsReveal.isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
           <p className="mb-14 text-center text-lg text-white/40">
-            Traditional reconciliation takes weeks.{" "}
-            <span className="landing-gradient-text font-semibold">ReconArt does it in minutes.</span>
+            {t("stats.tagline1")}{" "}
+            <span className="landing-gradient-text font-semibold">{t("stats.tagline2")}</span>
           </p>
 
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { val: (accuracyCount / 10).toFixed(1), suffix: "%", label: "Match Accuracy" },
-              { val: txCount, suffix: "M+", label: "Transactions Processed" },
-              { val: reductionCount, suffix: "%", label: "Reduction in Manual Work" },
-              { val: integrationsCount, suffix: "+", label: "Integrations" },
+              { val: (accuracyCount / 10).toFixed(1), suffix: "%", labelKey: "stats.accuracy" },
+              { val: txCount, suffix: "M+", labelKey: "stats.transactions" },
+              { val: reductionCount, suffix: "%", labelKey: "stats.reduction" },
+              { val: integrationsCount, suffix: "+", labelKey: "stats.integrations" },
             ].map((stat, i) => (
-              <div key={stat.label} className="bubble-hover group flex flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
+              <div key={stat.labelKey} className="bubble-hover group flex flex-col items-center gap-3 rounded-2xl border border-transparent p-4 text-center" style={{ transitionDelay: `${i * 100}ms` }}>
                 <div className="relative">
                   <span className="text-4xl font-bold text-white md:text-5xl">
                     {stat.val}
@@ -753,7 +650,7 @@ export default function Home() {
                   <span className="landing-gradient-text text-4xl font-bold md:text-5xl">{stat.suffix}</span>
                 </div>
                 <span className="text-sm font-medium text-white/50 transition-colors group-hover:text-white/70">
-                  {stat.label}
+                  {t(stat.labelKey)}
                 </span>
               </div>
             ))}
@@ -766,7 +663,7 @@ export default function Home() {
           ================================================================ */}
       <section className="border-y border-[#7C3AED]/[0.06] bg-[#0a0f1d] px-6 py-10 overflow-hidden">
         <p className="mb-6 text-center text-xs font-semibold uppercase tracking-[0.25em] text-white/20">
-          Integrations & Counterparties
+          {t("ticker.label")}
         </p>
         <div className="relative mx-auto max-w-[90%] overflow-hidden">
           <div className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-20 bg-gradient-to-r from-[#0a0f1d] to-transparent" />
@@ -796,14 +693,14 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">How It Works</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("workflow.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            From Data to <span className="landing-gradient-text">Decision</span>
+            {t("workflow.title1")} <span className="landing-gradient-text">{t("workflow.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
-            Four steps to complete reconciliation — automated, auditable, done.
+            {t("workflow.subtitle")}
           </p>
 
           <div className="relative flex flex-col items-center gap-12 md:flex-row md:justify-between md:gap-0">
@@ -826,7 +723,7 @@ export default function Home() {
 
             {workflowSteps.map((step, i) => (
               <div
-                key={step.title}
+                key={step.tKey}
                 className="relative z-10 flex flex-col items-center gap-4 text-center"
                 style={{
                   transition: `opacity 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms, transform 0.8s cubic-bezier(.37,0,.63,1) ${400 + i * 400}ms`,
@@ -850,8 +747,8 @@ export default function Home() {
                 </div>
 
                 {/* Text below */}
-                <h3 className="text-sm font-semibold text-white">{step.title}</h3>
-                <p className="max-w-[120px] text-xs text-white/40">{step.description}</p>
+                <h3 className="text-sm font-semibold text-white">{t(step.tKey)}</h3>
+                <p className="max-w-[120px] text-xs text-white/40">{t(`${step.tKey}Desc`)}</p>
               </div>
             ))}
           </div>
@@ -871,14 +768,14 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Why ReconArt</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("advantages.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            The ReconArt <span className="landing-gradient-text">Advantage</span>
+            {t("advantages.title1")} <span className="landing-gradient-text">{t("advantages.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            Our platform delivers what traditional reconciliation tools can&apos;t — speed, intelligence, and complete transparency.
+            {t("advantages.subtitle")}
           </p>
 
           <div
@@ -890,7 +787,7 @@ export default function Home() {
             <div style={advantagesGlow.glowStyle} />
             {advantages.map((item, i) => (
               <div
-                key={item.title}
+                key={item.tKey}
                 className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
                 style={itemReveal(advantagesReveal.isVisible, i)}
               >
@@ -898,8 +795,8 @@ export default function Home() {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
                   <item.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="text-sm leading-relaxed text-white/50">{item.description}</p>
+                <h3 className="mb-2 text-lg font-semibold text-white">{t(`${item.tKey}.title`)}</h3>
+                <p className="text-sm leading-relaxed text-white/50">{t(`${item.tKey}.desc`)}</p>
               </div>
             ))}
           </div>
@@ -919,49 +816,49 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Compare</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("compare.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Why Teams <span className="landing-gradient-text">Switch</span>
+            {t("compare.title1")} <span className="landing-gradient-text">{t("compare.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
-            See how ReconArt compares to legacy tools and manual spreadsheets.
+            {t("compare.subtitle")}
           </p>
 
           <div className="landing-card rounded-2xl overflow-hidden">
             <div className="grid grid-cols-4 gap-0 border-b border-[#7C3AED]/10 bg-[#7C3AED]/[0.04]">
-              <div className="px-6 py-4 text-sm font-semibold text-white/50">Feature</div>
-              <div className="px-6 py-4 text-center text-sm font-bold landing-gradient-text">ReconArt</div>
-              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">Legacy Tools</div>
-              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">Spreadsheets</div>
+              <div className="px-6 py-4 text-sm font-semibold text-white/50">{t("compare.feature")}</div>
+              <div className="px-6 py-4 text-center text-sm font-bold landing-gradient-text">{t("compare.reconart")}</div>
+              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">{t("compare.legacy")}</div>
+              <div className="px-6 py-4 text-center text-sm font-semibold text-white/40">{t("compare.manual")}</div>
             </div>
             {comparisonRows.map((row, i) => (
               <div
-                key={row.feature}
+                key={row.tKey}
                 className={`grid grid-cols-4 gap-0 border-b border-[#2f3c5b]/20 transition-colors hover:bg-[#1a243a]/60 ${i === comparisonRows.length - 1 ? "border-b-0" : ""}`}
                 style={itemReveal(comparisonReveal.isVisible, i, 100)}
               >
-                <div className="px-6 py-4 text-sm text-white/60">{row.feature}</div>
+                <div className="px-6 py-4 text-sm text-white/60">{t(row.tKey)}</div>
                 <div className="flex items-center justify-center px-6 py-4 text-sm font-medium text-[#14B8A6]">
-                  {typeof row.reconart === "boolean" ? (
+                  {row.isBool ? (
                     <Check className="h-5 w-5 text-[#14B8A6]" />
                   ) : (
-                    row.reconart
+                    row.rawVals ? String(row.reconart) : t(String(row.reconart))
                   )}
                 </div>
                 <div className="flex items-center justify-center px-6 py-4 text-sm text-white/30">
-                  {typeof row.legacy === "boolean" ? (
+                  {row.isBool ? (
                     row.legacy ? <Check className="h-4 w-4 text-white/30" /> : <X className="h-4 w-4 text-white/15" />
                   ) : (
-                    row.legacy
+                    row.rawVals ? String(row.legacy) : t(String(row.legacy))
                   )}
                 </div>
                 <div className="flex items-center justify-center px-6 py-4 text-sm text-white/30">
-                  {typeof row.manual === "boolean" ? (
+                  {row.isBool ? (
                     row.manual ? <Check className="h-4 w-4 text-white/30" /> : <X className="h-4 w-4 text-white/15" />
                   ) : (
-                    row.manual
+                    row.rawVals ? String(row.manual) : t(String(row.manual))
                   )}
                 </div>
               </div>
@@ -983,39 +880,39 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Coverage</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("domains.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            End-to-End <span className="landing-gradient-text">Transaction Lifecycle</span>
+            {t("domains.title1")} <span className="landing-gradient-text">{t("domains.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            One platform covering 8 domains — no separate modules, no patched integrations.
+            {t("domains.subtitle")}
           </p>
 
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {domainGroups.map((group, gi) => (
               <div
-                key={group.category}
+                key={group.catKey}
                 className="flex flex-col gap-4"
                 style={itemReveal(domainsReveal.isVisible, gi, 200)}
               >
                 <div className="flex items-center gap-2 px-1">
                   <div className="h-2 w-2 rounded-full" style={{ backgroundColor: group.color }} />
                   <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: group.color }}>
-                    {group.category}
+                    {t(group.catKey)}
                   </span>
                 </div>
                 {group.domains.map((domain) => (
                   <div
-                    key={domain.title}
+                    key={domain.tKey}
                     className="landing-card landing-card-glow group rounded-2xl p-6"
                   >
                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl transition-all group-hover:shadow-lg" style={{ background: `${group.color}15` }}>
                       <domain.icon className="h-5 w-5 transition-colors" style={{ color: group.color }} />
                     </div>
-                    <h3 className="mb-1.5 text-sm font-semibold text-white">{domain.title}</h3>
-                    <p className="text-xs leading-relaxed text-white/40">{domain.description}</p>
+                    <h3 className="mb-1.5 text-sm font-semibold text-white">{t(`${domain.tKey}.title`)}</h3>
+                    <p className="text-xs leading-relaxed text-white/40">{t(`${domain.tKey}.desc`)}</p>
                   </div>
                 ))}
               </div>
@@ -1037,14 +934,14 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Platform</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("services.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Our Specialized <span className="landing-gradient-text">Services</span>
+            {t("services.title1")} <span className="landing-gradient-text">{t("services.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            A comprehensive reconciliation platform covering the full lifecycle — from data ingestion to compliance reporting.
+            {t("services.subtitle")}
           </p>
 
           <div
@@ -1058,7 +955,7 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {services.slice(0, 4).map((service, i) => (
                 <div
-                  key={service.title}
+                  key={service.tIndex}
                   className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
                   style={itemReveal(servicesReveal.isVisible, i)}
                 >
@@ -1066,13 +963,13 @@ export default function Home() {
                   <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
                     <service.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-white">{service.title}</h3>
-                  <p className="mb-5 text-sm leading-relaxed text-white/50">{service.description}</p>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{t(`svc.${service.tIndex}.title`)}</h3>
+                  <p className="mb-5 text-sm leading-relaxed text-white/50">{t(`svc.${service.tIndex}.desc`)}</p>
                   <Link
                     href="/sign-up"
                     className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
                   >
-                    {service.cta}
+                    {t(`svc.${service.tIndex}.cta`)}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -1082,7 +979,7 @@ export default function Home() {
             <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {services.slice(4).map((service, i) => (
                 <div
-                  key={service.title}
+                  key={service.tIndex}
                   className="landing-card landing-card-glow group relative rounded-2xl p-7 pl-9"
                   style={itemReveal(servicesReveal.isVisible, i + 4)}
                 >
@@ -1090,13 +987,13 @@ export default function Home() {
                   <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
                     <service.icon className="h-5 w-5 text-[#9D5CF5] transition-colors group-hover:text-[#7C3AED]" />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-white">{service.title}</h3>
-                  <p className="mb-5 text-sm leading-relaxed text-white/50">{service.description}</p>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{t(`svc.${service.tIndex}.title`)}</h3>
+                  <p className="mb-5 text-sm leading-relaxed text-white/50">{t(`svc.${service.tIndex}.desc`)}</p>
                   <Link
                     href="/sign-up"
                     className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
                   >
-                    {service.cta}
+                    {t(`svc.${service.tIndex}.cta`)}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -1119,34 +1016,34 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Quick Start</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("templates.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Go Live in <span className="landing-gradient-text">Weeks, Not Months</span>
+            {t("templates.title1")} <span className="landing-gradient-text">{t("templates.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            100+ pre-configured reconciliation templates for major counterparties and payment networks.
+            {t("templates.subtitle")}
           </p>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {templates.map((tmpl, i) => (
               <div
-                key={tmpl.title}
+                key={tmpl.tIndex}
                 className="landing-card landing-card-glow group rounded-2xl overflow-hidden"
                 style={itemReveal(templatesReveal.isVisible, i)}
               >
                 <div className="border-b border-[#7C3AED]/10 bg-gradient-to-r from-[#7C3AED]/[0.06] to-transparent px-7 py-4">
-                  <h3 className="text-base font-semibold text-white">{tmpl.title}</h3>
-                  <p className="text-xs font-medium text-[#14B8A6]">{tmpl.examples}</p>
+                  <h3 className="text-base font-semibold text-white">{t(`tmpl.${tmpl.tIndex}.title`)}</h3>
+                  <p className="text-xs font-medium text-[#14B8A6]">{t(`tmpl.${tmpl.tIndex}.examples`)}</p>
                 </div>
                 <div className="px-7 py-5">
-                  <p className="mb-4 text-sm leading-relaxed text-white/50">{tmpl.description}</p>
+                  <p className="mb-4 text-sm leading-relaxed text-white/50">{t(`tmpl.${tmpl.tIndex}.desc`)}</p>
                   <Link
                     href="/sign-up"
                     className="inline-flex items-center gap-2 text-sm font-medium text-[#9D5CF5] transition-all hover:text-white hover:gap-3"
                   >
-                    Use Template
+                    {t("templates.useTemplate")}
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -1168,20 +1065,20 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Case Studies</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("cases.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Proven <span className="landing-gradient-text">Results</span>
+            {t("cases.title1")} <span className="landing-gradient-text">{t("cases.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            Trusted by financial institutions across banking, payments, insurance, and asset management.
+            {t("cases.subtitle")}
           </p>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {caseStudies.map((study, i) => (
               <div
-                key={study.title}
+                key={study.tIndex}
                 className="landing-card landing-card-glow group rounded-2xl overflow-hidden"
                 style={itemReveal(resultsReveal.isVisible, i)}
               >
@@ -1190,16 +1087,16 @@ export default function Home() {
                     <span className="text-lg font-bold text-white">{study.stat}</span>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-white">{study.statLabel}</p>
-                    <p className="text-xs text-white/40">{study.title}</p>
+                    <p className="text-sm font-semibold text-white">{t(`case.${study.tIndex}.statLabel`)}</p>
+                    <p className="text-xs text-white/40">{t(`case.${study.tIndex}.title`)}</p>
                   </div>
                   <TrendingUp className="ml-auto h-5 w-5 text-[#14B8A6]/30 transition-colors group-hover:text-[#14B8A6]" />
                 </div>
                 <div className="px-8 py-6">
-                  <p className="mb-4 text-sm leading-relaxed text-white/50">{study.description}</p>
+                  <p className="mb-4 text-sm leading-relaxed text-white/50">{t(`case.${study.tIndex}.desc`)}</p>
                   <div className="flex gap-2">
-                    <span className="rounded-full bg-[#7C3AED]/10 px-3 py-1 text-[10px] font-semibold text-[#9D5CF5]">{study.industry}</span>
-                    <span className="rounded-full bg-[#14B8A6]/10 px-3 py-1 text-[10px] font-semibold text-[#14B8A6]">{study.region}</span>
+                    <span className="rounded-full bg-[#7C3AED]/10 px-3 py-1 text-[10px] font-semibold text-[#9D5CF5]">{t(`case.${study.tIndex}.industry`)}</span>
+                    <span className="rounded-full bg-[#14B8A6]/10 px-3 py-1 text-[10px] font-semibold text-[#14B8A6]">{t(`case.${study.tIndex}.region`)}</span>
                   </div>
                 </div>
               </div>
@@ -1221,28 +1118,28 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Industries</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("industries.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Built for <span className="landing-gradient-text">Every Industry</span>
+            {t("industries.title1")} <span className="landing-gradient-text">{t("industries.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-2xl text-center text-white/40">
-            Trusted across banking, payments, insurance, and emerging digital finance.
+            {t("industries.subtitle")}
           </p>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {industries.map((ind, i) => (
               <div
-                key={ind.title}
+                key={ind.tIndex}
                 className="landing-card landing-card-glow group rounded-2xl p-5 text-center"
                 style={itemReveal(industriesReveal.isVisible, i, 100)}
               >
                 <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[#7C3AED]/15 to-[#14B8A6]/10 transition-all group-hover:shadow-lg group-hover:shadow-[#7C3AED]/20">
                   <ind.icon className="h-5 w-5 text-[#9D5CF5]/70 transition-colors group-hover:text-[#9D5CF5]" />
                 </div>
-                <h3 className="mb-1 text-xs font-semibold text-white">{ind.title}</h3>
-                <p className="text-[11px] leading-relaxed text-white/35">{ind.description}</p>
+                <h3 className="mb-1 text-xs font-semibold text-white">{t(`ind.${ind.tIndex}.title`)}</h3>
+                <p className="text-[11px] leading-relaxed text-white/35">{t(`ind.${ind.tIndex}.desc`)}</p>
               </div>
             ))}
           </div>
@@ -1260,16 +1157,16 @@ export default function Home() {
         {/* Security badges */}
         <div className="relative mx-auto mb-20 flex flex-wrap items-center justify-center gap-6 max-w-3xl">
           {[
-            { icon: Shield, label: "SOC 2 Type II", sub: "Certified" },
-            { icon: Lock, label: "AES-256", sub: "Encryption" },
-            { icon: Globe, label: "GDPR", sub: "Compliant" },
-            { icon: Eye, label: "99.9% Uptime", sub: "SLA Guaranteed" },
+            { icon: Shield, labelKey: "security.soc2", subKey: "security.soc2Sub" },
+            { icon: Lock, labelKey: "security.aes", subKey: "security.aesSub" },
+            { icon: Globe, labelKey: "security.gdpr", subKey: "security.gdprSub" },
+            { icon: Eye, labelKey: "security.uptime", subKey: "security.uptimeSub" },
           ].map((badge) => (
-            <div key={badge.label} className="flex items-center gap-3 rounded-xl border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-3">
+            <div key={badge.labelKey} className="flex items-center gap-3 rounded-xl border border-[#2f3c5b]/30 bg-[#1a243a]/40 px-5 py-3">
               <badge.icon className="h-5 w-5 text-[#14B8A6]" />
               <div>
-                <p className="text-sm font-semibold text-white/70">{badge.label}</p>
-                <p className="text-[10px] text-white/30">{badge.sub}</p>
+                <p className="text-sm font-semibold text-white/70">{t(badge.labelKey)}</p>
+                <p className="text-[10px] text-white/30">{t(badge.subKey)}</p>
               </div>
             </div>
           ))}
@@ -1280,20 +1177,20 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">Plans</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("pricing.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Simple, <span className="landing-gradient-text">Transparent</span> Pricing
+            {t("pricing.title1")} <span className="landing-gradient-text">{t("pricing.title2")}</span> {t("pricing.title3")}
           </h2>
           <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
-            Start free and scale as your operations grow. No credit card required.
+            {t("pricing.subtitle")}
           </p>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             {pricingPlans.map((plan, i) => (
               <div
-                key={plan.name}
+                key={plan.nameKey}
                 className={`relative rounded-2xl p-8 overflow-hidden ${
                   plan.highlighted
                     ? "landing-card border-[#7C3AED]/50 shadow-2xl shadow-[#7C3AED]/10"
@@ -1305,22 +1202,22 @@ export default function Home() {
                   <>
                     <div className="absolute -inset-[1px] -z-10 rounded-2xl bg-gradient-to-b from-[#7C3AED]/50 via-[#7C3AED]/20 to-transparent" />
                     <div className="absolute top-4 right-4 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#9D5CF5] px-4 py-1 text-xs font-bold text-white shadow-lg shadow-[#7C3AED]/30">
-                      Most Popular
+                      {t("pricing.mostPopular")}
                     </div>
                   </>
                 )}
                 <div>
-                  <h3 className="mb-2 text-lg font-semibold text-white">{plan.name}</h3>
+                  <h3 className="mb-2 text-lg font-semibold text-white">{t(plan.nameKey)}</h3>
                   <div className="mb-1 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
+                    <span className="text-4xl font-bold text-white">{plan.priceRaw || t(plan.priceKey)}</span>
                     {plan.period && <span className="text-sm text-white/30">{plan.period}</span>}
                   </div>
-                  <p className="mb-8 text-sm text-white/40">{plan.description}</p>
+                  <p className="mb-8 text-sm text-white/40">{t(plan.descKey)}</p>
                   <ul className="mb-8 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3">
+                    {plan.featureKeys.map((fk) => (
+                      <li key={fk} className="flex items-start gap-3">
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#14B8A6]" />
-                        <span className="text-sm text-white/50">{feature}</span>
+                        <span className="text-sm text-white/50">{t(fk)}</span>
                       </li>
                     ))}
                   </ul>
@@ -1332,7 +1229,7 @@ export default function Home() {
                           : "border border-[#9D5CF5]/30 bg-[#9D5CF5]/[0.06] text-[#9D5CF5] hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/50"
                       }`}
                     >
-                      {plan.cta}
+                      {t(plan.ctaKey)}
                     </button>
                   </Link>
                 </div>
@@ -1356,28 +1253,26 @@ export default function Home() {
         <div className="relative mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#7C3AED]/20 bg-[#7C3AED]/[0.06] px-4 py-2">
             <Sparkles className="h-3.5 w-3.5 text-[#9D5CF5]" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9D5CF5]">Our Philosophy</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#9D5CF5]">{t("philosophy.tag")}</span>
           </div>
           <h2 className="mb-8 text-3xl font-bold leading-tight tracking-tight text-white md:text-5xl lg:text-6xl">
-            Your team should be{" "}
-            <span className="landing-gradient-text">reconciling</span>,
+            {t("philosophy.title1")}{" "}
+            <span className="landing-gradient-text">{t("philosophy.title2")}</span>
             <br className="hidden sm:block" />
-            not wrestling with tools.
+            {t("philosophy.title3")}
           </h2>
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/40">
-            We built ReconArt because financial operations teams deserve a platform
-            that eliminates complexity instead of adding to it. Every feature exists
-            to give you answers faster — nothing more, nothing less.
+            {t("philosophy.desc")}
           </p>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-center">
             {[
-              { value: "Zero", label: "vendor lock-in" },
-              { value: "100%", label: "audit-ready from day one" },
-              { value: "One", label: "platform, every workflow" },
+              { valueKey: "philosophy.zero", labelKey: "philosophy.zeroLabel" },
+              { valueKey: "philosophy.audit", labelKey: "philosophy.auditLabel" },
+              { valueKey: "philosophy.one", labelKey: "philosophy.oneLabel" },
             ].map((item) => (
-              <div key={item.label} className="flex flex-col items-center gap-1">
-                <span className="text-2xl font-bold landing-gradient-text">{item.value}</span>
-                <span className="text-xs text-white/40">{item.label}</span>
+              <div key={item.labelKey} className="flex flex-col items-center gap-1">
+                <span className="text-2xl font-bold landing-gradient-text">{t(item.valueKey)}</span>
+                <span className="text-xs text-white/40">{t(item.labelKey)}</span>
               </div>
             ))}
           </div>
@@ -1397,20 +1292,20 @@ export default function Home() {
         >
           <div className="mb-4 flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#7C3AED]/50" />
-            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">FAQ</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-[#9D5CF5]">{t("faq.tag")}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#7C3AED]/50" />
           </div>
           <h2 className="mb-5 text-center text-3xl font-bold tracking-tight md:text-5xl">
-            Common <span className="landing-gradient-text">Questions</span>
+            {t("faq.title1")} <span className="landing-gradient-text">{t("faq.title2")}</span>
           </h2>
           <p className="mx-auto mb-16 max-w-xl text-center text-white/40">
-            Everything you need to know before getting started.
+            {t("faq.subtitle")}
           </p>
 
           <div className="space-y-3">
             {faqs.map((faq, i) => (
               <div
-                key={i}
+                key={faq.tIndex}
                 className="landing-card rounded-2xl overflow-hidden"
                 style={itemReveal(faqReveal.isVisible, i, 100)}
               >
@@ -1418,7 +1313,7 @@ export default function Home() {
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="flex w-full items-center justify-between px-7 py-5 text-left"
                 >
-                  <span className="text-sm font-semibold text-white pr-4">{faq.q}</span>
+                  <span className="text-sm font-semibold text-white pr-4">{t(`faq.q${faq.tIndex}`)}</span>
                   <ChevronDown
                     className={`h-4 w-4 shrink-0 text-[#9D5CF5] transition-transform duration-300 ${openFaq === i ? "rotate-180" : ""}`}
                   />
@@ -1430,7 +1325,7 @@ export default function Home() {
                     opacity: openFaq === i ? 1 : 0,
                   }}
                 >
-                  <p className="px-7 pb-6 text-sm leading-relaxed text-white/45">{faq.a}</p>
+                  <p className="px-7 pb-6 text-sm leading-relaxed text-white/45">{t(`faq.a${faq.tIndex}`)}</p>
                 </div>
               </div>
             ))}
@@ -1460,22 +1355,21 @@ export default function Home() {
 
           <div className="relative px-8 py-20 text-center">
             <h2 className="mb-6 text-3xl font-bold tracking-tight text-white md:text-5xl">
-              Ready to find out what your reconciliations are really costing you?
+              {t("cta.title")}
             </h2>
             <p className="mx-auto mb-10 max-w-xl text-white/80">
-              Join leading financial institutions using ReconArt to automate
-              matching, eliminate manual work, and deliver real operational ROI.
+              {t("cta.subtitle")}
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/sign-up">
                 <button className="bubble-hover inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-sm font-bold text-[#7C3AED] shadow-xl">
-                  Start Free Trial
+                  {t("cta.btn1")}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <a href="#pricing">
                 <button className="bubble-hover inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-8 py-4 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20">
-                  View Pricing
+                  {t("cta.btn2")}
                 </button>
               </a>
             </div>
@@ -1489,8 +1383,8 @@ export default function Home() {
       <footer className="border-t border-[#7C3AED]/10 bg-[#0a0f1d] px-6 py-16">
         <div className="mx-auto max-w-[90%]">
           <p className="mb-14 text-center text-lg font-medium text-white/30">
-            Vendor-agnostic. AI-powered. Reconciliations{" "}
-            <span className="landing-gradient-text font-bold">mastered</span>.
+            {t("footer.tagline1")}{" "}
+            <span className="landing-gradient-text font-bold">{t("footer.tagline2")}</span>.
           </p>
 
           <div className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-5">
@@ -1504,9 +1398,7 @@ export default function Home() {
                 </span>
               </div>
               <p className="mb-6 max-w-sm text-sm leading-relaxed text-white/30">
-                AI-powered reconciliation platform that automates matching,
-                detects anomalies, and delivers real-time operational
-                intelligence for financial institutions.
+                {t("footer.desc")}
               </p>
               <div className="flex gap-3">
                 {[
@@ -1526,12 +1418,12 @@ export default function Home() {
             </div>
 
             {footerSections.map((section) => (
-              <div key={section.title}>
-                <h4 className="mb-4 text-sm font-semibold text-white/80">{section.title}</h4>
+              <div key={section.titleKey}>
+                <h4 className="mb-4 text-sm font-semibold text-white/80">{t(section.titleKey)}</h4>
                 <ul className="space-y-2.5">
-                  {section.links.map((link) => (
-                    <li key={link.label}>
-                      <a href={link.href} className="text-sm text-white/30 transition-colors hover:text-white/60">{link.label}</a>
+                  {section.links.map((link, li) => (
+                    <li key={li}>
+                      <a href={link.href} className="text-sm text-white/30 transition-colors hover:text-white/60">{link.label || t(link.labelKey!)}</a>
                     </li>
                   ))}
                 </ul>
@@ -1541,11 +1433,11 @@ export default function Home() {
 
           <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#2f3c5b]/30 pt-8 sm:flex-row">
             <p className="text-xs text-white/20">
-              &copy; {new Date().getFullYear()} ReconArt. All rights reserved.
+              &copy; {new Date().getFullYear()} ReconArt. {t("footer.rights")}
             </p>
             <div className="flex gap-6">
-              <a href="/privacy" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Privacy Policy</a>
-              <a href="/terms" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">Terms of Service</a>
+              <a href="/privacy" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">{t("footer.privacy")}</a>
+              <a href="/terms" className="text-xs text-white/20 transition-colors hover:text-white/40 hover:underline">{t("footer.terms")}</a>
             </div>
           </div>
         </div>

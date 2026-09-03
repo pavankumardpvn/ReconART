@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/constants';
+import { useI18n } from '@/lib/i18n';
 import { PanelLeftClose, PanelLeft, GitCompareArrows, Sparkles } from 'lucide-react';
 import RegionSelector from '@/components/shared/RegionSelector';
 
@@ -27,6 +28,7 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
   const aiOpen = controlledAiOpen ?? internalAiOpen;
   const setAiOpen = onAiToggle ?? setInternalAiOpen;
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <>
@@ -94,7 +96,7 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
                       collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
                     )}
                   >
-                    {item.label}
+                    {t(item.tKey)}
                   </span>
                   {isActive && (
                     <span className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan-400 status-dot-pulse" />
@@ -102,7 +104,7 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
                 </Link>
               );
             }),
-          [pathname, collapsed]
+          [pathname, collapsed, t]
         )}
       </nav>
 
@@ -124,7 +126,7 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
               collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
             )}
           >
-            AI Assistant
+            {t("dash.aiAssistant")}
           </span>
         </button>
       </div>
@@ -142,7 +144,7 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
               collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
             )}
           >
-            Account
+            {t("dash.account")}
           </span>
         </div>
       </div>

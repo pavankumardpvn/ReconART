@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { OrganizationSwitcher } from '@clerk/nextjs';
 import { Bell, Search, Command, X, CheckCheck, Info } from 'lucide-react';
 import { useCommandPalette } from '@/components/command-palette/CommandPalette';
+import { useI18n } from '@/lib/i18n';
 
 const SAMPLE_NOTIFICATIONS = [
   { id: '1', title: 'Reconciliation completed', body: 'Match rate: 98.7% — 3 exceptions found', time: '2m ago', read: false },
@@ -15,6 +16,7 @@ const SAMPLE_NOTIFICATIONS = [
 export default function Header() {
   const pathname = usePathname();
   const { setOpen } = useCommandPalette();
+  const { t } = useI18n();
   const segments = pathname.split('/').filter(Boolean);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(SAMPLE_NOTIFICATIONS);
@@ -58,7 +60,7 @@ export default function Header() {
           className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1.5 text-sm text-[var(--foreground-muted)] transition-all hover:border-[var(--border-highlight)] hover:text-[var(--foreground)]"
         >
           <Search className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Search...</span>
+          <span className="hidden sm:inline">{t("header.search")}</span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-[var(--border)] bg-[var(--background-tertiary)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--foreground-subtle)]">
             <Command className="h-2.5 w-2.5" />K
           </kbd>
@@ -82,10 +84,10 @@ export default function Header() {
           {notifOpen && (
             <div className="absolute right-0 top-12 w-80 rounded-xl border border-[var(--card-border)] bg-[var(--background-elevated)] shadow-2xl shadow-black/30">
               <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-                <h3 className="text-sm font-semibold text-[var(--foreground)]">Notifications</h3>
+                <h3 className="text-sm font-semibold text-[var(--foreground)]">{t("header.notifications")}</h3>
                 {unreadCount > 0 && (
                   <button onClick={markAllRead} className="flex items-center gap-1 text-[10px] font-medium text-cyan-400 hover:text-cyan-300">
-                    <CheckCheck className="h-3 w-3" /> Mark all read
+                    <CheckCheck className="h-3 w-3" /> {t("header.markAllRead")}
                   </button>
                 )}
               </div>
@@ -93,7 +95,7 @@ export default function Header() {
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-8 text-[var(--foreground-subtle)]">
                     <Info className="h-5 w-5" />
-                    <p className="text-xs">No notifications</p>
+                    <p className="text-xs">{t("header.noNotifications")}</p>
                   </div>
                 ) : (
                   notifications.map(n => (
