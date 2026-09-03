@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api, createSource, uploadFileToSource, getDataSourceColumns } from "@/lib/api";
+import { useI18n, LANG_LABELS, type LangCode } from "@/lib/i18n";
 
 interface Action {
   type: string;
@@ -55,8 +56,12 @@ function generateTitle(messages: Message[]): string {
   return first.text.length > 40 ? first.text.slice(0, 40) + "..." : first.text;
 }
 
-async function callAI(q: string, name: string): Promise<{ response: string; action: Action | null }> {
-  const doCall = () => api.post("/api/v1/ai/chat", { message: q, user_name: name });
+async function callAI(q: string, name: string, lang?: LangCode): Promise<{ response: string; action: Action | null }> {
+  const langInstruction = lang && lang !== "en"
+    ? `\n[SYSTEM: The user's interface is set to ${LANG_LABELS[lang]}. Always respond in ${LANG_LABELS[lang]} unless the user explicitly asks you to communicate in a different language. Even if the user writes in English, respond in ${LANG_LABELS[lang]}.]\n`
+    : "";
+  const fullMessage = langInstruction ? `${langInstruction}${q}` : q;
+  const doCall = () => api.post("/api/v1/ai/chat", { message: fullMessage, user_name: name });
   try {
     const { data } = await doCall();
     return { response: data.response || "Could you rephrase that?", action: data.action || null };
@@ -139,10 +144,133 @@ interface AIAssistantPanelProps {
   onClose: () => void;
 }
 
+const WELCOME_MESSAGES: Record<LangCode, { morning: string; afternoon: string; evening: string; body: string }> = {
+  en: {
+    morning: "Good morning",
+    afternoon: "Good afternoon",
+    evening: "Good evening",
+    body: "I'm your ReconART agent. I can **create data sources**, **set up reconciliations**, **run matching**, and analyze your data.\n\nTry a quick action below or type your question.",
+  },
+  es: {
+    morning: "Buenos dias",
+    afternoon: "Buenas tardes",
+    evening: "Buenas noches",
+    body: "Soy tu agente ReconART. Puedo **crear fuentes de datos**, **configurar conciliaciones**, **ejecutar conciliacion** y analizar tus datos.\n\nPrueba una accion rapida abajo o escribe tu pregunta.",
+  },
+  pt: {
+    morning: "Bom dia",
+    afternoon: "Boa tarde",
+    evening: "Boa noite",
+    body: "Sou seu agente ReconART. Posso **criar fontes de dados**, **configurar conciliacoes**, **executar conciliacao** e analisar seus dados.\n\nExperimente uma acao rapida abaixo ou digite sua pergunta.",
+  },
+  hi: {
+    morning: "सुप्रभात",
+    afternoon: "नमस्कार",
+    evening: "शुभ संध्या",
+    body: "मैं आपका ReconART एजेंट हूं। मैं **डेटा स्रोत बना सकता हूं**, **मिलान सेट अप कर सकता हूं**, **मिलान चला सकता हूं** और आपके डेटा का विश्लेषण कर सकता हूं।\n\nनीचे एक त्वरित कार्रवाई आज़माएं या अपना प्रश्न लिखें।",
+  },
+};
+
+const QUICK_ACTIONS_I18N: Record<LangCode, string[]> = {
+  en: [
+    "What's my overall status?",
+    "List my data sources",
+    "Help me create a reconciliation",
+    "Help me improve match rates",
+  ],
+  es: [
+    "¿Cual es mi estado general?",
+    "Listar mis fuentes de datos",
+    "Ayudame a crear una conciliacion",
+    "Ayudame a mejorar las tasas de conciliacion",
+  ],
+  pt: [
+    "Qual é meu status geral?",
+    "Listar minhas fontes de dados",
+    "Me ajude a criar uma conciliacao",
+    "Me ajude a melhorar as taxas de conciliacao",
+  ],
+  hi: [
+    "मेरी समग्र स्थिति क्या है?",
+    "मेरे डेटा स्रोत सूचीबद्ध करें",
+    "मिलान बनाने में मदद करें",
+    "मिलान दर सुधारने में मदद करें",
+  ],
+};
+
+const UI_STRINGS: Record<LangCode, {
+  newChat: string; history: string; quickStart: string; historyFull: string;
+  historyFullDesc: string; goToHistory: string; noPrevChats: string;
+  startNew: string; conversations: string; activeChat: string;
+  aiAssistant: string; typeSourceName: string; typeNext: string;
+  askOrUpload: string; retry: string; confirm: string; cancel: string;
+  executing: string; done: string; cancelled: string; noProb: string;
+  savedConversations: string;
+}> = {
+  en: {
+    newChat: "New Chat", history: "History", quickStart: "Quick Start",
+    historyFull: "History Full",
+    historyFullDesc: "You have 3 saved conversations. Delete one from the History tab to start a new chat.",
+    goToHistory: "Go to History", noPrevChats: "No previous chats",
+    startNew: "Start a new conversation to see it here.",
+    conversations: "conversations saved", activeChat: "Active chat",
+    aiAssistant: "AI-powered assistant", typeSourceName: "Type your preferred source name...",
+    typeNext: "Type your next message...", askOrUpload: "Ask me or upload a file...",
+    retry: "Retry", confirm: "Confirm", cancel: "Cancel",
+    executing: "Executing...", done: "Done", cancelled: "Cancelled",
+    noProb: "No problem! Let me know if you'd like to do something else.",
+    savedConversations: "conversations saved",
+  },
+  es: {
+    newChat: "Nuevo Chat", history: "Historial", quickStart: "Inicio Rapido",
+    historyFull: "Historial Lleno",
+    historyFullDesc: "Tienes 3 conversaciones guardadas. Elimina una del Historial para iniciar un nuevo chat.",
+    goToHistory: "Ir al Historial", noPrevChats: "Sin chats previos",
+    startNew: "Inicia una conversacion para verla aqui.",
+    conversations: "conversaciones guardadas", activeChat: "Chat activo",
+    aiAssistant: "Asistente con IA", typeSourceName: "Escribe el nombre de la fuente...",
+    typeNext: "Escribe tu siguiente mensaje...", askOrUpload: "Preguntame o sube un archivo...",
+    retry: "Reintentar", confirm: "Confirmar", cancel: "Cancelar",
+    executing: "Ejecutando...", done: "Hecho", cancelled: "Cancelado",
+    noProb: "¡Sin problema! Dime si quieres hacer otra cosa.",
+    savedConversations: "conversaciones guardadas",
+  },
+  pt: {
+    newChat: "Novo Chat", history: "Historico", quickStart: "Inicio Rapido",
+    historyFull: "Historico Cheio",
+    historyFullDesc: "Voce tem 3 conversas salvas. Exclua uma do Historico para iniciar um novo chat.",
+    goToHistory: "Ir ao Historico", noPrevChats: "Sem chats anteriores",
+    startNew: "Inicie uma conversa para ve-la aqui.",
+    conversations: "conversas salvas", activeChat: "Chat ativo",
+    aiAssistant: "Assistente com IA", typeSourceName: "Digite o nome da fonte...",
+    typeNext: "Digite sua proxima mensagem...", askOrUpload: "Pergunte ou envie um arquivo...",
+    retry: "Tentar novamente", confirm: "Confirmar", cancel: "Cancelar",
+    executing: "Executando...", done: "Feito", cancelled: "Cancelado",
+    noProb: "Sem problema! Me diga se quiser fazer outra coisa.",
+    savedConversations: "conversas salvas",
+  },
+  hi: {
+    newChat: "नया चैट", history: "इतिहास", quickStart: "त्वरित शुरुआत",
+    historyFull: "इतिहास भरा",
+    historyFullDesc: "आपके पास 3 सहेजी गई बातचीत हैं। नया चैट शुरू करने के लिए इतिहास से एक हटाएं।",
+    goToHistory: "इतिहास पर जाएं", noPrevChats: "कोई पिछली चैट नहीं",
+    startNew: "यहां देखने के लिए एक बातचीत शुरू करें।",
+    conversations: "बातचीत सहेजी", activeChat: "सक्रिय चैट",
+    aiAssistant: "AI-संचालित सहायक", typeSourceName: "स्रोत का नाम लिखें...",
+    typeNext: "अपना अगला संदेश लिखें...", askOrUpload: "पूछें या फ़ाइल अपलोड करें...",
+    retry: "पुनः प्रयास", confirm: "पुष्टि करें", cancel: "रद्द करें",
+    executing: "निष्पादित हो रहा है...", done: "हो गया", cancelled: "रद्द",
+    noProb: "कोई बात नहीं! बताएं अगर कुछ और करना चाहें।",
+    savedConversations: "बातचीत सहेजी",
+  },
+};
+
 export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProps) {
   const { user } = useUser();
   const queryClient = useQueryClient();
   const firstName = user?.firstName || user?.fullName?.split(" ")[0] || "there";
+  const { lang } = useI18n();
+  const ui = UI_STRINGS[lang];
 
   const [view, setView] = useState<PanelView>("new");
   const [storedChats, setStoredChats] = useState<StoredChat[]>([]);
@@ -169,16 +297,17 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
       refreshChats();
       if (!welcomed && firstName) {
         const hour = new Date().getHours();
-        const g = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+        const wm = WELCOME_MESSAGES[lang] || WELCOME_MESSAGES.en;
+        const g = hour < 12 ? wm.morning : hour < 17 ? wm.afternoon : wm.evening;
         setMessages([{
           id: "welcome",
           role: "assistant",
-          text: `${g}, **${firstName}**!\n\nI'm your ReconART agent. I can **create data sources**, **set up reconciliations**, **run matching**, and analyze your data.\n\nTry a quick action below or type your question.`,
+          text: `${g}, **${firstName}**!\n\n${wm.body}`,
         }]);
         setWelcomed(true);
       }
     }
-  }, [open, welcomed, firstName, refreshChats]);
+  }, [open, welcomed, firstName, refreshChats, lang]);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -310,7 +439,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
         };
 
         const aiQuestion = `I created source "${sourceName}" from file "${file.name}". Source ID: ${source.id}. Columns: ${colsStr || "unknown"}. What should I do next?`;
-        const { response, action } = await callAI(aiQuestion, firstName);
+        const { response, action } = await callAI(aiQuestion, firstName, lang);
 
         const aiMsg: Message = {
           id: (Date.now() + 2).toString(),
@@ -338,7 +467,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     }
 
     setIsTyping(true);
-    const { response, action } = await callAI(question, firstName);
+    const { response, action } = await callAI(question, firstName, lang);
 
     const isFailed = response.includes("Something went wrong") || response.includes("Can't reach the server");
     const aiMsg: Message = {
@@ -396,7 +525,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     const cancelMsg: Message = {
       id: (Date.now() + 3).toString(),
       role: "assistant",
-      text: "No problem! Let me know if you'd like to do something else.",
+      text: ui.noProb,
     };
 
     setMessages((prev) => {
@@ -486,7 +615,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
                 onClick={() => handleRetry(msg)}
                 className="flex items-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10"
               >
-                <RefreshCw className="h-3 w-3" /> Retry
+                <RefreshCw className="h-3 w-3" /> {ui.retry}
               </button>
             </div>
           )}
@@ -496,22 +625,22 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
               <p className="mb-2 text-xs font-medium text-purple-300">{getActionLabel(msg.action)}</p>
               <div className="flex gap-2">
                 <button onClick={() => handleActionConfirm(msg.id)} className="flex items-center gap-1 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-600">
-                  <Check className="h-3 w-3" /> Confirm
+                  <Check className="h-3 w-3" /> {ui.confirm}
                 </button>
                 <button onClick={() => handleActionCancel(msg.id)} className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--foreground-muted)] hover:bg-[var(--background-tertiary)]">
-                  <XCircle className="h-3 w-3" /> Cancel
+                  <XCircle className="h-3 w-3" /> {ui.cancel}
                 </button>
               </div>
             </div>
           )}
           {msg.action && msg.actionStatus === "confirmed" && (
-            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Loader2 className="h-3 w-3 animate-spin" /> Executing...</div>
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Loader2 className="h-3 w-3 animate-spin" /> {ui.executing}</div>
           )}
           {msg.action && msg.actionStatus === "done" && (
-            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Check className="h-3 w-3" /> Done</div>
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-emerald-400"><Check className="h-3 w-3" /> {ui.done}</div>
           )}
           {msg.action && msg.actionStatus === "cancelled" && (
-            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]"><XCircle className="h-3 w-3" /> Cancelled</div>
+            <div className="ml-10 mt-2 flex items-center gap-2 text-xs text-[var(--foreground-subtle)]"><XCircle className="h-3 w-3" /> {ui.cancelled}</div>
           )}
 
           {/* Follow-up suggestions after the last assistant message */}
@@ -568,7 +697,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && !isTyping && handleSend()}
-          placeholder={pendingFile ? "Type your preferred source name..." : isTyping ? "Type your next message..." : "Ask me or upload a file..."}
+          placeholder={pendingFile ? ui.typeSourceName : isTyping ? ui.typeNext : ui.askOrUpload}
           className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] outline-none"
           disabled={isUploading}
         />
@@ -602,7 +731,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
           <div>
             <h3 className="text-sm font-semibold text-[var(--foreground)]">ReconART Agent</h3>
             <p className="text-[10px] text-emerald-400">
-              {inChat ? "Active chat" : "AI-powered assistant"}
+              {inChat ? ui.activeChat : ui.aiAssistant}
             </p>
           </div>
         </div>
@@ -625,7 +754,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
               )}
             >
               <Plus className="h-3.5 w-3.5" />
-              New Chat
+              {ui.newChat}
             </button>
             <button
               onClick={() => { setView("history"); refreshChats(); }}
@@ -637,7 +766,7 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
               )}
             >
               <History className="h-3.5 w-3.5" />
-              History
+              {ui.history}
               {storedChats.length > 0 && (
                 <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-purple-500/20 px-1 text-[10px] font-bold text-purple-400">
                   {storedChats.length}
@@ -653,16 +782,16 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
                   <AlertCircle className="h-7 w-7 text-amber-400" />
                 </div>
                 <div className="text-center">
-                  <h3 className="mb-2 text-base font-semibold text-[var(--foreground)]">History Full</h3>
+                  <h3 className="mb-2 text-base font-semibold text-[var(--foreground)]">{ui.historyFull}</h3>
                   <p className="text-xs leading-relaxed text-[var(--foreground-muted)]">
-                    You have {MAX_CHATS} saved conversations. Delete one from the <strong>History</strong> tab to start a new chat.
+                    {ui.historyFullDesc}
                   </p>
                 </div>
                 <button
                   onClick={() => { setView("history"); refreshChats(); }}
                   className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/10"
                 >
-                  <History className="h-3.5 w-3.5" /> Go to History
+                  <History className="h-3.5 w-3.5" /> {ui.goToHistory}
                 </button>
               </div>
             ) : (
@@ -671,9 +800,9 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
 
                 {messages.length <= 2 && (
                   <div className="border-t border-[var(--border)] px-4 py-3">
-                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">Quick Start</p>
+                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-[var(--foreground-subtle)]">{ui.quickStart}</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {QUICK_ACTIONS.map((action) => (
+                      {(QUICK_ACTIONS_I18N[lang] || QUICK_ACTIONS_I18N.en).map((action) => (
                         <button key={action} onClick={() => handleSend(action)} className="rounded-full border border-[var(--border)] bg-[var(--background-secondary)] px-3 py-1 text-xs text-[var(--foreground-muted)] transition-colors hover:border-cyan-500/30 hover:text-cyan-400">
                           {action}
                         </button>
@@ -689,19 +818,19 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               <div className="px-2 py-2">
                 <p className="text-[10px] font-medium text-[var(--foreground-subtle)]">
-                  {storedChats.length}/{MAX_CHATS} conversations saved
+                  {storedChats.length}/{MAX_CHATS} {ui.savedConversations}
                 </p>
               </div>
               {storedChats.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-3 pt-12">
                   <History className="h-10 w-10 text-[var(--foreground-subtle)]/30" />
-                  <p className="text-sm font-medium text-[var(--foreground-muted)]">No previous chats</p>
-                  <p className="text-xs text-[var(--foreground-subtle)]">Start a new conversation to see it here.</p>
+                  <p className="text-sm font-medium text-[var(--foreground-muted)]">{ui.noPrevChats}</p>
+                  <p className="text-xs text-[var(--foreground-subtle)]">{ui.startNew}</p>
                   <button
                     onClick={() => setView("new")}
                     className="mt-2 flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-4 py-2 text-xs font-semibold text-white"
                   >
-                    <Plus className="h-3.5 w-3.5" /> New Chat
+                    <Plus className="h-3.5 w-3.5" /> {ui.newChat}
                   </button>
                 </div>
               ) : (

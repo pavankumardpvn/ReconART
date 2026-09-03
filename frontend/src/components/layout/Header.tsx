@@ -6,6 +6,7 @@ import { OrganizationSwitcher } from '@clerk/nextjs';
 import { Bell, Search, Command, X, CheckCheck, Info } from 'lucide-react';
 import { useCommandPalette } from '@/components/command-palette/CommandPalette';
 import { useI18n } from '@/lib/i18n';
+import RegionSelector from '@/components/shared/RegionSelector';
 
 const SAMPLE_NOTIFICATIONS = [
   { id: '1', title: 'Reconciliation completed', body: 'Match rate: 98.7% — 3 exceptions found', time: '2m ago', read: false },
@@ -65,6 +66,8 @@ export default function Header() {
             <Command className="h-2.5 w-2.5" />K
           </kbd>
         </button>
+
+        <RegionSelector variant="dashboard" />
 
         {/* Notifications */}
         <div className="relative" ref={panelRef}>
