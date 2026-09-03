@@ -5,16 +5,28 @@ services:
     dockerfilePath: ./Dockerfile.backend
     dockerContext: .
     healthCheckPath: /api/v1/health/
+    plan: free
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: recon-art-db
-          property: connectionURI
+        sync: false
+      - key: DATABASE_URL_SYNC
+        sync: false
       - key: REDIS_URL
-        fromService:
-          name: recon-art-redis
-          type: redis
-          property: connectionURI
+        sync: false
+      - key: CELERY_BROKER_URL
+        sync: false
+      - key: CELERY_RESULT_BACKEND
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_JWKS_URL
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: APP_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
       - key: STORAGE_BACKEND
         value: s3
       - key: S3_BUCKET
@@ -27,38 +39,3 @@ services:
         sync: false
       - key: S3_ENDPOINT_URL
         sync: false
-
-  - type: web
-    name: recon-art-frontend
-    runtime: docker
-    dockerfilePath: ./Dockerfile.frontend
-    dockerContext: .
-
-  - type: worker
-    name: recon-art-celery
-    runtime: docker
-    dockerfilePath: ./Dockerfile.backend
-    dockerContext: .
-    dockerCommand: celery -A app.celery_app worker --loglevel=info
-    envVars:
-      - key: STORAGE_BACKEND
-        value: s3
-      - key: S3_BUCKET
-        sync: false
-      - key: S3_REGION
-        value: auto
-      - key: S3_ACCESS_KEY
-        sync: false
-      - key: S3_SECRET_KEY
-        sync: false
-      - key: S3_ENDPOINT_URL
-        sync: false
-
-databases:
-  - name: recon-art-db
-    databaseName: reconart
-    plan: free
-
-  - name: recon-art-redis
-    type: redis
-    plan: free
