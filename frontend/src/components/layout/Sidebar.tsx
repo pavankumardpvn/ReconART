@@ -8,6 +8,7 @@ import { UserButton } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 import { NAV_ITEMS } from '@/lib/constants';
 import { PanelLeftClose, PanelLeft, GitCompareArrows, Sparkles } from 'lucide-react';
+import RegionSelector from '@/components/shared/RegionSelector';
 
 const AIAssistantPanel = dynamic(() => import('@/components/ai/AIAssistantPanel'), { ssr: false });
 
@@ -128,8 +129,11 @@ export default function Sidebar({ collapsed: controlledCollapsed, onToggle, aiOp
         </button>
       </div>
 
-      {/* User section */}
-      <div className="border-t border-[var(--border)] p-4">
+      {/* Region selector + User section */}
+      <div className="border-t border-[var(--border)] p-4 space-y-3">
+        <div className={cn("flex items-center", collapsed ? "justify-center" : "gap-2 px-1")}>
+          <RegionSelector variant="dashboard" />
+        </div>
         <div className="flex items-center gap-3">
           <UserButton />
           <span

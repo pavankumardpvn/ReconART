@@ -48,6 +48,8 @@ import {
   Building2,
 } from "lucide-react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
+import RegionSelector from "@/components/shared/RegionSelector";
 
 /* =========================================================================
    Hooks
@@ -453,6 +455,7 @@ const footerSections = [
 export default function Home() {
   const { isSignedIn, isLoaded } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -520,21 +523,22 @@ export default function Home() {
                 href={link.href}
                 className="bubble-hover relative rounded-lg px-2 py-1 text-sm font-medium text-white/60 hover:text-white after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-[#7C3AED] after:transition-all hover:after:w-full"
               >
-                {link.label}
+                {t(`nav.${link.label.toLowerCase()}`)}
               </a>
             ))}
           </div>
 
-          <div className="hidden items-center gap-4 md:flex">
+          <div className="hidden items-center gap-3 md:flex">
+            <RegionSelector variant="landing" />
             <Link
               href="/sign-in"
               className="text-sm font-medium text-white/60 transition-colors hover:text-white"
             >
-              Sign In
+              {t("nav.signIn")}
             </Link>
             <Link href="/sign-up">
               <button className="landing-btn-primary inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white">
-                Start Free Trial
+                {t("nav.startTrial")}
                 <ArrowRight className="h-4 w-4" />
               </button>
             </Link>
@@ -594,7 +598,7 @@ export default function Home() {
             >
               <Sparkles className="h-3.5 w-3.5 text-[#9D5CF5]" />
               <span className="text-xs font-semibold uppercase tracking-wider text-[#9D5CF5]">
-                Intelligent Reconciliation Platform
+                {t("hero.badge")}
               </span>
             </div>
 
@@ -602,19 +606,17 @@ export default function Home() {
               className="animate-fade-in-up text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.5rem]"
               style={{ animationDelay: "0.3s" }}
             >
-              Are your reconciliations
+              {t("hero.title1")}
               <br />
-              actually delivering{" "}
-              <span className="landing-gradient-text">ROI</span>?
+              {t("hero.title2")}{" "}
+              <span className="landing-gradient-text">{t("hero.roi")}</span>?
             </h1>
 
             <p
               className="animate-fade-in-up max-w-lg text-lg leading-relaxed text-white/50"
               style={{ animationDelay: "0.5s" }}
             >
-              ReconArt is the only platform that combines AI-powered matching,
-              cross-border currency support, and real-time analytics — delivering
-              answers in minutes, not months.
+              {t("hero.subtitle")}
             </p>
 
             <div
@@ -623,13 +625,13 @@ export default function Home() {
             >
               <Link href="/sign-up">
                 <button className="landing-btn-primary inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-white">
-                  Start Free Trial
+                  {t("hero.cta1")}
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </Link>
               <a href="#advantages">
                 <button className="bubble-hover inline-flex items-center gap-2 rounded-full border border-[#9D5CF5]/40 bg-[#9D5CF5]/[0.06] px-8 py-4 text-sm font-semibold text-[#9D5CF5] backdrop-blur-sm hover:bg-[#9D5CF5]/15 hover:border-[#9D5CF5]/60">
-                  Learn More
+                  {t("hero.cta2")}
                   <ChevronDown className="h-4 w-4" />
                 </button>
               </a>
@@ -642,17 +644,17 @@ export default function Home() {
             >
               <div className="flex items-center gap-2 rounded-full border border-[#14B8A6]/20 bg-[#14B8A6]/[0.06] px-4 py-2">
                 <Shield className="h-3.5 w-3.5 text-[#14B8A6]" />
-                <span className="text-xs font-medium text-[#14B8A6]">SOC 2 Compliant</span>
+                <span className="text-xs font-medium text-[#14B8A6]">{t("hero.soc2")}</span>
               </div>
               <div className="flex items-center gap-2 rounded-full border border-[#9D5CF5]/20 bg-[#9D5CF5]/[0.06] px-4 py-2">
                 <Lock className="h-3.5 w-3.5 text-[#9D5CF5]" />
-                <span className="text-xs font-medium text-[#9D5CF5]">Bank-Grade Encryption</span>
+                <span className="text-xs font-medium text-[#9D5CF5]">{t("hero.encryption")}</span>
               </div>
               <div className="flex items-center gap-1">
                 {[0, 1, 2, 3, 4].map((i) => (
                   <Star key={i} className="h-3.5 w-3.5 fill-[#F59E0B] text-[#F59E0B]" />
                 ))}
-                <span className="ml-2 text-xs text-white/40">Trusted by 60+ institutions</span>
+                <span className="ml-2 text-xs text-white/40">{t("hero.trusted")}</span>
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ToastProvider } from "@/components/ui/toast";
 import { setTokenGetter } from "@/lib/auth";
+import { I18nProvider } from "@/lib/i18n";
 
 function AuthBridge({ children }: { children: React.ReactNode }) {
   const { getToken } = useAuth();
@@ -35,7 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ClerkProvider>
       <AuthBridge>
         <QueryClientProvider client={queryClient}>
-          <ToastProvider>{children}</ToastProvider>
+          <I18nProvider><ToastProvider>{children}</ToastProvider></I18nProvider>
         </QueryClientProvider>
       </AuthBridge>
     </ClerkProvider>
