@@ -14,6 +14,15 @@ function AuthBridge({ children }: { children: React.ReactNode }) {
     setTokenGetter(() => getToken());
   }, [getToken]);
 
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) return;
+    const ping = () => fetch(`${apiUrl}/api/v1/health/`).catch(() => {});
+    ping();
+    const interval = setInterval(ping, 13 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return <>{children}</>;
 }
 

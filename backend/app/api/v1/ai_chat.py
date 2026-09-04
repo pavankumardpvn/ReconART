@@ -134,7 +134,7 @@ async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
             + f"Open exceptions: {exc_q.scalar_one()} | Recent: {runs_str}"
             + sources_str + recons_str
         )
-        await cache_set(cache_key, ctx, ttl=15)
+        await cache_set(cache_key, ctx, ttl=120)
         return ctx
     except Exception as e:
         return f"Data unavailable: {e}"
