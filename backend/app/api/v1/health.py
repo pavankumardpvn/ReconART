@@ -66,6 +66,37 @@ async def _check_url(name: str, url: str) -> dict:
         return {"status": "down", "error": str(e)}
 
 
+@router.get("/test-ai")
+async def test_ai():
+    """Public diagnostic — verifies Groq/Gemini API connectivity."""
+    import httpx
+    from app.config import settings
+
+    groq_key = settings.groq_api_key
+    gemini_key = settings.gemini_api_key
+    provider = "groq" if groq_key else ("gemini" if gemini_key else "none")
+
+    if provider == "none":
+        return {"status": "error", "provider": "none", "detail": "No GROQ_API_KEY or GEMINI_API_KEY set"}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            if provider == "groq":
+                resp = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {groq_key}"},
+                    json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": "Say hi"}], "max_tokens": 10},
+                )
+            else:
+                resp = await client.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}",
+                    json={"contents": [{"parts": [{"text": "Say hi"}]}], "generationConfig": {"maxOutputTokens": 10}},
+                )
+            return {"status": "ok" if resp.status_code == 200 else "error", "provider": provider, "http_status": resp.status_code, "body": resp.text[:500]}
+    except Exception as e:
+        return {"status": "error", "provider": provider, "detail": str(e)[:500]}
+
+
 @router.get("/full")
 async def full_health_check(db: AsyncSession = Depends(get_db)) -> JSONResponse:
     """Full health check — tests all services in parallel."""
