@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, Body
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -228,6 +229,130 @@ async def ai_chat(
     except Exception as e:
         logger.exception("AI chat failed")
         return {"response": f"Something went wrong, {name}. Try again!", "action": None}
+
+
+@router.post("/chat/stream")
+async def ai_chat_stream(
+    message: str = Body(..., embed=True),
+    user_name: str = Body("", embed=True),
+    db: AsyncSession = Depends(get_db),
+    tenant: Tenant = Depends(get_current_tenant),
+    _user: dict = Depends(get_current_user),
+):
+    name = (user_name or "there").strip().capitalize()
+    api_key = settings.groq_api_key or settings.gemini_api_key
+    use_groq = bool(settings.groq_api_key)
+
+    if not api_key:
+        async def no_key():
+            yield f"data: {json.dumps({'text': f'Hey {name}! AI is not configured yet.', 'done': True})}\n\n"
+        return StreamingResponse(no_key(), media_type="text/event-stream")
+
+    context = await _get_context(db, tenant)
+
+    async def stream_groq():
+        full_text = ""
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                async with client.stream(
+                    "POST", GROQ_URL,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "model": "qwen/qwen3.6-27b",
+                        "messages": [
+                            {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name}\nData: {context}"},
+                            {"role": "user", "content": message},
+                        ],
+                        "max_tokens": 2048,
+                        "stream": True,
+                    },
+                ) as resp:
+                    resp.raise_for_status()
+                    in_think = False
+                    async for line in resp.aiter_lines():
+                        if not line.startswith("data: "):
+                            continue
+                        payload = line[6:]
+                        if payload.strip() == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(payload)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                            if not delta:
+                                continue
+                            full_text += delta
+                            if "<think>" in delta:
+                                in_think = True
+                            if "</think>" in delta:
+                                in_think = False
+                                continue
+                            if in_think:
+                                continue
+                            if "|||ACTION:" in full_text:
+                                continue
+                            yield f"data: {json.dumps({'text': delta})}\n\n"
+                        except json.JSONDecodeError:
+                            continue
+        except Exception as e:
+            logger.exception("Stream failed")
+            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Try again!', 'error': True})}\n\n"
+
+        clean_text = re.sub(r"<think>.*?</think>", "", full_text, flags=re.DOTALL).strip()
+        _, action = _parse_action(clean_text)
+        if action:
+            action_types_auto = ("list_sources", "list_reconciliations", "delete_source", "delete_reconciliation")
+            if action.get("type") in action_types_auto:
+                try:
+                    from app.api.v1.agent import _execute_action_internal
+                    result = await _execute_action_internal(action["type"], action.get("params", {}), db, tenant)
+                    yield f"data: {json.dumps({'action_result': result, 'done': True})}\n\n"
+                    return
+                except Exception:
+                    pass
+            yield f"data: {json.dumps({'action': action, 'done': True})}\n\n"
+        else:
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+    async def stream_gemini():
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse&key={api_key}",
+                    json={
+                        "contents": [{"parts": [{"text": f"{SYSTEM_PROMPT}\nUser: {name}\nData: {context}\nMessage: {message}"}]}],
+                        "generationConfig": {"maxOutputTokens": 2048},
+                    },
+                )
+                resp.raise_for_status()
+                full_text = ""
+                for line in resp.text.split("\n"):
+                    if not line.startswith("data: "):
+                        continue
+                    try:
+                        chunk = json.loads(line[6:])
+                        text = chunk.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                        if text:
+                            full_text += text
+                            if "|||ACTION:" not in full_text:
+                                yield f"data: {json.dumps({'text': text})}\n\n"
+                    except json.JSONDecodeError:
+                        continue
+
+                _, action = _parse_action(full_text)
+                if action:
+                    yield f"data: {json.dumps({'action': action, 'done': True})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'done': True})}\n\n"
+        except Exception as e:
+            logger.exception("Gemini stream failed")
+            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Try again!', 'error': True, 'done': True})}\n\n"
+
+    generator = stream_groq() if use_groq else stream_gemini()
+    return StreamingResponse(
+        generator,
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("/analyze-columns")

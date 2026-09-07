@@ -56,17 +56,89 @@ function generateTitle(messages: Message[]): string {
   return first.text.length > 40 ? first.text.slice(0, 40) + "..." : first.text;
 }
 
+function buildLangMessage(q: string, lang?: LangCode): string {
+  if (!lang || lang === "en") return q;
+  return `[SYSTEM: The user's interface is set to ${LANG_LABELS[lang]}. Always respond in ${LANG_LABELS[lang]} unless the user explicitly asks you to communicate in a different language. Even if the user writes in English, respond in ${LANG_LABELS[lang]}.]\n${q}`;
+}
+
+async function callAIStream(
+  q: string,
+  name: string,
+  lang: LangCode | undefined,
+  onChunk: (text: string) => void,
+): Promise<{ action: Action | null }> {
+  const { getAuthToken } = await import("@/lib/auth");
+  const token = await getAuthToken();
+  const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const fullMessage = buildLangMessage(q, lang);
+
+  const resp = await fetch(`${baseURL}/api/v1/ai/chat/stream`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ message: fullMessage, user_name: name }),
+  });
+
+  if (resp.status === 401) {
+    const { refreshToken } = await import("@/lib/auth");
+    const newToken = await refreshToken();
+    if (!newToken) throw new Error("Session expired");
+    const retry = await fetch(`${baseURL}/api/v1/ai/chat/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${newToken}`,
+      },
+      body: JSON.stringify({ message: fullMessage, user_name: name }),
+    });
+    return processStream(retry, onChunk);
+  }
+
+  return processStream(resp, onChunk);
+}
+
+async function processStream(
+  resp: Response,
+  onChunk: (text: string) => void,
+): Promise<{ action: Action | null }> {
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const reader = resp.body?.getReader();
+  if (!reader) throw new Error("No stream");
+
+  const decoder = new TextDecoder();
+  let action: Action | null = null;
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.text) onChunk(data.text);
+        if (data.action) action = data.action;
+        if (data.action_result) onChunk(data.action_result);
+      } catch { /* skip */ }
+    }
+  }
+  return { action };
+}
+
 async function callAI(q: string, name: string, lang?: LangCode): Promise<{ response: string; action: Action | null }> {
-  const langInstruction = lang && lang !== "en"
-    ? `\n[SYSTEM: The user's interface is set to ${LANG_LABELS[lang]}. Always respond in ${LANG_LABELS[lang]} unless the user explicitly asks you to communicate in a different language. Even if the user writes in English, respond in ${LANG_LABELS[lang]}.]\n`
-    : "";
-  const fullMessage = langInstruction ? `${langInstruction}${q}` : q;
+  const fullMessage = buildLangMessage(q, lang);
   const doCall = () => api.post("/api/v1/ai/chat", { message: fullMessage, user_name: name });
   try {
     const { data } = await doCall();
     return { response: data.response || "Could you rephrase that?", action: data.action || null };
   } catch (err: unknown) {
-    const axiosErr = err as { response?: { status?: number; data?: { response?: string } }; message?: string };
+    const axiosErr = err as { response?: { status?: number }; message?: string };
     if (axiosErr.response?.status === 401) {
       try {
         const { refreshToken } = await import("@/lib/auth");
@@ -467,22 +539,39 @@ export default function AIAssistantPanel({ open, onClose }: AIAssistantPanelProp
     }
 
     setIsTyping(true);
-    const { response, action } = await callAI(question, firstName, lang);
-
-    const isFailed = response.includes("Something went wrong") || response.includes("Can't reach the server");
-    const aiMsg: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant", text: response,
-      action, actionStatus: action ? "pending" : undefined,
-      failed: isFailed || undefined,
-      failedQuery: isFailed ? question : undefined,
-    };
-
-    const updated = [...newMessages, aiMsg];
-    setMessages(updated);
-    saveCurrentChat(updated);
-
+    const aiMsgId = (Date.now() + 1).toString();
+    const aiMsg: Message = { id: aiMsgId, role: "assistant", text: "" };
+    const streamMessages = [...newMessages, aiMsg];
+    setMessages(streamMessages);
     if (view === "new") setView("chat");
+
+    let fullText = "";
+    try {
+      const { action } = await callAIStream(question, firstName, lang, (chunk) => {
+        fullText += chunk;
+        setMessages((prev) =>
+          prev.map((m) => m.id === aiMsgId ? { ...m, text: fullText } : m)
+        );
+      });
+
+      setMessages((prev) =>
+        prev.map((m) => m.id === aiMsgId
+          ? { ...m, text: fullText || "Could you rephrase that?", action, actionStatus: action ? "pending" : undefined }
+          : m
+        )
+      );
+      setMessages((prev) => { saveCurrentChat(prev); return prev; });
+    } catch {
+      const fallbackText = fullText || `Can't reach the server, ${firstName}. Try again in 10 seconds.`;
+      setMessages((prev) =>
+        prev.map((m) => m.id === aiMsgId
+          ? { ...m, text: fallbackText, failed: !fullText || undefined, failedQuery: !fullText ? question : undefined }
+          : m
+        )
+      );
+      setMessages((prev) => { saveCurrentChat(prev); return prev; });
+    }
+
     setIsTyping(false);
   }
 
