@@ -83,7 +83,7 @@ async def test_groq():
                 resp = await client.post(
                     GROQ_URL,
                     headers={"Authorization": f"Bearer {groq_key}"},
-                    json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": "Say hi"}], "max_tokens": 10},
+                    json={"model": "openai/gpt-oss-120b", "messages": [{"role": "user", "content": "Say hi"}], "max_tokens": 10},
                 )
             else:
                 resp = await client.post(
@@ -205,7 +205,7 @@ async def ai_chat(
                     GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "llama-3.3-70b-versatile",
+                        "model": "openai/gpt-oss-120b",
                         "messages": [
                             {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name} (capitalize first letter)\nData: {context}"},
                             {"role": "user", "content": message},
@@ -286,7 +286,7 @@ async def ai_chat_stream(
                     "POST", GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "llama-3.3-70b-versatile",
+                        "model": "openai/gpt-oss-120b",
                         "messages": [
                             {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name}\nData: {context}"},
                             {"role": "user", "content": message},
@@ -426,7 +426,7 @@ async def analyze_columns(
                     GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "llama-3.3-70b-versatile",
+                        "model": "openai/gpt-oss-120b",
                         "messages": [{"role": "user", "content": prompt}],
                         "max_tokens": 512,
                     },
