@@ -34,7 +34,7 @@ interface StoredChat {
   updatedAt: string;
 }
 
-const MAX_CHATS = 3;
+const MAX_CHATS = 5;
 const STORAGE_KEY = "reconart-chat-history";
 
 function loadChatsFromStorage(): StoredChat[] {
@@ -282,7 +282,7 @@ const UI_STRINGS: Record<LangCode, {
   en: {
     newChat: "New Chat", history: "History", quickStart: "Quick Start",
     historyFull: "History Full",
-    historyFullDesc: "You have 3 saved conversations. Delete one from the History tab to start a new chat.",
+    historyFullDesc: "You have 5 saved conversations. Delete one from the History tab to start a new chat.",
     goToHistory: "Go to History", noPrevChats: "No previous chats",
     startNew: "Start a new conversation to see it here.",
     conversations: "conversations saved", activeChat: "Active chat",
@@ -296,7 +296,7 @@ const UI_STRINGS: Record<LangCode, {
   es: {
     newChat: "Nuevo Chat", history: "Historial", quickStart: "Inicio Rapido",
     historyFull: "Historial Lleno",
-    historyFullDesc: "Tienes 3 conversaciones guardadas. Elimina una del Historial para iniciar un nuevo chat.",
+    historyFullDesc: "Tienes 5 conversaciones guardadas. Elimina una del Historial para iniciar un nuevo chat.",
     goToHistory: "Ir al Historial", noPrevChats: "Sin chats previos",
     startNew: "Inicia una conversacion para verla aqui.",
     conversations: "conversaciones guardadas", activeChat: "Chat activo",
@@ -310,7 +310,7 @@ const UI_STRINGS: Record<LangCode, {
   pt: {
     newChat: "Novo Chat", history: "Historico", quickStart: "Inicio Rapido",
     historyFull: "Historico Cheio",
-    historyFullDesc: "Voce tem 3 conversas salvas. Exclua uma do Historico para iniciar um novo chat.",
+    historyFullDesc: "Voce tem 5 conversas salvas. Exclua uma do Historico para iniciar um novo chat.",
     goToHistory: "Ir ao Historico", noPrevChats: "Sem chats anteriores",
     startNew: "Inicie uma conversa para ve-la aqui.",
     conversations: "conversas salvas", activeChat: "Chat ativo",
@@ -324,7 +324,7 @@ const UI_STRINGS: Record<LangCode, {
   hi: {
     newChat: "नया चैट", history: "इतिहास", quickStart: "त्वरित शुरुआत",
     historyFull: "इतिहास भरा",
-    historyFullDesc: "आपके पास 3 सहेजी गई बातचीत हैं। नया चैट शुरू करने के लिए इतिहास से एक हटाएं।",
+    historyFullDesc: "आपके पास 5 सहेजी गई बातचीत हैं। नया चैट शुरू करने के लिए इतिहास से एक हटाएं।",
     goToHistory: "इतिहास पर जाएं", noPrevChats: "कोई पिछली चैट नहीं",
     startNew: "यहां देखने के लिए एक बातचीत शुरू करें।",
     conversations: "बातचीत सहेजी", activeChat: "सक्रिय चैट",
