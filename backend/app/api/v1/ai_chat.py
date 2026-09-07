@@ -228,7 +228,7 @@ async def ai_chat(
         return {"response": f"That took too long, {name}. Try again in a moment.", "action": None}
     except Exception as e:
         logger.exception("AI chat failed")
-        return {"response": f"Something went wrong, {name}. Try again!", "action": None}
+        return {"response": f"Something went wrong, {name}. Debug: {str(e)[:300]}", "action": None}
 
 
 @router.post("/chat/stream")
