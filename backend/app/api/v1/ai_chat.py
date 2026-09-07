@@ -67,6 +67,34 @@ CRITICAL RULES:
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
+@router.get("/test-groq")
+async def test_groq():
+    """Quick diagnostic — hit this to verify Groq connectivity."""
+    groq_key = settings.groq_api_key
+    gemini_key = settings.gemini_api_key
+    provider = "groq" if groq_key else ("gemini" if gemini_key else "none")
+
+    if provider == "none":
+        return {"status": "error", "provider": "none", "detail": "No API key configured"}
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            if provider == "groq":
+                resp = await client.post(
+                    GROQ_URL,
+                    headers={"Authorization": f"Bearer {groq_key}"},
+                    json={"model": "llama-3.3-70b-versatile", "messages": [{"role": "user", "content": "Say hi"}], "max_tokens": 10},
+                )
+            else:
+                resp = await client.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}",
+                    json={"contents": [{"parts": [{"text": "Say hi"}]}], "generationConfig": {"maxOutputTokens": 10}},
+                )
+            return {"status": "ok" if resp.status_code == 200 else "error", "provider": provider, "http_status": resp.status_code, "body": resp.text[:500]}
+    except Exception as e:
+        return {"status": "error", "provider": provider, "detail": str(e)[:500]}
+
+
 async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
     cache_key = f"ai:context:{tenant.id}"
     cached = await cache_get(cache_key)
@@ -295,7 +323,7 @@ async def ai_chat_stream(
                             continue
         except Exception as e:
             logger.exception("Stream failed")
-            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Try again!', 'error': True})}\n\n"
+            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Debug: {str(e)[:300]}', 'error': True})}\n\n"
 
         clean_text = re.sub(r"<think>.*?</think>", "", full_text, flags=re.DOTALL).strip()
         _, action = _parse_action(clean_text)
@@ -345,7 +373,7 @@ async def ai_chat_stream(
                     yield f"data: {json.dumps({'done': True})}\n\n"
         except Exception as e:
             logger.exception("Gemini stream failed")
-            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Try again!', 'error': True, 'done': True})}\n\n"
+            yield f"data: {json.dumps({'text': f'Something went wrong, {name}. Debug: {str(e)[:300]}', 'error': True, 'done': True})}\n\n"
 
     generator = stream_groq() if use_groq else stream_gemini()
     return StreamingResponse(
