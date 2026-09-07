@@ -67,34 +67,6 @@ CRITICAL RULES:
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 
-@router.get("/test-groq")
-async def test_groq():
-    """Quick diagnostic — hit this to verify Groq connectivity."""
-    groq_key = settings.groq_api_key
-    gemini_key = settings.gemini_api_key
-    provider = "groq" if groq_key else ("gemini" if gemini_key else "none")
-
-    if provider == "none":
-        return {"status": "error", "provider": "none", "detail": "No API key configured"}
-
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            if provider == "groq":
-                resp = await client.post(
-                    GROQ_URL,
-                    headers={"Authorization": f"Bearer {groq_key}"},
-                    json={"model": "openai/gpt-oss-120b", "messages": [{"role": "user", "content": "Say hi"}], "max_tokens": 10},
-                )
-            else:
-                resp = await client.post(
-                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}",
-                    json={"contents": [{"parts": [{"text": "Say hi"}]}], "generationConfig": {"maxOutputTokens": 10}},
-                )
-            return {"status": "ok" if resp.status_code == 200 else "error", "provider": provider, "http_status": resp.status_code, "body": resp.text[:500]}
-    except Exception as e:
-        return {"status": "error", "provider": provider, "detail": str(e)[:500]}
-
-
 async def _get_context(db: AsyncSession, tenant: Tenant) -> str:
     cache_key = f"ai:context:{tenant.id}"
     cached = await cache_get(cache_key)
@@ -256,7 +228,7 @@ async def ai_chat(
         return {"response": f"That took too long, {name}. Try again in a moment.", "action": None}
     except Exception as e:
         logger.exception("AI chat failed")
-        return {"response": f"Something went wrong, {name}. Debug: {str(e)[:300]}", "action": None}
+        return {"response": f"Something went wrong, {name}. Try again!", "action": None}
 
 
 @router.post("/chat/stream")
