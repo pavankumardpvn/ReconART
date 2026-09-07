@@ -177,7 +177,7 @@ async def ai_chat(
                     GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "qwen/qwen3.6-27b",
+                        "model": "llama-3.3-70b-versatile",
                         "messages": [
                             {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name} (capitalize first letter)\nData: {context}"},
                             {"role": "user", "content": message},
@@ -258,7 +258,7 @@ async def ai_chat_stream(
                     "POST", GROQ_URL,
                     headers={"Authorization": f"Bearer {api_key}"},
                     json={
-                        "model": "qwen/qwen3.6-27b",
+                        "model": "llama-3.3-70b-versatile",
                         "messages": [
                             {"role": "system", "content": f"{SYSTEM_PROMPT}\nUser's name: {name}\nData: {context}"},
                             {"role": "user", "content": message},
@@ -378,6 +378,7 @@ async def analyze_columns(
     right = [{"name": r[0], "type": r[1]} for r in right_cols.all()]
 
     api_key = settings.groq_api_key or settings.gemini_api_key
+    use_groq = bool(settings.groq_api_key)
     if not api_key:
         return {"suggestions": []}
 
@@ -392,18 +393,30 @@ async def analyze_columns(
 
     try:
         async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
-                GROQ_URL,
-                headers={"Authorization": f"Bearer {api_key}"},
-                json={
-                    "model": "qwen/qwen3.6-27b",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 512,
-                },
-            )
-            resp.raise_for_status()
-            text = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "")
-            text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+            if use_groq:
+                resp = await client.post(
+                    GROQ_URL,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "max_tokens": 512,
+                    },
+                )
+                resp.raise_for_status()
+                text = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+                text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+            else:
+                resp = await client.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}",
+                    json={
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {"maxOutputTokens": 512},
+                    },
+                )
+                resp.raise_for_status()
+                text = resp.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+
             text = re.sub(r"```json\s*", "", text).replace("```", "").strip()
             suggestions = json.loads(text)
             return {"suggestions": suggestions, "left_columns": left, "right_columns": right}

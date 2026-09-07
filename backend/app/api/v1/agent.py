@@ -221,7 +221,7 @@ async def send_message(
                     resp = await client.post(
                         GROQ_URL,
                         headers={"Authorization": f"Bearer {api_key}"},
-                        json={"model": "qwen/qwen3.6-27b", "messages": groq_messages, "max_tokens": 2048},
+                        json={"model": "llama-3.3-70b-versatile", "messages": groq_messages, "max_tokens": 2048},
                     )
                 else:
                     prompt = "\n".join(f"{m['role']}: {m['content']}" for m in groq_messages)
